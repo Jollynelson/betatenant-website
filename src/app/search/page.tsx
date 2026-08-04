@@ -16,7 +16,7 @@ import { cn } from "@/lib/utils";
 const popularSearches = [
   { label: "2 Bedroom in Lekki", state: "Lagos", type: "2 Bedroom" },
   { label: "Self Con in Yaba", state: "Lagos", type: "Self Contained" },
-  { label: "Short-let in VI", state: "Lagos", type: "short-let" },
+  { label: "Apartments in VI", state: "Lagos", type: "" },
   { label: "3 Bedroom in Ikeja", state: "Lagos", type: "3 Bedroom" },
   { label: "Apartments in Abuja", state: "FCT - Abuja", type: "" },
   { label: "Mini Flat in Surulere", state: "Lagos", type: "Mini Flat" },
@@ -24,7 +24,7 @@ const popularSearches = [
 
 const recentSearches = [
   "2 Bedroom in Lekki, Lagos",
-  "Short-let Victoria Island",
+  "Apartments in Victoria Island",
   "Self Contained Yaba",
 ];
 
@@ -44,13 +44,10 @@ export default function SearchPage() {
   const handleQuickSearch = (search: (typeof popularSearches)[0]) => {
     const params = new URLSearchParams();
     if (search.state) params.set("state", search.state);
-    if (search.type && search.type !== "short-let") {
+    if (search.type) {
       params.set("apartmentType", search.type);
-      params.set("type", "rent");
     }
-    if (search.type === "short-let") {
-      params.set("type", "short-let");
-    }
+    params.set("type", "rent");
     router.push(`/properties?${params.toString()}`);
   };
 

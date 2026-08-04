@@ -161,8 +161,8 @@ export default function PropertyDetailPage({
             {/* Title & Meta */}
             <div>
               <div className="flex items-center gap-2 mb-2">
-                <span className="px-2.5 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium">
-                  {property.type === "short-let" ? "Short-Let" : "For Rent"}
+                <span className="px-2.5 py-1 rounded-full bg-bt-primary/10 text-bt-primary text-xs font-medium">
+                  For Rent
                 </span>
                 <span className="px-2.5 py-1 rounded-full bg-muted text-muted-foreground text-xs font-medium">
                   {property.apartmentType}
@@ -307,7 +307,7 @@ export default function PropertyDetailPage({
                     {formatPriceFullNumber(property.price)}
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    {property.type === "rent" ? "per year" : "per night"}
+                    per year
                   </p>
                 </div>
 
@@ -320,55 +320,26 @@ export default function PropertyDetailPage({
                   </div>
                 )}
 
-                {property.type === "short-let" && (
-                  <div className="space-y-3 mb-5">
-                    <div className="grid grid-cols-2 gap-2">
-                      <div className="p-3 rounded-xl border border-border">
-                        <label className="text-xs text-muted-foreground block mb-1">
-                          Check-in
-                        </label>
-                        <input
-                          type="date"
-                          className="w-full text-sm font-medium bg-transparent focus:outline-none"
-                        />
-                      </div>
-                      <div className="p-3 rounded-xl border border-border">
-                        <label className="text-xs text-muted-foreground block mb-1">
-                          Check-out
-                        </label>
-                        <input
-                          type="date"
-                          className="w-full text-sm font-medium bg-transparent focus:outline-none"
-                        />
-                      </div>
+                <div className="mb-5">
+                  <div className="p-3 rounded-xl border border-neutral-200">
+                    <label className="text-xs text-neutral-500 block mb-1">
+                      Schedule Inspection
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <Calendar className="w-4 h-4 text-neutral-400" />
+                      <input
+                        type="date"
+                        className="flex-1 text-sm font-medium bg-transparent focus:outline-none"
+                      />
                     </div>
                   </div>
-                )}
-
-                {property.type === "rent" && (
-                  <div className="mb-5">
-                    <div className="p-3 rounded-xl border border-border">
-                      <label className="text-xs text-muted-foreground block mb-1">
-                        Schedule Inspection
-                      </label>
-                      <div className="flex items-center gap-2">
-                        <Calendar className="w-4 h-4 text-muted-foreground" />
-                        <input
-                          type="date"
-                          className="flex-1 text-sm font-medium bg-transparent focus:outline-none"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                )}
+                </div>
 
                 <button
                   onClick={() => setShowContactModal(true)}
                   className="w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-semibold hover:bg-primary/90 transition-colors shadow-lg shadow-primary/25"
                 >
-                  {property.type === "rent"
-                    ? "Schedule Inspection"
-                    : "Book Now"}
+                  Schedule Inspection
                 </button>
 
                 <button className="w-full mt-3 py-3.5 rounded-xl border border-border text-foreground font-medium hover:bg-muted transition-colors flex items-center justify-center gap-2">
@@ -453,14 +424,14 @@ export default function PropertyDetailPage({
             {formatPriceFullNumber(property.price)}
           </p>
           <p className="text-xs text-muted-foreground">
-            {property.type === "rent" ? "per year" : "per night"}
+            per year
           </p>
         </div>
         <button
           onClick={() => setShowContactModal(true)}
           className="px-6 py-3 rounded-xl bg-primary text-primary-foreground font-semibold shadow-lg shadow-primary/25"
         >
-          {property.type === "rent" ? "Schedule Visit" : "Book Now"}
+          Schedule Visit
         </button>
       </div>
     </div>

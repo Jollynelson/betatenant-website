@@ -85,7 +85,7 @@ export const MOCK_PROPERTIES: Property[] = [
     _id: "3",
     title: "Modern Short-Let Apartment in Victoria Island",
     description: "Stunning waterfront apartment with breathtaking views. Perfect for business trips and short stays.",
-    type: "short-let",
+    type: "rent",
     apartmentType: "2 Bedroom",
     state: "Lagos",
     lga: "Victoria Island",
@@ -163,8 +163,8 @@ export const MOCK_PROPERTIES: Property[] = [
   {
     _id: "5",
     title: "Executive Short-Let in Ikoyi",
-    description: "Premium 3 bedroom short-let with private pool access, concierge service, and stunning city views.",
-    type: "short-let",
+    description: "Premium 3 bedroom apartment with private pool access, concierge service, and stunning city views.",
+    type: "rent",
     apartmentType: "3 Bedroom",
     state: "Lagos",
     lga: "Ikoyi",
@@ -288,7 +288,7 @@ export const MOCK_PROPERTIES: Property[] = [
     address: "Plot 123, Central Business District",
     price: 3500000,
     photos: [
-      "https://images.unsplash.com/photo-1600607687644-aac4c3eac7f4?w=800&q=80",
+      "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80",
       "https://images.unsplash.com/photo-1600566753376-12c8ab7fb75b?w=800&q=80",
     ],
     amenities: ["24/7 Electricity", "Air Conditioning", "Gym", "Swimming Pool", "Security", "Elevator", "Furnished"],

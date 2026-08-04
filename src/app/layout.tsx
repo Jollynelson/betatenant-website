@@ -14,11 +14,10 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "Beta Tenant — Find Your Perfect Rental Home in Nigeria",
   description:
-    "Nigeria's most trusted property rental marketplace. Find verified apartments, short-lets, and rental homes with transparent pricing and vetted agents.",
+    "Nigeria's most trusted property rental marketplace. Find verified rental apartments with transparent pricing and vetted agents.",
   keywords: [
     "rent apartment Nigeria",
     "Lagos rental",
-    "short-let Nigeria",
     "apartment hunting",
     "verified agents",
     "Beta Tenant",
@@ -26,7 +25,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Beta Tenant — Find Your Perfect Rental Home in Nigeria",
     description:
-      "Nigeria's most trusted property rental marketplace. Find verified apartments, short-lets, and rental homes.",
+      "Nigeria's most trusted property rental marketplace. Find verified rental apartments with transparent pricing.",
     type: "website",
     locale: "en_NG",
   },
@@ -38,10 +37,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${inter.variable} h-full antialiased`}>
+    <html lang="en" className={`${inter.variable} h-full antialiased`} data-scroll-behavior="smooth">
       <body className="min-h-full flex flex-col">
         <Navbar />
-        <main className="flex-1 pb-16 md:pb-0">{children}</main>
+        <main className="flex-1 pt-[72px] lg:pt-[78px] pb-16 lg:pb-0">
+          {children}
+        </main>
         <Footer />
         <MobileNav />
       </body>

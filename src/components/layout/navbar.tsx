@@ -2,85 +2,57 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  Menu,
-  X,
-  Search,
-  User,
-  Heart,
-  MessageCircle,
-  Home,
-  Shield,
-} from "lucide-react";
+import { Menu, X, User, ChevronDown } from "lucide-react";
 
 export function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-border/50">
-      <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16 md:h-18">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-white shadow-[0px_4px_39px_6px_rgba(217,217,217,0.25)]">
+      <nav className="max-w-[1360px] mx-auto px-5 lg:px-10">
+        <div className="flex items-center justify-between h-[72px] lg:h-[78px]">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2">
-            <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center">
-              <Home className="w-5 h-5 text-white" />
-            </div>
-            <span className="text-xl font-bold text-foreground">
-              Beta<span className="text-primary">Tenant</span>
-            </span>
+          <Link href="/" className="flex items-center shrink-0">
+            <Image
+              src="/images/bt_logo_big.svg"
+              alt="Beta Tenant"
+              width={122}
+              height={32}
+              className="h-8 w-auto"
+              priority
+            />
           </Link>
 
-          {/* Desktop Nav Links */}
-          <div className="hidden md:flex items-center gap-1">
-            <NavLink href="/properties?type=rent">Rent</NavLink>
-            <NavLink href="/properties?type=short-let">Short-Let</NavLink>
-            <NavLink href="/agents">Find Agents</NavLink>
-            <NavLink href="/about">About</NavLink>
+          {/* Desktop Nav Center */}
+          <div className="hidden lg:flex items-center gap-1">
+            <NavLink href="/tenant-switch">Tenant Switch</NavLink>
+            <NavLink href="https://gist.betatenant.com" external>
+              Area Gist
+            </NavLink>
+            <NavLink href="/report/search">Report Agent</NavLink>
           </div>
 
           {/* Desktop Actions */}
-          <div className="hidden md:flex items-center gap-3">
-            <Link
-              href="/search"
-              className="p-2.5 rounded-full hover:bg-muted transition-colors"
-              aria-label="Search"
-            >
-              <Search className="w-5 h-5" />
-            </Link>
-            <Link
-              href="/saved"
-              className="p-2.5 rounded-full hover:bg-muted transition-colors"
-              aria-label="Saved"
-            >
-              <Heart className="w-5 h-5" />
-            </Link>
-            <Link
-              href="/messages"
-              className="p-2.5 rounded-full hover:bg-muted transition-colors"
-              aria-label="Messages"
-            >
-              <MessageCircle className="w-5 h-5" />
-            </Link>
-            <div className="w-px h-6 bg-border mx-1" />
-            <Link
-              href="/host"
-              className="text-sm font-medium text-foreground hover:text-primary transition-colors px-3 py-2"
-            >
-              List Property
-            </Link>
+          <div className="hidden lg:flex items-center gap-3">
             <Link
               href="/auth/login"
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
+              className="px-5 py-2.5 text-sm font-semibold text-bt-primary hover:bg-bt-primary/5 rounded-full transition-colors"
             >
-              <User className="w-4 h-4" />
-              Sign In
+              Sign in
+            </Link>
+            <Link
+              href="/auth/signup"
+              className="px-5 py-2.5 rounded-full bg-bt-primary text-white text-sm font-semibold hover:bg-bt-primary-light transition-colors"
+            >
+              Sign up
             </Link>
           </div>
 
           {/* Mobile Menu Toggle */}
           <button
-            className="md:hidden p-2 rounded-lg hover:bg-muted transition-colors"
+            className="lg:hidden p-2 rounded-lg hover:bg-neutral-50 transition-colors"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-label="Menu"
           >
@@ -100,45 +72,41 @@ export function Navbar() {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            className="md:hidden border-t border-border bg-white overflow-hidden"
+            className="lg:hidden border-t border-neutral-100 bg-white overflow-hidden"
           >
-            <div className="px-4 py-4 space-y-1">
+            <div className="px-5 py-5 space-y-1">
               <MobileNavLink
-                href="/properties?type=rent"
+                href="/tenant-switch"
                 onClick={() => setMobileMenuOpen(false)}
               >
-                <Home className="w-5 h-5" />
-                Rent Properties
+                Tenant Switch
               </MobileNavLink>
               <MobileNavLink
-                href="/properties?type=short-let"
+                href="https://gist.betatenant.com"
                 onClick={() => setMobileMenuOpen(false)}
               >
-                <Home className="w-5 h-5" />
-                Short-Let
+                Area Gist
               </MobileNavLink>
               <MobileNavLink
-                href="/agents"
+                href="/report/search"
                 onClick={() => setMobileMenuOpen(false)}
               >
-                <Shield className="w-5 h-5" />
-                Find Agents
+                Report Agent
               </MobileNavLink>
-              <MobileNavLink
-                href="/about"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                <MessageCircle className="w-5 h-5" />
-                About
-              </MobileNavLink>
-              <div className="pt-3 border-t border-border mt-3">
+              <div className="pt-4 border-t border-neutral-100 mt-4 space-y-3">
                 <Link
                   href="/auth/login"
-                  className="flex items-center justify-center gap-2 w-full px-4 py-3 rounded-xl bg-primary text-primary-foreground font-medium"
+                  className="block w-full text-center px-5 py-3 rounded-full border-2 border-bt-primary text-bt-primary font-semibold"
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  <User className="w-5 h-5" />
-                  Sign In
+                  Sign in
+                </Link>
+                <Link
+                  href="/auth/signup"
+                  className="block w-full text-center px-5 py-3 rounded-full bg-bt-primary text-white font-semibold"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Sign up
                 </Link>
               </div>
             </div>
@@ -152,15 +120,30 @@ export function Navbar() {
 function NavLink({
   href,
   children,
+  external,
 }: {
   href: string;
   children: React.ReactNode;
+  external?: boolean;
 }) {
+  const className =
+    "px-4 py-2 text-sm font-medium text-neutral-700 hover:text-bt-primary rounded-lg transition-colors";
+
+  if (external) {
+    return (
+      <a
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={`${className} underline underline-offset-2`}
+      >
+        {children}
+      </a>
+    );
+  }
+
   return (
-    <Link
-      href={href}
-      className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
-    >
+    <Link href={href} className={className}>
       {children}
     </Link>
   );
@@ -179,7 +162,7 @@ function MobileNavLink({
     <Link
       href={href}
       onClick={onClick}
-      className="flex items-center gap-3 px-4 py-3 text-base font-medium text-foreground hover:bg-muted rounded-xl transition-colors"
+      className="block px-4 py-3 text-base font-medium text-neutral-800 hover:bg-neutral-50 rounded-xl transition-colors"
     >
       {children}
     </Link>

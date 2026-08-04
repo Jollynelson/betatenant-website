@@ -10,15 +10,15 @@ const navItems = [
   { href: "/search", icon: Search, label: "Search" },
   { href: "/saved", icon: Heart, label: "Saved" },
   { href: "/messages", icon: MessageCircle, label: "Messages" },
-  { href: "/account", icon: User, label: "Account" },
+  { href: "/account", icon: User, label: "Profile" },
 ];
 
 export function MobileNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-white/95 backdrop-blur-xl border-t border-border/50 safe-area-bottom">
-      <div className="flex items-center justify-around px-2 py-2">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-white border-t border-neutral-200">
+      <div className="flex items-center justify-around px-2 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
         {navItems.map((item) => {
           const isActive =
             pathname === item.href ||
@@ -30,12 +30,12 @@ export function MobileNav() {
               className={cn(
                 "flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-lg transition-colors min-w-[56px]",
                 isActive
-                  ? "text-primary"
-                  : "text-muted-foreground hover:text-foreground"
+                  ? "text-bt-primary"
+                  : "text-neutral-400 hover:text-neutral-600"
               )}
             >
               <item.icon
-                className={cn("w-5 h-5", isActive && "fill-primary/20")}
+                className={cn("w-5 h-5", isActive && "fill-bt-primary/10")}
               />
               <span className="text-[10px] font-medium">{item.label}</span>
             </Link>
