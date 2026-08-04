@@ -3,28 +3,42 @@
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import Link from "next/link";
 import { motion } from "framer-motion";
 import { PropertyCard } from "@/components/property/property-card";
 import { HowItWorks } from "@/components/shared/how-it-works";
 import { CTASection } from "@/components/shared/cta-section";
 import { MOCK_PROPERTIES } from "@/lib/mock-data";
 import { searchLocations, type LocationItem } from "@/lib/locations";
-import { Shield, Users, Home, TrendingUp, Search } from "lucide-react";
+import { Shield, Users, Home, TrendingUp, Search, ArrowRight } from "lucide-react";
 
 export default function HomePage() {
   return (
     <div className="flex flex-col">
-      {/* Hero Section — Map Background */}
       <HeroSection />
 
       {/* Listings Section */}
-      <section className="py-10 md:py-16">
+      <section className="py-12 md:py-20">
         <div className="max-w-[1360px] mx-auto px-5 lg:px-10">
-          <h2 className="text-xl sm:text-2xl font-bold text-neutral-900 mb-8">
-            Some available listings
-          </h2>
+          <div className="flex items-end justify-between mb-8 md:mb-10">
+            <div>
+              <h2 className="text-xl sm:text-2xl lg:text-[28px] font-bold text-neutral-900">
+                Some available listings
+              </h2>
+              <p className="text-sm text-neutral-500 mt-1 hidden sm:block">
+                Fresh properties verified by our team
+              </p>
+            </div>
+            <Link
+              href="/properties"
+              className="inline-flex items-center gap-1.5 text-sm font-semibold text-bt-primary hover:text-bt-primary-light transition-colors group"
+            >
+              View all
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+            </Link>
+          </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 justify-items-center">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 lg:gap-6">
             {MOCK_PROPERTIES.filter((p) => p.type === "rent")
               .slice(0, 8)
               .map((property) => (
@@ -155,12 +169,12 @@ function HeroSection() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
+            transition={{ duration: 0.5 }}
           >
-            <h1 className="text-3xl sm:text-4xl lg:text-[48px] font-bold text-foreground leading-tight lg:leading-[60px]">
+            <h1 className="text-[32px] sm:text-[40px] lg:text-[48px] font-bold text-neutral-900 leading-tight lg:leading-[60px] tracking-[-0.02em]">
               The perfect house awaits. Start your search now!
             </h1>
-            <p className="mt-4 text-lg sm:text-xl text-neutral-600 font-medium max-w-[500px] mx-auto">
+            <p className="mt-4 text-lg sm:text-xl text-neutral-600 font-medium max-w-[480px] mx-auto leading-relaxed">
               Explore our curated selection of rental properties and find one
               that suits you.
             </p>
@@ -170,7 +184,7 @@ function HeroSection() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
+            transition={{ duration: 0.5, delay: 0.15 }}
             className="mt-8"
           >
             <div className="flex items-center justify-center mb-4">
@@ -183,14 +197,14 @@ function HeroSection() {
             <div className="relative" ref={dropdownRef}>
               <form
                 onSubmit={handleSubmit}
-                className="flex items-center w-full border border-neutral-200 rounded-[30px] px-4 pr-1.5 bg-white shadow-sm"
+                className="flex items-center w-full border border-neutral-200 rounded-full px-4 pr-1.5 bg-white shadow-[0_4px_20px_rgba(0,0,0,0.06)] hover:shadow-[0_4px_28px_rgba(0,0,0,0.1)] transition-shadow"
               >
                 <Image
                   src="/icons/u_search.svg"
                   alt=""
                   width={20}
                   height={20}
-                  className="opacity-75 shrink-0"
+                  className="opacity-60 shrink-0"
                 />
                 <input
                   type="text"
@@ -198,11 +212,11 @@ function HeroSection() {
                   value={searchQuery}
                   onChange={(e) => handleSearch(e.target.value)}
                   onFocus={() => results.length > 0 && setShowDropdown(true)}
-                  className="w-full py-[14px] px-2 placeholder:text-base text-base placeholder:text-neutral-400 placeholder:font-medium bg-transparent focus:outline-none"
+                  className="w-full py-[14px] px-2.5 placeholder:text-base text-base placeholder:text-neutral-400 placeholder:font-medium bg-transparent focus:outline-none"
                 />
                 <button
                   type="submit"
-                  className="shrink-0 w-9 h-9 rounded-full bg-bt-primary flex items-center justify-center hover:bg-bt-primary-light transition-colors"
+                  className="shrink-0 w-10 h-10 rounded-full bg-bt-primary flex items-center justify-center hover:bg-bt-primary-light transition-colors shadow-sm"
                 >
                   <Search className="w-4 h-4 text-white" />
                 </button>
@@ -211,17 +225,17 @@ function HeroSection() {
               {/* Dropdown Results */}
               {showDropdown && results.length > 0 && (
                 <motion.div
-                  initial={{ opacity: 0, y: -4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="absolute top-full left-0 right-0 mt-2 bg-white border border-neutral-200 rounded-[10px] shadow-[0px_20px_48px_6px_#D9D9D9] overflow-hidden z-50"
+                  initial={{ opacity: 0, y: -4, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  className="absolute top-full left-0 right-0 mt-2 bg-white border border-neutral-100 rounded-2xl shadow-[0px_20px_48px_6px_rgba(0,0,0,0.08)] overflow-hidden z-50"
                 >
                   {results.map((item, i) => (
                     <button
                       key={`${item.state}-${item.city}-${i}`}
                       onClick={() => handleSelectLocation(item)}
-                      className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-neutral-50 transition-colors border-b border-neutral-100 last:border-b-0"
+                      className="w-full flex items-center gap-3 px-4 py-3.5 text-left hover:bg-neutral-50 transition-colors border-b border-neutral-50 last:border-b-0"
                     >
-                      <div className="w-8 h-8 rounded-full bg-bt-primary/10 flex items-center justify-center shrink-0">
+                      <div className="w-9 h-9 rounded-full bg-[#CECEE4]/30 flex items-center justify-center shrink-0">
                         <svg
                           className="w-4 h-4 text-bt-primary"
                           fill="none"
@@ -243,10 +257,10 @@ function HeroSection() {
                         </svg>
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-foreground">
+                        <p className="text-sm font-medium text-neutral-900">
                           {item.city}
                         </p>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-xs text-neutral-400">
                           {item.state}
                         </p>
                       </div>
@@ -256,26 +270,29 @@ function HeroSection() {
               )}
 
               {/* No results */}
-              {showDropdown && searchQuery.length >= 2 && results.length === 0 && (
-                <motion.div
-                  initial={{ opacity: 0, y: -4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="absolute top-full left-0 right-0 mt-2 bg-white border border-neutral-200 rounded-[10px] shadow-[0px_20px_48px_6px_#D9D9D9] p-4 text-center z-50"
-                >
-                  <p className="text-sm text-muted-foreground">
-                    We&apos;re not in your city yet, but we&apos;re expanding fast!
-                  </p>
-                </motion.div>
-              )}
+              {showDropdown &&
+                searchQuery.length >= 2 &&
+                results.length === 0 && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="absolute top-full left-0 right-0 mt-2 bg-white border border-neutral-100 rounded-2xl shadow-[0px_20px_48px_6px_rgba(0,0,0,0.08)] p-5 text-center z-50"
+                  >
+                    <p className="text-sm text-neutral-500">
+                      We&apos;re not in your city yet, but we&apos;re expanding
+                      fast!
+                    </p>
+                  </motion.div>
+                )}
             </div>
           </motion.div>
 
           {/* Stats */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
-            className="mt-10 flex flex-wrap items-center justify-center gap-6 md:gap-10"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+            className="mt-10 flex flex-wrap items-center justify-center gap-5 md:gap-8"
           >
             <Stat icon={Home} value="2,000+" label="Properties" />
             <Stat icon={Users} value="200+" label="Agents" />
@@ -298,13 +315,13 @@ function Stat({
   label: string;
 }) {
   return (
-    <div className="flex items-center gap-2">
-      <div className="w-9 h-9 rounded-lg bg-bt-primary/10 flex items-center justify-center">
+    <div className="flex items-center gap-2.5">
+      <div className="w-9 h-9 rounded-xl bg-white/80 border border-neutral-100 flex items-center justify-center shadow-sm">
         <Icon className="w-4 h-4 text-bt-primary" />
       </div>
-      <div>
-        <p className="text-sm font-bold text-foreground">{value}</p>
-        <p className="text-[11px] text-muted-foreground">{label}</p>
+      <div className="text-left">
+        <p className="text-sm font-bold text-neutral-900">{value}</p>
+        <p className="text-[11px] text-neutral-500">{label}</p>
       </div>
     </div>
   );
