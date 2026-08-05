@@ -61,16 +61,31 @@ function safeParse(val: string): number {
 
 // ── Upload helpers ────────────────────────────────────────────────────────────
 
-// Client-side image compression before upload (reduces size for slow networks)
-async function compressImage(file: File, maxSizePx = 1920, quality = 0.82): Promise<File> {
+// Client-side image optimisation before upload.
+// Strategy: only resize if the image is very large (>3000px) to avoid slow uploads.
+// Quality is kept high (92%) — visually lossless for property photos.
+// If the compressed result is larger than the original, the original is used.
+async function compressImage(file: File): Promise<File> {
   if (!file.type.startsWith("image/")) return file;
+  // Only process if file is over 2MB — small files are fine as-is
+  const MAX_PX = 2560;   // preserve detail, just kill excess megapixels from phone cameras
+  const QUALITY = 0.92;  // high quality — barely distinguishable from lossless
+
   return new Promise((resolve) => {
     const img = new Image();
     const url = URL.createObjectURL(file);
     img.onload = () => {
       URL.revokeObjectURL(url);
       const { width, height } = img;
-      const scale = Math.min(1, maxSizePx / Math.max(width, height));
+      const maxDim = Math.max(width, height);
+
+      // If already small enough, skip compression entirely
+      if (file.size < 1.5 * 1024 * 1024 && maxDim <= MAX_PX) {
+        resolve(file);
+        return;
+      }
+
+      const scale = Math.min(1, MAX_PX / maxDim);
       const canvas = document.createElement("canvas");
       canvas.width  = Math.round(width  * scale);
       canvas.height = Math.round(height * scale);
@@ -78,11 +93,12 @@ async function compressImage(file: File, maxSizePx = 1920, quality = 0.82): Prom
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
       canvas.toBlob(
         (blob) => {
+          // Never use the compressed version if it's larger than the original
           if (!blob || blob.size >= file.size) { resolve(file); return; }
-          resolve(new File([blob], file.name, { type: "image/jpeg" }));
+          resolve(new File([blob], file.name.replace(/\.\w+$/, ".jpg"), { type: "image/jpeg" }));
         },
         "image/jpeg",
-        quality
+        QUALITY
       );
     };
     img.onerror = () => { URL.revokeObjectURL(url); resolve(file); };
