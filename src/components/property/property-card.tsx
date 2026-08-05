@@ -1,53 +1,75 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { Heart, MapPin, Bed, Bath, Eye, Star, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  Heart, MapPin, Bed, Bath, Eye, Star,
+  ChevronLeft, ChevronRight, BadgeCheck,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
+import { isFavorited, toggleFavorite } from "@/lib/favorites";
 import type { Property } from "@/types";
 
 interface PropertyCardProps {
   property: Property;
   variant?: "default" | "horizontal";
+  onRemove?: (id: string) => void;
 }
 
-export function PropertyCard({
-  property,
-  variant = "default",
-}: PropertyCardProps) {
+export function PropertyCard({ property, variant = "default", onRemove }: PropertyCardProps) {
   const [liked, setLiked] = useState(false);
   const [imgIdx, setImgIdx] = useState(0);
+
+  // Hydrate from localStorage on mount
+  useEffect(() => {
+    setLiked(isFavorited(property._id));
+  }, [property._id]);
+
+  const handleHeart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    const nowLiked = toggleFavorite(property._id);
+    setLiked(nowLiked);
+    if (!nowLiked && onRemove) onRemove(property._id);
+  };
 
   if (variant === "horizontal") {
     return (
       <Link
         href={`/property/${property._id}`}
-        className="group flex gap-4 p-3 rounded-2xl hover:bg-neutral-50 transition-colors"
+        className="group flex gap-5 p-4 rounded-2xl border border-transparent hover:border-neutral-200 hover:bg-white hover:shadow-sm transition-all"
       >
-        <div className="relative w-36 h-28 sm:w-44 sm:h-32 rounded-xl overflow-hidden shrink-0">
+        <div className="relative w-[200px] h-[140px] rounded-xl overflow-hidden shrink-0">
           <Image
             src={property.photos[0] || "/placeholder-property.jpg"}
             alt={property.title}
             fill
             className="object-cover group-hover:scale-105 transition-transform duration-500"
           />
+          {property.host?.isVerified && (
+            <div className="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-bt-success/90 text-white text-[10px] font-semibold flex items-center gap-1">
+              <BadgeCheck className="w-3 h-3" />
+              Verified
+            </div>
+          )}
         </div>
-        <div className="flex-1 min-w-0 py-1">
-          <p className="text-xs text-neutral-400 uppercase tracking-wide font-medium">
-            {property.apartmentType}
-          </p>
-          <h3 className="font-semibold text-neutral-900 truncate mt-0.5 text-[15px]">
-            House in {property.lga}
-          </h3>
-          <p className="text-sm text-neutral-500 flex items-center gap-1 mt-1">
-            <MapPin className="w-3 h-3" />
-            {property.lga}, {property.state}
-          </p>
-          <p className="text-[#08065E] font-bold mt-2 text-base">
+        <div className="flex-1 min-w-0 py-1 flex flex-col justify-between">
+          <div>
+            <p className="text-xs font-medium text-neutral-400 uppercase tracking-wider">
+              {property.apartmentType}
+            </p>
+            <h3 className="font-semibold text-neutral-900 mt-1 text-base leading-snug">
+              {property.bedrooms} Bed in {property.lga}
+            </h3>
+            <p className="text-sm text-neutral-500 flex items-center gap-1 mt-1">
+              <MapPin className="w-3.5 h-3.5 shrink-0" />
+              <span className="truncate">{property.address}</span>
+            </p>
+          </div>
+          <p className="text-lg font-bold text-[#08065E]">
             &#8358;{property.price.toLocaleString()}
-            <span className="text-neutral-400 font-normal text-sm">/year</span>
+            <span className="text-sm text-neutral-400 font-normal">/year</span>
           </p>
         </div>
       </Link>
@@ -56,79 +78,73 @@ export function PropertyCard({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 16 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-50px" }}
-      transition={{ duration: 0.4 }}
+      viewport={{ once: true, margin: "-40px" }}
+      transition={{ duration: 0.35 }}
       className="group w-full"
     >
       <Link
         href={`/property/${property._id}`}
-        className="block rounded-2xl overflow-hidden bg-white border border-neutral-100 shadow-[0_2px_12px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] transition-all duration-300 hover:-translate-y-1"
+        className="block rounded-xl overflow-hidden bg-white border border-neutral-100 hover:shadow-[0_12px_40px_-12px_rgba(0,0,0,0.12)] transition-all duration-300 hover:-translate-y-0.5"
       >
-        {/* Image Carousel */}
-        <div className="relative w-full aspect-[4/3] overflow-hidden">
+        {/* Image */}
+        <div className="relative w-full aspect-[16/11] overflow-hidden bg-neutral-100">
           <Image
             src={property.photos[imgIdx] || "/placeholder-property.jpg"}
             alt={property.title}
             fill
-            className="object-cover group-hover:scale-[1.03] transition-transform duration-700"
+            className="object-cover group-hover:scale-[1.02] transition-transform duration-700"
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
           />
 
-          {/* Gradient overlay on hover */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          {/* Badges */}
+          <div className="absolute top-3 left-3 flex items-center gap-1.5">
+            {property.host?.isVerified && (
+              <span className="px-2 py-1 rounded-md bg-bt-success text-white text-[10px] font-bold uppercase tracking-wide flex items-center gap-1 shadow-sm">
+                <BadgeCheck className="w-3 h-3" />
+                Verified
+              </span>
+            )}
+            {property.isPromoted && (
+              <span className="px-2 py-1 rounded-md bg-bt-secondary text-white text-[10px] font-bold uppercase tracking-wide shadow-sm">
+                Featured
+              </span>
+            )}
+          </div>
 
-          {/* Heart button */}
+          {/* Heart — wired to localStorage */}
           <button
-            onClick={(e) => {
-              e.preventDefault();
-              setLiked(!liked);
-            }}
-            className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/95 backdrop-blur-sm flex items-center justify-center shadow-md hover:scale-110 active:scale-95 transition-transform"
+            onClick={handleHeart}
+            className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-md hover:scale-110 active:scale-95 transition-transform"
+            aria-label={liked ? "Remove from saved" : "Save property"}
           >
             <Heart
               className={cn(
-                "w-[18px] h-[18px] transition-all",
-                liked
-                  ? "fill-[#0A0876] text-[#0A0876] scale-110"
-                  : "text-neutral-600"
+                "w-4 h-4 transition-all",
+                liked ? "fill-red-500 text-red-500" : "text-neutral-500"
               )}
             />
           </button>
 
-          {/* Image navigation arrows (only on hover, only if multiple images) */}
+          {/* Carousel */}
           {property.photos.length > 1 && (
             <>
               <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  setImgIdx(imgIdx > 0 ? imgIdx - 1 : property.photos.length - 1);
-                }}
-                className="absolute left-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-white/90 flex items-center justify-center shadow-sm opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white"
+                onClick={(e) => { e.preventDefault(); setImgIdx(imgIdx > 0 ? imgIdx - 1 : property.photos.length - 1); }}
+                className="absolute left-2.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-white/95 flex items-center justify-center shadow opacity-0 group-hover:opacity-100 group-active:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity duration-200"
               >
-                <ChevronLeft className="w-4 h-4" />
+                <ChevronLeft className="w-3.5 h-3.5 text-neutral-700" />
               </button>
               <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  setImgIdx(imgIdx < property.photos.length - 1 ? imgIdx + 1 : 0);
-                }}
-                className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-white/90 flex items-center justify-center shadow-sm opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white"
+                onClick={(e) => { e.preventDefault(); setImgIdx(imgIdx < property.photos.length - 1 ? imgIdx + 1 : 0); }}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-white/95 flex items-center justify-center shadow opacity-0 group-hover:opacity-100 group-active:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity duration-200"
               >
-                <ChevronRight className="w-4 h-4" />
+                <ChevronRight className="w-3.5 h-3.5 text-neutral-700" />
               </button>
-
-              {/* Dots */}
               <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1">
                 {property.photos.slice(0, 5).map((_, i) => (
-                  <span
-                    key={i}
-                    className={cn(
-                      "w-1.5 h-1.5 rounded-full transition-all",
-                      i === imgIdx ? "bg-white w-4" : "bg-white/60"
-                    )}
-                  />
+                  <span key={i} className={cn("h-1.5 rounded-full transition-all duration-200", i === imgIdx ? "bg-white w-4" : "bg-white/50 w-1.5")} />
                 ))}
               </div>
             </>
@@ -136,54 +152,42 @@ export function PropertyCard({
         </div>
 
         {/* Content */}
-        <div className="p-4 space-y-1.5">
-          {/* Price */}
-          <div className="flex items-baseline justify-between">
-            <p className="text-lg font-bold text-[#08065E]">
+        <div className="p-4">
+          <div className="flex items-baseline justify-between gap-2">
+            <p className="text-[17px] font-bold text-neutral-900">
               &#8358;{property.price.toLocaleString()}
-              <span className="text-sm text-neutral-400 font-normal">/year</span>
+              <span className="text-[13px] text-neutral-400 font-normal ml-0.5">/yr</span>
             </p>
-            {property.rating && (
-              <span className="flex items-center gap-1 text-sm">
+            {!!property.rating && (
+              <span className="flex items-center gap-1 text-[13px] text-neutral-600">
                 <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                <span className="font-medium text-neutral-700">{property.rating.toFixed(1)}</span>
+                {property.rating.toFixed(1)}
+                <span className="text-neutral-300">({property.reviewCount})</span>
               </span>
             )}
           </div>
-
-          {/* Title */}
-          <h3 className="text-[15px] font-semibold text-neutral-900 leading-snug">
-            House in {property.lga}
-          </h3>
-
-          {/* Type */}
-          <p className="text-sm text-neutral-500">
-            {property.apartmentType} Apartment
-          </p>
-
-          {/* Location */}
-          <p className="text-sm text-neutral-400 truncate flex items-center gap-1">
-            <MapPin className="w-3.5 h-3.5 shrink-0" />
-            <span className="truncate">{property.address}</span>
-          </p>
-
-          {/* Views */}
-          <div className="flex items-center gap-1 text-xs text-neutral-400">
-            <Eye className="w-3.5 h-3.5" />
-            <span>{property.views} views</span>
-          </div>
-
-          {/* Divider + Amenities */}
-          <div className="border-t border-neutral-100 pt-3 mt-2 flex items-center gap-4">
-            <span className="flex items-center gap-1.5 text-sm text-neutral-600">
-              <Bed className="w-4 h-4 text-neutral-400" />
-              {property.bedrooms} {property.bedrooms === 1 ? "Bed" : "Beds"}
+          <div className="flex items-center gap-2 mt-2 text-[13px] text-neutral-600">
+            <span className="flex items-center gap-1">
+              <Bed className="w-3.5 h-3.5 text-neutral-400" />
+              {property.bedrooms} bed
             </span>
-            <span className="flex items-center gap-1.5 text-sm text-neutral-600">
-              <Bath className="w-4 h-4 text-neutral-400" />
-              {property.bathrooms} {property.bathrooms === 1 ? "Bath" : "Baths"}
+            <span className="text-neutral-300">&bull;</span>
+            <span className="flex items-center gap-1">
+              <Bath className="w-3.5 h-3.5 text-neutral-400" />
+              {property.bathrooms} bath
             </span>
+            <span className="text-neutral-300">&bull;</span>
+            <span>{property.apartmentType}</span>
           </div>
+          <p className="text-[13px] text-neutral-500 mt-1.5 truncate">
+            {property.lga}, {property.state}
+          </p>
+          {property.views && (
+            <div className="flex items-center gap-1 mt-2 text-[11px] text-neutral-400">
+              <Eye className="w-3 h-3" />
+              {property.views.toLocaleString()} views
+            </div>
+          )}
         </div>
       </Link>
     </motion.div>

@@ -50,18 +50,18 @@ export default function AboutPage() {
   return (
     <div className="min-h-screen">
       {/* Hero */}
-      <section className="relative bg-gradient-to-b from-secondary to-background pt-12 pb-20 md:pt-20 md:pb-28">
+      <section className="relative bg-gradient-to-b from-bt-surface to-white pt-12 pb-20 md:pt-20 md:pb-28">
         <div className="max-w-4xl mx-auto px-4 text-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground tracking-tight">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-neutral-900 tracking-tight">
               Making renting in Nigeria{" "}
-              <span className="text-primary">safe and simple</span>
+              <span className="text-bt-primary">safe and simple</span>
             </h1>
-            <p className="mt-5 text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+            <p className="mt-5 text-lg text-neutral-500 max-w-2xl mx-auto leading-relaxed">
               Beta Tenant was born from a frustration every Nigerian renter
               knows: fake listings, fraudulent agents, and zero accountability.
               We&apos;re changing that.
@@ -79,10 +79,10 @@ export default function AboutPage() {
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
             >
-              <h2 className="text-2xl font-bold text-foreground mb-4">
+              <h2 className="text-2xl font-bold text-neutral-900 mb-4">
                 Our Story
               </h2>
-              <div className="space-y-4 text-muted-foreground leading-relaxed">
+              <div className="space-y-4 text-neutral-500 leading-relaxed">
                 <p>
                   In Nigeria, finding a rental apartment has always been a
                   nightmare. Fake listings flood social media, agents demand
@@ -112,10 +112,10 @@ export default function AboutPage() {
               {stats.map((stat) => (
                 <div
                   key={stat.label}
-                  className="p-6 rounded-2xl bg-muted/50 border border-border text-center"
+                  className="p-6 rounded-2xl bg-neutral-50 border border-neutral-200 text-center"
                 >
-                  <p className="text-2xl font-bold text-primary">{stat.value}</p>
-                  <p className="text-sm text-muted-foreground mt-1">
+                  <p className="text-2xl font-bold text-bt-primary">{stat.value}</p>
+                  <p className="text-sm text-neutral-500 mt-1">
                     {stat.label}
                   </p>
                 </div>
@@ -126,13 +126,13 @@ export default function AboutPage() {
       </section>
 
       {/* Values */}
-      <section className="py-16 md:py-20 bg-muted/30">
+      <section className="py-16 md:py-20 bg-neutral-50">
         <div className="max-w-5xl mx-auto px-4">
           <div className="text-center mb-12">
-            <h2 className="text-2xl sm:text-3xl font-bold text-foreground">
+            <h2 className="text-2xl sm:text-3xl font-bold text-neutral-900">
               What We Stand For
             </h2>
-            <p className="mt-2 text-muted-foreground">
+            <p className="mt-2 text-neutral-500">
               Our core values guide everything we build
             </p>
           </div>
@@ -145,13 +145,13 @@ export default function AboutPage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.1 }}
-                className="p-6 rounded-2xl bg-white border border-border"
+                className="p-6 rounded-2xl bg-white border border-neutral-200"
               >
-                <value.icon className="w-8 h-8 text-primary mb-4" />
-                <h3 className="text-lg font-semibold text-foreground mb-2">
+                <value.icon className="w-8 h-8 text-bt-primary mb-4" />
+                <h3 className="text-lg font-semibold text-neutral-900 mb-2">
                   {value.title}
                 </h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">
+                <p className="text-sm text-neutral-500 leading-relaxed">
                   {value.description}
                 </p>
               </motion.div>
@@ -163,11 +163,11 @@ export default function AboutPage() {
       {/* Mission */}
       <section className="py-16 md:py-20">
         <div className="max-w-3xl mx-auto px-4 text-center">
-          <Target className="w-12 h-12 text-primary mx-auto mb-5" />
-          <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-4">
+          <Target className="w-12 h-12 text-bt-primary mx-auto mb-5" />
+          <h2 className="text-2xl sm:text-3xl font-bold text-neutral-900 mb-4">
             Our Mission
           </h2>
-          <p className="text-lg text-muted-foreground leading-relaxed">
+          <p className="text-lg text-neutral-500 leading-relaxed">
             To make finding and renting a home in Nigeria a safe, transparent,
             and stress-free experience for every tenant, while empowering
             honest agents and landlords to thrive.

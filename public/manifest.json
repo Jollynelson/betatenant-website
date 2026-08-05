@@ -1,0 +1,39 @@
+{
+  "name": "Beta Tenant",
+  "short_name": "BetaTenant",
+  "description": "Nigeria's most trusted property rental marketplace",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0A0876",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["lifestyle", "utilities"],
+  "lang": "en-NG",
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Browse Rentals",
+      "url": "/properties",
+      "description": "Browse available rental properties"
+    },
+    {
+      "name": "Messages",
+      "url": "/messages",
+      "description": "View your messages"
+    }
+  ]
+}

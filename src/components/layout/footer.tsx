@@ -3,11 +3,11 @@ import Image from "next/image";
 
 export function Footer() {
   return (
-    <footer className="bg-neutral-50">
-      <div className="max-w-[1360px] mx-auto px-5 lg:px-10 py-10 lg:py-[50px]">
+    <footer className="bg-white border-t border-neutral-100">
+      <div className="max-w-[1360px] mx-auto px-5 lg:px-10 py-10 lg:py-14">
         <div className="flex flex-col lg:flex-row gap-10 lg:gap-16">
-          {/* Logo & Copyright */}
-          <div className="lg:min-w-[200px]">
+          {/* Logo & description */}
+          <div className="lg:min-w-[220px] lg:max-w-[260px]">
             <Link href="/">
               <Image
                 src="/images/bt_logo_big.svg"
@@ -17,8 +17,11 @@ export function Footer() {
                 className="h-7 w-auto"
               />
             </Link>
-            <p className="text-sm text-neutral-500 mt-4">
-              &copy; {new Date().getFullYear()} Beta Tenant
+            <p className="text-sm text-neutral-500 mt-3 leading-relaxed">
+              Nigeria&apos;s trusted rental marketplace. Find verified properties and reliable agents.
+            </p>
+            <p className="text-xs text-neutral-400 mt-4">
+              &copy; {new Date().getFullYear()} Beta Tenant. All rights reserved.
             </p>
           </div>
 
@@ -146,7 +149,7 @@ function SocialIcon({
       target="_blank"
       rel="noopener noreferrer"
       aria-label={label}
-      className="w-9 h-9 rounded-full bg-[#FEB273]/20 flex items-center justify-center text-bt-secondary hover:bg-bt-secondary/20 transition-colors"
+      className="w-9 h-9 rounded-full bg-neutral-100 flex items-center justify-center text-neutral-500 hover:bg-bt-primary/8 hover:text-bt-primary transition-colors"
     >
       {children}
     </a>

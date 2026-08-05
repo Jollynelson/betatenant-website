@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
@@ -13,6 +13,9 @@ import {
 import { NIGERIAN_STATES, APARTMENT_TYPES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
+const LS_KEY = "BT_RecentSearches";
+const MAX_RECENT = 5;
+
 const popularSearches = [
   { label: "2 Bedroom in Lekki", state: "Lagos", type: "2 Bedroom" },
   { label: "Self Con in Yaba", state: "Lagos", type: "Self Contained" },
@@ -22,22 +25,49 @@ const popularSearches = [
   { label: "Mini Flat in Surulere", state: "Lagos", type: "Mini Flat" },
 ];
 
-const recentSearches = [
-  "2 Bedroom in Lekki, Lagos",
-  "Apartments in Victoria Island",
-  "Self Contained Yaba",
-];
+function readRecentSearches(): string[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const stored = localStorage.getItem(LS_KEY);
+    if (!stored) return [];
+    const parsed = JSON.parse(stored);
+    return Array.isArray(parsed) ? parsed.filter((s): s is string => typeof s === "string") : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveRecentSearch(term: string) {
+  if (!term.trim()) return;
+  const existing = readRecentSearches();
+  const updated = [term, ...existing.filter((s) => s !== term)].slice(0, MAX_RECENT);
+  try {
+    localStorage.setItem(LS_KEY, JSON.stringify(updated));
+  } catch {
+    // ignore storage errors
+  }
+}
 
 export default function SearchPage() {
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [selectedState, setSelectedState] = useState("");
+  const [recentSearches, setRecentSearches] = useState<string[]>([]);
+
+  useEffect(() => {
+    setRecentSearches(readRecentSearches());
+  }, []);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     const params = new URLSearchParams();
     if (selectedState) params.set("state", selectedState);
     if (query) params.set("q", query);
+    if (query.trim()) {
+      const label = selectedState ? `${query} in ${selectedState}` : query;
+      saveRecentSearch(label);
+      setRecentSearches(readRecentSearches());
+    }
     router.push(`/properties?${params.toString()}`);
   };
 
@@ -48,23 +78,29 @@ export default function SearchPage() {
       params.set("apartmentType", search.type);
     }
     params.set("type", "rent");
+    saveRecentSearch(search.label);
+    setRecentSearches(readRecentSearches());
     router.push(`/properties?${params.toString()}`);
   };
 
+  const handleRecentClick = (term: string) => {
+    router.push(`/properties?q=${encodeURIComponent(term)}`);
+  };
+
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-white">
       <div className="max-w-2xl mx-auto px-4 pt-6 pb-20">
         {/* Search Input */}
         <form onSubmit={handleSearch}>
           <div className="relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-500" />
             <input
               type="text"
               placeholder="Search by location, apartment type..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               autoFocus
-              className="w-full pl-12 pr-4 py-4 rounded-2xl border border-border bg-white text-base focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-sm"
+              className="w-full pl-12 pr-4 py-4 rounded-2xl border border-neutral-200 bg-white text-base text-neutral-900 focus:outline-none focus:ring-2 focus:ring-bt-primary/20 focus:border-bt-primary shadow-sm"
             />
           </div>
 
@@ -81,8 +117,8 @@ export default function SearchPage() {
                   className={cn(
                     "px-4 py-2 rounded-full text-sm font-medium border transition-colors",
                     selectedState === state
-                      ? "bg-primary text-primary-foreground border-primary"
-                      : "bg-white text-foreground border-border hover:border-primary/50"
+                      ? "bg-bt-primary text-white border-bt-primary"
+                      : "bg-white text-neutral-900 border-neutral-200 hover:border-bt-primary/50"
                   )}
                 >
                   <MapPin className="w-3.5 h-3.5 inline mr-1.5" />
@@ -96,7 +132,7 @@ export default function SearchPage() {
         {/* Recent Searches */}
         {recentSearches.length > 0 && (
           <div className="mt-8">
-            <h3 className="text-sm font-medium text-muted-foreground flex items-center gap-2 mb-3">
+            <h3 className="text-sm font-medium text-neutral-500 flex items-center gap-2 mb-3">
               <Clock className="w-4 h-4" />
               Recent Searches
             </h3>
@@ -104,13 +140,14 @@ export default function SearchPage() {
               {recentSearches.map((search) => (
                 <button
                   key={search}
-                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-muted transition-colors text-left"
+                  onClick={() => handleRecentClick(search)}
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-neutral-50 transition-colors text-left"
                 >
-                  <Clock className="w-4 h-4 text-muted-foreground shrink-0" />
-                  <span className="text-sm text-foreground flex-1">
+                  <Clock className="w-4 h-4 text-neutral-500 shrink-0" />
+                  <span className="text-sm text-neutral-900 flex-1">
                     {search}
                   </span>
-                  <ArrowRight className="w-4 h-4 text-muted-foreground" />
+                  <ArrowRight className="w-4 h-4 text-neutral-500" />
                 </button>
               ))}
             </div>
@@ -119,7 +156,7 @@ export default function SearchPage() {
 
         {/* Popular Searches */}
         <div className="mt-8">
-          <h3 className="text-sm font-medium text-muted-foreground flex items-center gap-2 mb-3">
+          <h3 className="text-sm font-medium text-neutral-500 flex items-center gap-2 mb-3">
             <TrendingUp className="w-4 h-4" />
             Popular Searches
           </h3>
@@ -131,12 +168,12 @@ export default function SearchPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.05 }}
                 onClick={() => handleQuickSearch(search)}
-                className="flex items-center gap-3 px-4 py-3.5 rounded-xl border border-border hover:border-primary/30 hover:bg-primary/5 transition-all text-left"
+                className="flex items-center gap-3 px-4 py-3.5 rounded-xl border border-neutral-200 hover:border-bt-primary/30 hover:bg-bt-primary/5 transition-all text-left"
               >
-                <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                  <MapPin className="w-4 h-4 text-primary" />
+                <div className="w-9 h-9 rounded-lg bg-bt-primary/10 flex items-center justify-center shrink-0">
+                  <MapPin className="w-4 h-4 text-bt-primary" />
                 </div>
-                <span className="text-sm font-medium text-foreground">
+                <span className="text-sm font-medium text-neutral-900">
                   {search.label}
                 </span>
               </motion.button>
@@ -146,7 +183,7 @@ export default function SearchPage() {
 
         {/* Browse by State */}
         <div className="mt-8">
-          <h3 className="text-sm font-medium text-muted-foreground mb-3">
+          <h3 className="text-sm font-medium text-neutral-500 mb-3">
             Browse by State
           </h3>
           <div className="flex flex-wrap gap-2">
@@ -158,7 +195,7 @@ export default function SearchPage() {
                     `/properties?state=${encodeURIComponent(state)}`
                   );
                 }}
-                className="px-3 py-1.5 rounded-full text-xs font-medium bg-muted text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors"
+                className="px-3 py-1.5 rounded-full text-xs font-medium bg-neutral-50 text-neutral-500 hover:bg-bt-primary/10 hover:text-bt-primary transition-colors"
               >
                 {state}
               </button>

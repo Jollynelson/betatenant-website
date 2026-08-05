@@ -1,240 +1,325 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, useRef, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { PropertyCard } from "@/components/property/property-card";
-import { MOCK_PROPERTIES } from "@/lib/mock-data";
+import { propertyApi } from "@/lib/api";
 import { APARTMENT_TYPES, NIGERIAN_STATES, PRICE_RANGES } from "@/lib/constants";
 import {
-  SlidersHorizontal,
-  X,
-  MapPin,
-  Home,
-  DollarSign,
-  Grid3X3,
-  List,
+  SlidersHorizontal, X, MapPin, Home, Grid3X3, List, ChevronDown, Check,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+type FilterPanel = "location" | "type" | "budget" | "filters" | null;
+
 function PropertiesContent() {
   const searchParams = useSearchParams();
-  const [showFilters, setShowFilters] = useState(false);
+  const [activePanel, setActivePanel] = useState<FilterPanel>(null);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-
-  const stateParam = searchParams.get("state") || "";
-  const apartmentTypeParam = searchParams.get("apartmentType") || "";
+  const [page, setPage] = useState(1);
+  const panelRef = useRef<HTMLDivElement>(null);
 
   const [filters, setFilters] = useState({
-    state: stateParam,
-    apartmentType: apartmentTypeParam,
+    state: searchParams.get("state") || "",
+    lga: searchParams.get("lga") || "",
+    apartmentType: searchParams.get("apartmentType") || "",
     minPrice: "",
     maxPrice: "",
+    amenities: [] as string[],
   });
 
-  const filteredProperties = MOCK_PROPERTIES.filter((p) => {
-    if (p.type !== "rent") return false;
-    if (filters.state && p.state !== filters.state) return false;
-    if (filters.apartmentType && p.apartmentType !== filters.apartmentType)
-      return false;
-    return true;
+  // Close panel on outside click
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (panelRef.current && !panelRef.current.contains(e.target as Node))
+        setActivePanel(null);
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Reset page when filters change
+  useEffect(() => { setPage(1); }, [filters]);
+
+  const searchBody = {
+    ...(filters.state ? { state: filters.state } : {}),
+    ...(filters.lga ? { localGovernmentArea: filters.lga } : {}),
+    ...(filters.apartmentType ? { apartmentTypes: [filters.apartmentType] } : {}),
+    ...(filters.minPrice ? { minAmount: Number(filters.minPrice) } : {}),
+    ...(filters.maxPrice ? { maxAmount: Number(filters.maxPrice) } : {}),
+    ...(filters.amenities.length > 0 ? { amenities: filters.amenities } : {}),
+    page,
+    limit: 12,
+  };
+
+  const hasFilters = !!(filters.state || filters.apartmentType || filters.minPrice || filters.maxPrice || filters.lga || filters.amenities.length > 0);
+
+  type PropertyListResult = { properties: any[]; totalPages: number; totalDocs?: number; totalResults?: number; page: number };
+
+  const { data, isLoading, isFetching } = useQuery<PropertyListResult>({
+    queryKey: ["properties", searchBody] as const,
+    queryFn: () =>
+      hasFilters
+        ? propertyApi.search(searchBody)
+        : propertyApi.list(page, 12),
+    staleTime: 1000 * 60 * 2,
   });
+
+  const properties = data?.properties ?? [];
+  const totalPages = data?.totalPages ?? 1;
+
+  const activeFilterCount = [filters.state, filters.apartmentType, filters.minPrice || filters.maxPrice, filters.amenities.length > 0 ? true : undefined].filter(Boolean).length;
+
+  const togglePanel = (panel: FilterPanel) =>
+    setActivePanel(activePanel === panel ? null : panel);
+
+  const toggleAmenity = (a: string) =>
+    setFilters((f) => ({
+      ...f,
+      amenities: f.amenities.includes(a) ? f.amenities.filter((x) => x !== a) : [...f.amenities, a],
+    }));
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Header / Filter Bar */}
-      <div className="sticky top-[72px] lg:top-[78px] z-40 bg-white border-b border-neutral-200">
-        <div className="max-w-[1360px] mx-auto px-5 lg:px-10 py-4">
-          <div className="flex items-center justify-between gap-4">
-            <h1 className="text-lg font-semibold text-neutral-900">
-              Rental Properties
-            </h1>
-
-            <div className="flex items-center gap-2">
-              {/* View toggle - desktop */}
-              <div className="hidden sm:flex items-center gap-1 p-1 bg-neutral-100 rounded-lg">
-                <button
-                  onClick={() => setViewMode("grid")}
-                  className={cn(
-                    "p-2 rounded-md transition-colors",
-                    viewMode === "grid"
-                      ? "bg-white shadow-sm"
-                      : "text-neutral-400"
-                  )}
-                >
-                  <Grid3X3 className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => setViewMode("list")}
-                  className={cn(
-                    "p-2 rounded-md transition-colors",
-                    viewMode === "list"
-                      ? "bg-white shadow-sm"
-                      : "text-neutral-400"
-                  )}
-                >
-                  <List className="w-4 h-4" />
-                </button>
-              </div>
-
-              {/* Filter button */}
-              <button
-                onClick={() => setShowFilters(!showFilters)}
-                className={cn(
-                  "inline-flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium border transition-colors",
-                  showFilters
-                    ? "bg-bt-primary text-white border-bt-primary"
-                    : "bg-white text-neutral-700 border-neutral-200 hover:border-bt-primary/50"
-                )}
-              >
-                <SlidersHorizontal className="w-4 h-4" />
-                Filters
+    <div className="min-h-screen bg-bt-surface">
+      {/* Filter bar */}
+      <div className="sticky top-[72px] lg:top-[78px] z-40 bg-white border-b border-neutral-100" ref={panelRef}>
+        <div className="max-w-[1360px] mx-auto px-5 lg:px-10">
+          <div className="flex items-center gap-2.5 py-3 overflow-x-auto no-scrollbar">
+            <FilterPill label={filters.state || "Location"} active={activePanel === "location"} hasValue={!!filters.state} onClick={() => togglePanel("location")} />
+            <FilterPill label={APARTMENT_TYPES.find((t) => t.value === filters.apartmentType)?.label || "Property type"} active={activePanel === "type"} hasValue={!!filters.apartmentType} onClick={() => togglePanel("type")} />
+            <FilterPill
+              label={filters.minPrice || filters.maxPrice ? `₦${Number(filters.minPrice || 0).toLocaleString()} – ₦${Number(filters.maxPrice || 10000000).toLocaleString()}` : "Budget"}
+              active={activePanel === "budget"}
+              hasValue={!!(filters.minPrice || filters.maxPrice)}
+              onClick={() => togglePanel("budget")}
+            />
+            <FilterPill
+              label="Filters"
+              active={activePanel === "filters"}
+              hasValue={activeFilterCount > 0}
+              badge={activeFilterCount > 0 ? activeFilterCount : undefined}
+              icon={<SlidersHorizontal className="w-3.5 h-3.5" />}
+              onClick={() => togglePanel("filters")}
+            />
+            <div className="flex-1" />
+            <div className="hidden sm:flex items-center gap-0.5 p-1 bg-neutral-100 rounded-lg shrink-0">
+              <button onClick={() => setViewMode("grid")} className={cn("p-1.5 rounded-md transition-all", viewMode === "grid" ? "bg-white shadow-sm text-neutral-900" : "text-neutral-400 hover:text-neutral-600")}>
+                <Grid3X3 className="w-4 h-4" />
+              </button>
+              <button onClick={() => setViewMode("list")} className={cn("p-1.5 rounded-md transition-all", viewMode === "list" ? "bg-white shadow-sm text-neutral-900" : "text-neutral-400 hover:text-neutral-600")}>
+                <List className="w-4 h-4" />
               </button>
             </div>
           </div>
-
-          {/* Expandable Filters */}
-          <AnimatePresence>
-            {showFilters && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: "auto", opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.2 }}
-                className="overflow-hidden"
-              >
-                <div className="pt-4 pb-2 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                  {/* State */}
-                  <div className="relative">
-                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
-                    <select
-                      value={filters.state}
-                      onChange={(e) =>
-                        setFilters({ ...filters, state: e.target.value })
-                      }
-                      className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-neutral-200 bg-white text-sm appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-bt-primary/20 focus:border-bt-primary"
-                    >
-                      <option value="">All States</option>
-                      {NIGERIAN_STATES.map((state) => (
-                        <option key={state} value={state}>
-                          {state}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Apartment type */}
-                  <div className="relative">
-                    <Home className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
-                    <select
-                      value={filters.apartmentType}
-                      onChange={(e) =>
-                        setFilters({
-                          ...filters,
-                          apartmentType: e.target.value,
-                        })
-                      }
-                      className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-neutral-200 bg-white text-sm appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-bt-primary/20 focus:border-bt-primary"
-                    >
-                      <option value="">All Types</option>
-                      {APARTMENT_TYPES.map((type) => (
-                        <option key={type} value={type}>
-                          {type}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Price */}
-                  <div className="relative">
-                    <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
-                    <select className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-neutral-200 bg-white text-sm appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-bt-primary/20 focus:border-bt-primary">
-                      <option value="">Any Budget</option>
-                      {PRICE_RANGES.map((range) => (
-                        <option
-                          key={range.label}
-                          value={`${range.min}-${range.max}`}
-                        >
-                          {range.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Clear */}
-                  <button
-                    onClick={() =>
-                      setFilters({
-                        state: "",
-                        apartmentType: "",
-                        minPrice: "",
-                        maxPrice: "",
-                      })
-                    }
-                    className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium text-neutral-500 hover:text-neutral-800 hover:bg-neutral-100 transition-colors"
-                  >
-                    <X className="w-4 h-4" />
-                    Clear All
-                  </button>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
         </div>
+
+        {/* Filter panels */}
+        <AnimatePresence>
+          {activePanel && (
+            <motion.div
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -4 }}
+              transition={{ duration: 0.15 }}
+              className="absolute left-0 right-0 bg-white border-b border-neutral-200 shadow-[0_12px_40px_-8px_rgba(0,0,0,0.1)] z-30"
+            >
+              <div className="max-w-[1360px] mx-auto px-5 lg:px-10 py-6">
+
+                {/* Location */}
+                {activePanel === "location" && (
+                  <div>
+                    <h3 className="text-base font-bold text-neutral-900 mb-4">Location</h3>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 max-h-[280px] overflow-y-auto">
+                      {NIGERIAN_STATES.map((state) => (
+                        <button
+                          key={state}
+                          onClick={() => setFilters({ ...filters, state: filters.state === state ? "" : state, lga: "" })}
+                          className={cn(
+                            "flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm text-left transition-all",
+                            filters.state === state
+                              ? "bg-bt-primary/8 border border-bt-primary/30 text-bt-primary font-medium"
+                              : "bg-neutral-50 text-neutral-700 hover:bg-neutral-100"
+                          )}
+                        >
+                          <MapPin className="w-3.5 h-3.5 shrink-0 opacity-50" />
+                          <span className="truncate">{state}</span>
+                          {filters.state === state && <Check className="w-3.5 h-3.5 ml-auto shrink-0" />}
+                        </button>
+                      ))}
+                    </div>
+                    <PanelFooter count={properties.length} loading={isFetching} onClear={() => setFilters({ ...filters, state: "", lga: "" })} onApply={() => setActivePanel(null)} />
+                  </div>
+                )}
+
+                {/* Property type */}
+                {activePanel === "type" && (
+                  <div>
+                    <h3 className="text-base font-bold text-neutral-900 mb-4">Property type</h3>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+                      {APARTMENT_TYPES.map((type) => (
+                        <button
+                          key={type.value}
+                          onClick={() => setFilters({ ...filters, apartmentType: filters.apartmentType === type.value ? "" : type.value })}
+                          className={cn(
+                            "flex items-center gap-2.5 px-4 py-3 rounded-xl text-sm text-left transition-all",
+                            filters.apartmentType === type.value
+                              ? "bg-bt-primary/8 border border-bt-primary/30 text-bt-primary font-medium"
+                              : "bg-neutral-50 text-neutral-700 hover:bg-neutral-100"
+                          )}
+                        >
+                          <Home className="w-4 h-4 shrink-0 opacity-50" />
+                          <span>{type.label}</span>
+                          {filters.apartmentType === type.value && <Check className="w-3.5 h-3.5 ml-auto shrink-0" />}
+                        </button>
+                      ))}
+                    </div>
+                    <PanelFooter count={properties.length} loading={isFetching} onClear={() => setFilters({ ...filters, apartmentType: "" })} onApply={() => setActivePanel(null)} />
+                  </div>
+                )}
+
+                {/* Budget */}
+                {activePanel === "budget" && (
+                  <div>
+                    <h3 className="text-base font-bold text-neutral-900 mb-4">Budget <span className="text-sm font-normal text-neutral-500">per year</span></h3>
+                    <div className="flex items-center gap-4 max-w-md mb-5">
+                      <div className="flex-1">
+                        <label className="text-xs text-neutral-400 uppercase tracking-wide mb-1.5 block">From</label>
+                        <div className="relative">
+                          <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm text-neutral-400">₦</span>
+                          <input
+                            type="text"
+                            value={filters.minPrice ? Number(filters.minPrice).toLocaleString() : ""}
+                            onChange={(e) => setFilters({ ...filters, minPrice: e.target.value.replace(/[^0-9]/g, "") })}
+                            placeholder="0"
+                            className="w-full pl-8 pr-4 py-3 rounded-xl border border-neutral-200 text-[16px] font-medium focus:outline-none focus:ring-2 focus:ring-bt-primary/20 focus:border-bt-primary transition-all"
+                          />
+                        </div>
+                      </div>
+                      <span className="text-neutral-300 mt-5">—</span>
+                      <div className="flex-1">
+                        <label className="text-xs text-neutral-400 uppercase tracking-wide mb-1.5 block">To</label>
+                        <div className="relative">
+                          <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm text-neutral-400">₦</span>
+                          <input
+                            type="text"
+                            value={filters.maxPrice ? Number(filters.maxPrice).toLocaleString() : ""}
+                            onChange={(e) => setFilters({ ...filters, maxPrice: e.target.value.replace(/[^0-9]/g, "") })}
+                            placeholder="Any"
+                            className="w-full pl-8 pr-4 py-3 rounded-xl border border-neutral-200 text-[16px] font-medium focus:outline-none focus:ring-2 focus:ring-bt-primary/20 focus:border-bt-primary transition-all"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {PRICE_RANGES.map((r) => (
+                        <button
+                          key={r.label}
+                          onClick={() => setFilters({ ...filters, minPrice: String(r.min), maxPrice: String(r.max) })}
+                          className={cn(
+                            "px-3.5 py-2 rounded-lg text-xs font-medium border transition-all",
+                            filters.minPrice === String(r.min) && filters.maxPrice === String(r.max)
+                              ? "bg-bt-primary/8 border-bt-primary/30 text-bt-primary"
+                              : "bg-neutral-50 border-transparent text-neutral-600 hover:bg-neutral-100"
+                          )}
+                        >
+                          {r.label}
+                        </button>
+                      ))}
+                    </div>
+                    <PanelFooter count={properties.length} loading={isFetching} onClear={() => setFilters({ ...filters, minPrice: "", maxPrice: "" })} onApply={() => setActivePanel(null)} />
+                  </div>
+                )}
+
+                {/* Filters */}
+                {activePanel === "filters" && (
+                  <div>
+                    <h3 className="text-base font-bold text-neutral-900 mb-4">Features</h3>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5">
+                      {["WiFi", "Air Conditioning", "Swimming Pool", "Generator", "Parking Space", "Security", "CCTV", "Elevator", "Balcony", "Gym", "Washing Machine", "Inverter Backup"].map((a) => (
+                        <label key={a} className={cn("flex items-center gap-2.5 px-3.5 py-2.5 rounded-lg cursor-pointer text-sm transition-all", filters.amenities.includes(a) ? "bg-bt-primary/8 text-bt-primary font-medium" : "text-neutral-600 hover:bg-neutral-50")}>
+                          <input type="checkbox" checked={filters.amenities.includes(a)} onChange={() => toggleAmenity(a)} className="w-4 h-4 rounded border-neutral-300 accent-bt-primary" />
+                          {a}
+                        </label>
+                      ))}
+                    </div>
+                    <PanelFooter count={properties.length} loading={isFetching} onClear={() => setFilters({ ...filters, amenities: [] })} onApply={() => setActivePanel(null)} />
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Results */}
-      <div className="max-w-[1360px] mx-auto px-5 lg:px-10 py-8">
-        <div className="flex items-center justify-between mb-6">
+      <div className="max-w-[1360px] mx-auto px-5 lg:px-10 py-6 md:py-8">
+        {/* Active filter tags */}
+        {activeFilterCount > 0 && (
+          <div className="flex flex-wrap items-center gap-2 mb-5">
+            {filters.state && <ActiveTag label={filters.state} onRemove={() => setFilters({ ...filters, state: "", lga: "" })} />}
+            {filters.apartmentType && <ActiveTag label={APARTMENT_TYPES.find((t) => t.value === filters.apartmentType)?.label || filters.apartmentType} onRemove={() => setFilters({ ...filters, apartmentType: "" })} />}
+            {(filters.minPrice || filters.maxPrice) && <ActiveTag label={`₦${Number(filters.minPrice || 0).toLocaleString()} – ₦${Number(filters.maxPrice || 10000000).toLocaleString()}`} onRemove={() => setFilters({ ...filters, minPrice: "", maxPrice: "" })} />}
+            <button onClick={() => setFilters({ state: "", lga: "", apartmentType: "", minPrice: "", maxPrice: "", amenities: [] })} className="text-xs font-medium text-neutral-500 hover:text-neutral-800 underline underline-offset-2">
+              Clear all
+            </button>
+          </div>
+        )}
+
+        <div className="flex items-center justify-between mb-5">
           <p className="text-sm text-neutral-500">
-            <span className="font-semibold text-neutral-900">
-              {filteredProperties.length}
-            </span>{" "}
-            properties found
+            {isLoading ? "Loading..." : (
+              <><span className="font-semibold text-neutral-900">{properties.length}</span> properties{filters.state && <span className="text-neutral-400"> in {filters.state}</span>}</>
+            )}
           </p>
-          <select className="text-sm border border-neutral-200 rounded-lg px-3 py-2 bg-white appearance-none cursor-pointer">
-            <option>Most Relevant</option>
-            <option>Newest First</option>
-            <option>Price: Low to High</option>
-            <option>Price: High to Low</option>
-          </select>
         </div>
 
-        {filteredProperties.length > 0 ? (
-          <div
-            className={cn(
-              viewMode === "grid"
-                ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 justify-items-center"
-                : "space-y-4"
-            )}
-          >
-            {filteredProperties.map((property) => (
-              <PropertyCard
-                key={property._id}
-                property={property}
-                variant={viewMode === "list" ? "horizontal" : "default"}
-              />
+        {isLoading ? (
+          <div className={cn(viewMode === "grid" ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5" : "space-y-3")}>
+            {Array.from({ length: 12 }).map((_, i) => (
+              <div key={i} className="rounded-xl bg-neutral-100 animate-pulse h-[320px]" />
             ))}
           </div>
+        ) : properties.length > 0 ? (
+          <>
+            <div className={cn(viewMode === "grid" ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5" : "space-y-3")}>
+              {(properties as any[]).map((p) => (
+                <PropertyCard key={p._id} property={p} variant={viewMode === "list" ? "horizontal" : "default"} />
+              ))}
+            </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-center gap-2 mt-10">
+                <button
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page === 1}
+                  className="px-4 py-2 rounded-lg text-sm font-medium border border-neutral-200 disabled:opacity-40 hover:bg-neutral-50 transition-colors"
+                >
+                  Previous
+                </button>
+                <span className="text-sm text-neutral-500 px-3">Page {page} of {totalPages}</span>
+                <button
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={page === totalPages}
+                  className="px-4 py-2 rounded-lg text-sm font-medium border border-neutral-200 disabled:opacity-40 hover:bg-neutral-50 transition-colors"
+                >
+                  Next
+                </button>
+              </div>
+            )}
+          </>
         ) : (
-          <div className="text-center py-20">
-            <Home className="w-16 h-16 text-neutral-200 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-neutral-900 mb-2">
-              No properties found
-            </h3>
-            <p className="text-neutral-500 mb-6">
-              Try adjusting your filters to see more results
-            </p>
+          <div className="text-center py-24">
+            <div className="w-16 h-16 rounded-2xl bg-neutral-100 flex items-center justify-center mx-auto mb-4">
+              <Home className="w-7 h-7 text-neutral-300" />
+            </div>
+            <h3 className="text-lg font-semibold text-neutral-900 mb-2">No properties found</h3>
+            <p className="text-sm text-neutral-500 mb-6 max-w-sm mx-auto">Try adjusting your filters or searching in a different location</p>
             <button
-              onClick={() =>
-                setFilters({
-                  state: "",
-                  apartmentType: "",
-                  minPrice: "",
-                  maxPrice: "",
-                })
-              }
-              className="px-6 py-3 rounded-full bg-bt-primary text-white font-medium"
+              onClick={() => setFilters({ state: "", lga: "", apartmentType: "", minPrice: "", maxPrice: "", amenities: [] })}
+              className="px-6 py-3 rounded-full bg-bt-primary text-white text-sm font-semibold hover:bg-bt-primary-light transition-colors"
             >
               Clear Filters
             </button>
@@ -245,15 +330,55 @@ function PropertiesContent() {
   );
 }
 
+function FilterPill({ label, active, hasValue, badge, icon, onClick }: {
+  label: string; active: boolean; hasValue: boolean; badge?: number;
+  icon?: React.ReactNode; onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        "shrink-0 inline-flex items-center gap-1.5 px-4 py-2.5 rounded-full text-sm font-medium border transition-all whitespace-nowrap",
+        active ? "bg-neutral-900 text-white border-neutral-900" :
+          hasValue ? "bg-bt-primary/5 border-bt-primary/30 text-bt-primary" :
+            "bg-white border-neutral-200 text-neutral-700 hover:border-neutral-300"
+      )}
+    >
+      {icon}
+      <span className="max-w-[160px] truncate">{label}</span>
+      {badge !== undefined && (
+        <span className="w-5 h-5 rounded-full bg-bt-secondary text-white text-[11px] font-bold flex items-center justify-center">{badge}</span>
+      )}
+      <ChevronDown className={cn("w-3.5 h-3.5 transition-transform", active && "rotate-180")} />
+    </button>
+  );
+}
+
+function PanelFooter({ count, loading, onClear, onApply }: { count: number; loading?: boolean; onClear: () => void; onApply: () => void }) {
+  return (
+    <div className="flex items-center justify-between mt-6 pt-5 border-t border-neutral-100">
+      <button onClick={onClear} className="text-sm font-medium text-neutral-500 hover:text-neutral-800 underline underline-offset-2">Clear</button>
+      <button onClick={onApply} className="px-6 py-2.5 rounded-full bg-bt-primary text-white text-sm font-semibold hover:bg-bt-primary-light transition-colors">
+        {loading ? "Loading..." : `View ${count} results`}
+      </button>
+    </div>
+  );
+}
+
+function ActiveTag({ label, onRemove }: { label: string; onRemove: () => void }) {
+  return (
+    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-bt-primary/5 border border-bt-primary/15 text-bt-primary text-xs font-medium">
+      {label}
+      <button onClick={onRemove} className="hover:bg-bt-primary/10 rounded-full p-1.5 transition-colors">
+        <X className="w-3 h-3" />
+      </button>
+    </span>
+  );
+}
+
 export default function PropertiesPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="w-8 h-8 border-2 border-bt-primary border-t-transparent rounded-full animate-spin" />
-        </div>
-      }
-    >
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="w-8 h-8 border-2 border-bt-primary border-t-transparent rounded-full animate-spin" /></div>}>
       <PropertiesContent />
     </Suspense>
   );
