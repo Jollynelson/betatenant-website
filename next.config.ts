@@ -4,6 +4,7 @@ const nextConfig: NextConfig = {
   // Explicitly use Turbopack (Next 16 default) — no webpack plugins needed
   turbopack: {},
   images: {
+    unoptimized: true,
     remotePatterns: [
       { protocol: "https", hostname: "images.unsplash.com" },
       { protocol: "https", hostname: "res.cloudinary.com" },
