@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { use } from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -53,6 +53,8 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
   const router = useRouter();
   const { token } = useAuthStore();
   const isLoggedIn = !!token;
+  // Touch swipe state for mobile gallery
+  const touchStartX = useRef<number | null>(null);
   const [currentImage, setCurrentImage] = useState(0);
   const [liked, setLiked] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>("overview");
@@ -105,8 +107,21 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
 
       {/* ── MOBILE: full-screen immersive layout ─────────────────────────────── */}
       <div className="md:hidden">
-        {/* Full-bleed photo — fills from status bar to fold */}
-        <div className="relative w-full bg-neutral-900" style={{ height: "62vh", minHeight: 320 }}>
+        {/* Full-bleed photo — fills from status bar to fold, touch-swipeable */}
+        <div
+          className="relative w-full bg-neutral-900"
+          style={{ height: "62vh", minHeight: 320 }}
+          onTouchStart={(e) => { touchStartX.current = e.touches[0].clientX; }}
+          onTouchEnd={(e) => {
+            if (touchStartX.current === null) return;
+            const dx = e.changedTouches[0].clientX - touchStartX.current;
+            if (Math.abs(dx) > 40) {
+              if (dx < 0) setCurrentImage((i) => (i < property.photos.length - 1 ? i + 1 : 0));
+              else setCurrentImage((i) => (i > 0 ? i - 1 : property.photos.length - 1));
+            }
+            touchStartX.current = null;
+          }}
+        >
           <Image
             src={property.photos[currentImage] || "/placeholder-property.jpg"}
             alt={property.title}
@@ -428,8 +443,8 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
         </div>
       </div>
 
-      {/* Body */}
-      <div className="max-w-[1360px] mx-auto px-5 lg:px-10 py-6 md:py-10">
+      {/* Body — desktop only, mobile has its own bottom-sheet layout above */}
+      <div className="hidden md:block max-w-[1360px] mx-auto px-5 lg:px-10 py-6 md:py-10">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
 
           {/* Left */}
