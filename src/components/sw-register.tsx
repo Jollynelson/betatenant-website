@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import toast from "react-hot-toast";
 
 // App Badge API — call from anywhere to update the badge count
 export function setAppBadge(count: number) {
@@ -20,8 +19,6 @@ export function SWRegister() {
     if (!("serviceWorker" in navigator)) return;
     if (process.env.NODE_ENV !== "production") return;
 
-    let updateTimer: ReturnType<typeof setTimeout>;
-
     const register = async () => {
       try {
         const reg = await navigator.serviceWorker.register("/sw.js", { scope: "/" });
@@ -32,29 +29,8 @@ export function SWRegister() {
 
           newWorker.addEventListener("statechange", () => {
             if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
-              toast(
-                (t) => (
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm text-neutral-700 font-medium">Update available</span>
-                    <button
-                      onClick={() => {
-                        newWorker.postMessage({ type: "SKIP_WAITING" });
-                        toast.dismiss(t.id);
-                        clearTimeout(updateTimer);
-                      }}
-                      className="text-sm font-bold text-[#0A0876] shrink-0"
-                    >
-                      Update now
-                    </button>
-                  </div>
-                ),
-                { duration: Infinity, id: "sw-update" }
-              );
-
-              // Auto-apply after 24h if user never clicked
-              updateTimer = setTimeout(() => {
-                newWorker.postMessage({ type: "SKIP_WAITING" });
-              }, 24 * 60 * 60 * 1000);
+              // Auto-activate new SW immediately — no user prompt needed
+              newWorker.postMessage({ type: "SKIP_WAITING" });
             }
           });
         });
@@ -91,9 +67,16 @@ export function SWRegister() {
       window.location.reload();
     });
 
-    register();
+    // Auto-reload when new SW version activates and sends SW_UPDATED message
+    navigator.serviceWorker.addEventListener("message", (event) => {
+      if (event.data?.type === "SW_UPDATED") {
+        if (refreshing.current) return;
+        refreshing.current = true;
+        window.location.reload();
+      }
+    });
 
-    return () => clearTimeout(updateTimer);
+    register();
   }, []);
 
   return null;

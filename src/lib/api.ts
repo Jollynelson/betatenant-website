@@ -46,6 +46,7 @@ async function request<T>(
 export const api = {
   get: <T>(path: string, signal?: AbortSignal) => request<T>("GET", path, undefined, signal),
   post: <T>(path: string, body: unknown, signal?: AbortSignal) => request<T>("POST", path, body, signal),
+  put: <T>(path: string, body: unknown) => request<T>("PUT", path, body),
   del: <T>(path: string, body?: unknown) => request<T>("DELETE", path, body),
 };
 
@@ -143,8 +144,11 @@ export const propertyApi = {
     state?: string;
     localGovernmentArea?: string;
     apartmentTypes?: string[];
+    amenities?: string[];
     minAmount?: number;
     maxAmount?: number;
+    sortBy?: string;
+    sortOrder?: string;
     page?: number;
     limit?: number;
   }) => {

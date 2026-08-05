@@ -121,13 +121,14 @@ function PropertiesContent() {
   };
 
   const hasFilters = !!(filters.state || filters.apartmentType || filters.minPrice || filters.maxPrice || filters.lga || filters.amenities.length > 0);
+  const useSearch = hasFilters || sort !== "newest";
 
   type PropertyListResult = { properties: any[]; totalPages: number; totalDocs?: number; totalResults?: number; page: number };
 
   const { data, isLoading, isFetching, isError, refetch } = useQuery<PropertyListResult>({
     queryKey: ["properties", searchBody] as const,
     queryFn: () =>
-      hasFilters || sort !== "newest"
+      useSearch
         ? propertyApi.search(searchBody)
         : propertyApi.list(page, 12),
     staleTime: 1000 * 60 * 2,

@@ -27,14 +27,33 @@ function getPushEndpoint(action: "subscribe" | "unsubscribe") {
 }
 
 export async function subscribeToPush(): Promise<boolean> {
-  if (!("serviceWorker" in navigator) || !("PushManager" in window)) return false;
-  if (!("Notification" in window)) return false;
+  if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
+    toast.error("Push notifications not supported on this browser");
+    return false;
+  }
+  if (!("Notification" in window)) {
+    toast.error("Notifications not supported");
+    return false;
+  }
 
   try {
     const permission = await Notification.requestPermission();
+    if (permission === "denied") {
+      toast.error("Notifications blocked. Enable in your browser settings.");
+      return false;
+    }
     if (permission !== "granted") return false;
 
-    const reg = await navigator.serviceWorker.ready;
+    // Ensure service worker is registered (even in dev for testing)
+    let reg: ServiceWorkerRegistration;
+    try {
+      reg = await navigator.serviceWorker.ready;
+    } catch {
+      // SW not yet registered — register now
+      reg = await navigator.serviceWorker.register("/sw.js", { scope: "/" });
+      await navigator.serviceWorker.ready;
+    }
+
     // Unsubscribe any stale subscription first
     const existing = await reg.pushManager.getSubscription();
     if (existing) await existing.unsubscribe();
@@ -49,7 +68,8 @@ export async function subscribeToPush(): Promise<boolean> {
     localStorage.setItem("BT_PUSH_SUBSCRIBED", "1");
     localStorage.removeItem(PUSH_DISMISSED_KEY);
     return true;
-  } catch {
+  } catch (err: any) {
+    console.error("Push subscribe error:", err);
     return false;
   }
 }
@@ -163,6 +183,15 @@ export function PushToggle() {
   }, []);
 
   const toggle = async () => {
+    // iOS requires PWA to be installed for push
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const isStandalone = window.matchMedia("(display-mode: standalone)").matches
+      || (navigator as any).standalone === true;
+    if (isIOS && !isStandalone && !subscribed) {
+      toast("Add BetaTenant to your home screen first to enable notifications", { duration: 5000 });
+      return;
+    }
+
     setLoading(true);
     if (subscribed) {
       await unsubscribeFromPush();
@@ -172,7 +201,7 @@ export function PushToggle() {
       const ok = await subscribeToPush();
       setSubscribed(ok);
       if (ok) toast.success("Notifications enabled");
-      else toast.error("Could not enable notifications");
+      else if (Notification.permission !== "denied") toast.error("Could not enable notifications");
     }
     setLoading(false);
   };

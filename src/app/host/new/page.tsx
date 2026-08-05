@@ -157,81 +157,51 @@ async function generateThumbnail(file: File): Promise<string> {
   });
 }
 
-// ── 3. Chunked upload with per-chunk progress + exponential backoff ────────────
-const CHUNK_SIZE = 2 * 1024 * 1024; // 2MB chunks — survives typical Nigerian network drops
+// ── 3. Upload engine — small files go direct, large files use S3 multipart ────
+const CHUNK_SIZE = 5 * 1024 * 1024; // 5MB — S3 minimum part size
+
+function getApiBase() {
+  return window.location.hostname === "localhost"
+    ? "/api/bt" : "https://api.betatenant.com";
+}
+
+function getToken() {
+  return localStorage.getItem("BT_TOKEN");
+}
 
 async function uploadFileChunked(
   file: File,
   onProgress: (pct: number, speedKBps?: number) => void,
   signal?: AbortSignal
 ): Promise<string> {
-  const token = localStorage.getItem("BT_TOKEN");
-  const apiBase = window.location.hostname === "localhost"
-    ? "/api/bt" : "https://api.betatenant.com";
-
-  // For files under 3MB, skip chunking — single upload is simpler and fast enough
-  if (file.size <= 3 * 1024 * 1024) {
-    return uploadChunk(file, 0, file.size, apiBase, token, onProgress, signal);
+  // Small files (≤5MB): direct single upload — fast, simple
+  if (file.size <= 5 * 1024 * 1024) {
+    return uploadDirect(file, onProgress, signal);
   }
-
-  // Chunked upload: upload each chunk sequentially, resume from last if interrupted
-  const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
-  let uploadedBytes = 0;
-  let lastUrl = "";
-  const startTime = Date.now();
-
-  for (let i = 0; i < totalChunks; i++) {
-    if (signal?.aborted) throw new Error("Upload cancelled");
-
-    const start = i * CHUNK_SIZE;
-    const end   = Math.min(start + CHUNK_SIZE, file.size);
-    const chunk = file.slice(start, end);
-
-    // For the last chunk, use the final chunk as the whole file (server combines)
-    // For single-endpoint backends (like this one), we send each chunk as independent
-    // and only the last URL matters
-    const url = await uploadChunk(
-      new File([chunk], file.name, { type: file.type }),
-      start, end, apiBase, token,
-      (pct) => {
-        const chunkProgress = (start + (chunk.size * pct / 100)) / file.size * 100;
-        const elapsed = (Date.now() - startTime) / 1000;
-        const speedKBps = elapsed > 0 ? Math.round((start + chunk.size * pct / 100) / 1024 / elapsed) : undefined;
-        onProgress(Math.round(chunkProgress), speedKBps);
-        uploadedBytes = start + chunk.size * pct / 100;
-      },
-      signal
-    );
-    lastUrl = url;
-  }
-
-  onProgress(100);
-  return lastUrl;
+  // Large files: S3 multipart — true server-side assembly, resumable
+  return uploadMultipart(file, onProgress, signal);
 }
 
-async function uploadChunk(
-  chunk: File,
-  _start: number,
-  _end: number,
-  apiBase: string,
-  token: string | null,
+// Direct single-file upload (images, small videos)
+async function uploadDirect(
+  file: File,
   onProgress: (pct: number) => void,
   signal?: AbortSignal,
   maxRetries = 3
 ): Promise<string> {
+  const apiBase = getApiBase();
+  const token = getToken();
   let lastErr: Error = new Error("Upload failed");
 
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     if (signal?.aborted) throw new Error("Upload cancelled");
     if (attempt > 0) {
-      // Exponential backoff: 1s, 2s, 4s
       await new Promise((r) => setTimeout(r, 1000 * Math.pow(2, attempt - 1)));
     }
-
     try {
       const url = await new Promise<string>((resolve, reject) => {
         const formData = new FormData();
-        formData.append("files", chunk);
+        formData.append("files", file);
         const xhr = new XMLHttpRequest();
         xhr.open("POST", `${apiBase}/v1/user/aws-upload`);
         if (token) xhr.setRequestHeader("Authorization", `Bearer ${token}`);
@@ -248,14 +218,141 @@ async function uploadChunk(
         xhr.onerror   = () => reject(new Error("Network error"));
         xhr.ontimeout = () => reject(new Error("Timed out — retrying…"));
         xhr.timeout   = 90_000;
-        // Abort support
         signal?.addEventListener("abort", () => xhr.abort(), { once: true });
         xhr.send(formData);
       });
       return url;
     } catch (err: any) {
       lastErr = err;
-      // Don't retry on auth errors
+      if (err.message?.includes("401") || err.message?.includes("403")) throw err;
+    }
+  }
+  throw lastErr;
+}
+
+// S3 multipart upload — init, upload parts, complete
+async function uploadMultipart(
+  file: File,
+  onProgress: (pct: number, speedKBps?: number) => void,
+  signal?: AbortSignal
+): Promise<string> {
+  const apiBase = getApiBase();
+  const token = getToken();
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+
+  // 1. Initiate multipart upload
+  const initRes = await fetch(`${apiBase}/v1/user/upload/init-multipart`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ fileName: file.name, mimeType: file.type, fileSize: file.size }),
+    signal,
+  });
+  if (!initRes.ok) {
+    const err = await initRes.json().catch(() => ({ message: "Failed to start upload" }));
+    throw new Error(err.message || `HTTP ${initRes.status}`);
+  }
+  const { data: { uploadId, key } } = await initRes.json();
+
+  // 2. Upload parts with progress tracking
+  const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
+  const parts: { ETag: string; PartNumber: number }[] = [];
+  const startTime = Date.now();
+
+  for (let i = 0; i < totalChunks; i++) {
+    if (signal?.aborted) {
+      // Abort the multipart upload on cancel
+      await fetch(`${apiBase}/v1/user/upload/abort`, {
+        method: "POST", headers,
+        body: JSON.stringify({ key, uploadId }),
+      }).catch(() => {});
+      throw new Error("Upload cancelled");
+    }
+
+    const start = i * CHUNK_SIZE;
+    const end = Math.min(start + CHUNK_SIZE, file.size);
+    const chunk = file.slice(start, end);
+    const partNumber = i + 1;
+
+    const part = await uploadSinglePart(
+      key, uploadId, partNumber, chunk, file.name, apiBase, token,
+      (chunkPct) => {
+        const overall = ((start + chunk.size * chunkPct / 100) / file.size) * 100;
+        const elapsed = (Date.now() - startTime) / 1000;
+        const speedKBps = elapsed > 0
+          ? Math.round((start + chunk.size * chunkPct / 100) / 1024 / elapsed)
+          : undefined;
+        onProgress(Math.round(overall), speedKBps);
+      },
+      signal
+    );
+    parts.push(part);
+  }
+
+  // 3. Complete multipart upload
+  const completeRes = await fetch(`${apiBase}/v1/user/upload/complete`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ key, uploadId, parts }),
+    signal,
+  });
+  if (!completeRes.ok) {
+    throw new Error("Failed to finalize upload");
+  }
+  const { data: { url } } = await completeRes.json();
+  onProgress(100);
+  return url;
+}
+
+async function uploadSinglePart(
+  key: string,
+  uploadId: string,
+  partNumber: number,
+  chunk: Blob,
+  fileName: string,
+  apiBase: string,
+  token: string | null,
+  onProgress: (pct: number) => void,
+  signal?: AbortSignal,
+  maxRetries = 3
+): Promise<{ ETag: string; PartNumber: number }> {
+  let lastErr: Error = new Error("Chunk upload failed");
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    if (signal?.aborted) throw new Error("Upload cancelled");
+    if (attempt > 0) {
+      await new Promise((r) => setTimeout(r, 1000 * Math.pow(2, attempt - 1)));
+    }
+    try {
+      const result = await new Promise<{ ETag: string; PartNumber: number }>((resolve, reject) => {
+        const formData = new FormData();
+        formData.append("chunk", new File([chunk], fileName));
+        formData.append("key", key);
+        formData.append("uploadId", uploadId);
+        formData.append("partNumber", String(partNumber));
+
+        const xhr = new XMLHttpRequest();
+        xhr.open("POST", `${apiBase}/v1/user/upload/chunk`);
+        if (token) xhr.setRequestHeader("Authorization", `Bearer ${token}`);
+        xhr.upload.onprogress = (e) => {
+          if (e.lengthComputable) onProgress(Math.round(e.loaded / e.total * 100));
+        };
+        xhr.onload = () => {
+          try {
+            const data = JSON.parse(xhr.responseText);
+            if (xhr.status >= 200 && xhr.status < 300 && data.data) resolve(data.data);
+            else reject(new Error(data.message || `HTTP ${xhr.status}`));
+          } catch { reject(new Error("Invalid response")); }
+        };
+        xhr.onerror   = () => reject(new Error("Network error"));
+        xhr.ontimeout = () => reject(new Error("Timed out — retrying…"));
+        xhr.timeout   = 120_000; // 2min per 5MB chunk
+        signal?.addEventListener("abort", () => xhr.abort(), { once: true });
+        xhr.send(formData);
+      });
+      return result;
+    } catch (err: any) {
+      lastErr = err;
       if (err.message?.includes("401") || err.message?.includes("403")) throw err;
     }
   }
@@ -284,8 +381,8 @@ function StepCreate({
   onNext: (propertyId: string, propertyDetails: any) => void;
 }) {
   const [apartmentType, setApartmentType] = useState("");
-  const [roomCount, setRoomCount] = useState(0);
-  const [bathroomCount, setBathroomCount] = useState(0);
+  const [roomCount, setRoomCount] = useState(1);
+  const [bathroomCount, setBathroomCount] = useState(1);
   const [livingRoomCount, setLivingRoomCount] = useState(0);
   const [streetAddress, setStreetAddress] = useState("");
   const [closeLandmark, setCloseLandmark] = useState("");
@@ -505,11 +602,11 @@ function StepCreate({
     const readyPhotos = photoURLs.filter((p) => p.url && !p.error && p.progress === undefined);
     if (uploadingCount > 0) return setError("Please wait for all uploads to finish.");
     if (hasUploadErrors) return setError("Some files failed to upload. Retry or remove them.");
-    if (readyPhotos.length < 5) return setError("Please upload at least 5 photos.");
+    if (readyPhotos.length < 3) return setError("Please upload at least 3 photos.");
 
     const readyVideos = videoURLs.filter((v) => v.url && !v.error && v.progress === undefined);
 
-    const form = {
+    const form: Record<string, any> = {
       rentType: "rent",
       apartmentType,
       roomCount,
@@ -524,10 +621,12 @@ function StepCreate({
       amenities,
       houseRules,
       photoURLs: readyPhotos.map((p) => p.url),
-      videoURLs: readyVideos.map((v) => v.url),
       houseName,
       houseDescription,
     };
+    if (readyVideos.length > 0) {
+      form.videoURLs = readyVideos.map((v) => v.url);
+    }
 
     setCreating(true);
     try {
@@ -575,11 +674,23 @@ function StepCreate({
                     value={t.value}
                     checked={apartmentType === t.value}
                     onChange={(e) => {
-                      setApartmentType(e.target.value);
-                      if (e.target.value === "self-contained") {
-                        if (roomCount === 0) setRoomCount(1);
-                        if (bathroomCount === 0) setBathroomCount(1);
-                        if (livingRoomCount === 0) setLivingRoomCount(1);
+                      const val = e.target.value;
+                      setApartmentType(val);
+                      const roomDefaults: Record<string, number> = {
+                        "single-room/shared-apartment": 1,
+                        "self-contained": 1,
+                        "mini-flat/one-bedroom": 1,
+                        "two-bedroom": 2,
+                        "three-bedroom": 3,
+                        "four-bedroom": 4,
+                        "big-family-house-4plus": 4,
+                      };
+                      setRoomCount(roomDefaults[val] ?? 1);
+                      setBathroomCount(1);
+                      if (val === "self-contained" || val === "mini-flat/one-bedroom") {
+                        setLivingRoomCount(0);
+                      } else if (livingRoomCount === 0 && val !== "single-room/shared-apartment") {
+                        setLivingRoomCount(1);
                       }
                     }}
                     className="sr-only"

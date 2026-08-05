@@ -113,12 +113,12 @@ function AccountContent() {
                   </div>
                 )}
               </div>
-              <button
-                onClick={() => toast("Profile editing coming soon", { icon: "✏️" })}
+              <Link
+                href="/account/edit"
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-neutral-200 text-xs font-medium text-neutral-600 hover:bg-neutral-50 transition-colors"
               >
                 <Edit3 className="w-3.5 h-3.5" /> Edit Profile
-              </button>
+              </Link>
             </div>
 
             {/* Info */}

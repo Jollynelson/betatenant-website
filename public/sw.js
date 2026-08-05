@@ -2,7 +2,7 @@
    Beta Tenant Service Worker — World-Class PWA Edition
    ───────────────────────────────────────────────────────────────────────────── */
 
-const APP_VERSION = "bt-v6";
+const APP_VERSION = "bt-v7";
 const CACHE_STATIC = `${APP_VERSION}-static`;
 const CACHE_PAGES  = `${APP_VERSION}-pages`;
 const CACHE_IMAGES = `${APP_VERSION}-images`;
@@ -32,7 +32,7 @@ self.addEventListener("install", (e) => {
   );
 });
 
-// ── Activate: purge old caches ────────────────────────────────────────────────
+// ── Activate: purge old caches + auto-refresh clients ─────────────────────────
 self.addEventListener("activate", (e) => {
   const CURRENT = [CACHE_STATIC, CACHE_PAGES, CACHE_IMAGES, CACHE_API, CACHE_FONTS];
   e.waitUntil(
@@ -41,6 +41,10 @@ self.addEventListener("activate", (e) => {
         keys.filter((k) => !CURRENT.includes(k)).map((k) => caches.delete(k))
       ))
       .then(() => self.clients.claim())
+      .then(() => self.clients.matchAll({ type: "window" }))
+      .then((clients) => {
+        clients.forEach((client) => client.postMessage({ type: "SW_UPDATED", version: APP_VERSION }));
+      })
   );
 });
 
