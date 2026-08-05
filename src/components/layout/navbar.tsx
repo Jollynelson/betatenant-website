@@ -299,12 +299,17 @@ export function Navbar() {
               style={{ paddingBottom: "calc(4rem + env(safe-area-inset-bottom) + 1rem)" }}
             >
               <div className="px-5 py-5 space-y-1">
-                <MobileNavLink href="/properties" onClick={() => setMobileMenuOpen(false)}>Browse Properties</MobileNavLink>
-                <MobileNavLink href="/tenant-switch" onClick={() => setMobileMenuOpen(false)}>Tenant Switch</MobileNavLink>
-                <MobileNavLink href="https://gist.betatenant.com" onClick={() => setMobileMenuOpen(false)}>Area Gist</MobileNavLink>
-                <MobileNavLink href="/agents" onClick={() => setMobileMenuOpen(false)}>Report Agent</MobileNavLink>
+                {/* Only show nav links when logged out — logged-in users use the bottom nav */}
+                {!user && (
+                  <>
+                    <MobileNavLink href="/properties" onClick={() => setMobileMenuOpen(false)}>Browse Properties</MobileNavLink>
+                    <MobileNavLink href="/tenant-switch" onClick={() => setMobileMenuOpen(false)}>Tenant Switch</MobileNavLink>
+                    <MobileNavLink href="https://gist.betatenant.com" onClick={() => setMobileMenuOpen(false)}>Area Gist</MobileNavLink>
+                    <MobileNavLink href="/agents" onClick={() => setMobileMenuOpen(false)}>Report Agent</MobileNavLink>
+                  </>
+                )}
 
-                <div className="pt-4 border-t border-neutral-100 mt-4">
+                <div className={user ? "" : "pt-4 border-t border-neutral-100 mt-4"}>
                   {user ? (
                     <>
                       {/* User info */}
