@@ -9,6 +9,7 @@ import {
   LogOut, ChevronRight, Phone, Mail, Bell, Repeat2, Plus,
   MapPin, ShieldCheck, Crown, Edit3,
 } from "lucide-react";
+import toast from "react-hot-toast";
 import { AuthGuard } from "@/components/auth-guard";
 import { useAuthStore } from "@/lib/auth-store";
 import { api } from "@/lib/api";
@@ -112,8 +113,10 @@ function AccountContent() {
                   </div>
                 )}
               </div>
-              {/* Edit profile hint — no edit page yet, placeholder */}
-              <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-neutral-200 text-xs font-medium text-neutral-600 hover:bg-neutral-50 transition-colors">
+              <button
+                onClick={() => toast("Profile editing coming soon", { icon: "✏️" })}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-neutral-200 text-xs font-medium text-neutral-600 hover:bg-neutral-50 transition-colors"
+              >
                 <Edit3 className="w-3.5 h-3.5" /> Edit Profile
               </button>
             </div>

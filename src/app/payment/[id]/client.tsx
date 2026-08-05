@@ -250,7 +250,10 @@ function PaymentContent({ propertyId }: { propertyId: string }) {
 }
 
 export default function PaymentPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);
+  const { id: paramId } = use(params);
+  const id = typeof window !== "undefined"
+    ? window.location.pathname.split("/payment/")[1]?.split("/")[0] || paramId
+    : paramId;
   return (
     <AuthGuard>
       <PaymentContent propertyId={id} />

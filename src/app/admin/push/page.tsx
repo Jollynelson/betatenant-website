@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import toast from "react-hot-toast";
+import { useRouter } from "next/navigation";
 
 // Admin push panel — calls the backend admin push endpoint
 // Admin token must be in localStorage as BT_ADMIN_TOKEN
@@ -59,6 +60,7 @@ const QUICK_TEMPLATES = [
 ];
 
 export default function AdminPushPage() {
+  const router = useRouter();
   const [stats, setStats] = useState<{ total: number; byRole: { _id: string; count: number }[] } | null>(null);
   const [statsLoading, setStatsLoading] = useState(true);
 
@@ -72,11 +74,16 @@ export default function AdminPushPage() {
   const [result, setResult] = useState<{ sent: number; failed: number } | null>(null);
 
   useEffect(() => {
+    // Gate: require admin token in localStorage
+    if (!getAdminToken()) {
+      router.replace("/auth/login");
+      return;
+    }
     adminGet("/messaging/push/stats")
       .then(setStats)
       .catch(() => {})
       .finally(() => setStatsLoading(false));
-  }, []);
+  }, [router]);
 
   const applyTemplate = (tpl: typeof QUICK_TEMPLATES[0]) => {
     setForm((f) => ({ ...f, title: tpl.title, body: tpl.body, url: tpl.url }));

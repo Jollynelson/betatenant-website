@@ -95,7 +95,7 @@ export default function HowItWorksPage() {
                 Browse Properties
               </Link>
               <Link
-                href="/auth/register"
+                href="/auth/signup"
                 className="px-6 py-3 rounded-full border border-neutral-200 text-neutral-700 font-medium text-sm hover:bg-neutral-50 transition-colors"
               >
                 Create Account

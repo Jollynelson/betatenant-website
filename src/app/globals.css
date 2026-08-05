@@ -104,7 +104,6 @@
     /* NO global scroll-behavior: smooth — kills mobile perf, use per-element */
     /* iOS overscroll color matches navy theme */
     background-color: #0A0876;
-    overflow-y: scroll;
     /* Prevent iOS font size inflation in landscape */
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;

@@ -17,7 +17,10 @@ import { cn } from "@/lib/utils";
 import toast from "react-hot-toast";
 
 export default function AgentPortfolioPage({ params }: { params: Promise<{ shareId: string }> }) {
-  const { shareId } = use(params);
+  const { shareId: paramShareId } = use(params);
+  const shareId = typeof window !== "undefined"
+    ? window.location.pathname.split("/agents/portfolio/")[1]?.split("/")[0] || paramShareId
+    : paramShareId;
   const router = useRouter();
   const { token } = useAuthStore();
   const isLoggedIn = !!token;

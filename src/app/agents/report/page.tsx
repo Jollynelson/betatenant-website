@@ -15,6 +15,7 @@ import {
 import { cn } from "@/lib/utils";
 import { api } from "@/lib/api";
 import { useAuthStore } from "@/lib/auth-store";
+import { AuthGuard } from "@/components/auth-guard";
 import toast from "react-hot-toast";
 
 const POSITIVE_CHIPS = [
@@ -107,8 +108,8 @@ function ReportAgentContent() {
     if (!validate()) return;
     setLoading(true);
     try {
-      const rawPhone = phoneParam.replace("+", "");
-      await api.post(`/v1/user/${phoneParam}/reports`, {
+      const rawPhone = encodeURIComponent(phoneParam);
+      await api.post(`/v1/user/${rawPhone}/reports`, {
         agentName:       form.agentName,
         rating:          form.rating,
         positives:       form.positives,
@@ -348,8 +349,10 @@ function ReportAgentContent() {
 
 export default function ReportAgentPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-bt-primary" /></div>}>
-      <ReportAgentContent />
-    </Suspense>
+    <AuthGuard>
+      <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-bt-primary" /></div>}>
+        <ReportAgentContent />
+      </Suspense>
+    </AuthGuard>
   );
 }

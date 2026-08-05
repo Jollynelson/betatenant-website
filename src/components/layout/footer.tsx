@@ -34,7 +34,7 @@ export function Footer() {
               </h3>
               <ul className="space-y-3">
                 <FooterLink href="/about">About us</FooterLink>
-                <FooterLink href="#">Contact us</FooterLink>
+                <FooterLink href="mailto:support@betatenant.com">Contact us</FooterLink>
                 <FooterLink href="/terms-and-conditions">
                   Terms and conditions
                 </FooterLink>
@@ -52,8 +52,8 @@ export function Footer() {
               <ul className="space-y-3">
                 <FooterLink href="/how-it-works">How it works</FooterLink>
                 <FooterLink href="/properties">Properties</FooterLink>
-                <FooterLink href="#">Promotions</FooterLink>
-                <FooterLink href="/report/search">Report</FooterLink>
+                <FooterLink href="/saved">Saved Homes</FooterLink>
+                <FooterLink href="/agents">Report Agent</FooterLink>
               </ul>
             </div>
 
@@ -63,8 +63,8 @@ export function Footer() {
                 Landlords/Sellers
               </h3>
               <ul className="space-y-3">
-                <FooterLink href="/host">Publish your properties</FooterLink>
-                <FooterLink href="#">Promotions</FooterLink>
+                <FooterLink href="/host/new">List a Property</FooterLink>
+                <FooterLink href="/host">Dashboard</FooterLink>
               </ul>
             </div>
 

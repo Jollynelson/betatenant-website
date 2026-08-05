@@ -7,6 +7,7 @@ import { Heart, Search, Loader2 } from "lucide-react";
 import { PropertyCard } from "@/components/property/property-card";
 import { getFavorites } from "@/lib/favorites";
 import { propertyApi } from "@/lib/api";
+import { AuthGuard } from "@/components/auth-guard";
 
 async function fetchInChunks<T>(items: T[], fn: (item: T) => Promise<any>, chunkSize = 8) {
   const results: PromiseSettledResult<any>[] = [];
@@ -78,5 +79,5 @@ function SavedContent() {
 }
 
 export default function SavedPage() {
-  return <SavedContent />;
+  return <AuthGuard><SavedContent /></AuthGuard>;
 }

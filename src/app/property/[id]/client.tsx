@@ -44,7 +44,12 @@ const TABS = [
 type Tab = (typeof TABS)[number]["key"];
 
 export default function PropertyDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);
+  const { id: paramId } = use(params);
+  // Static export serves placeholder.html for all /property/:id URLs.
+  // The real ID lives in the browser pathname, not in params.
+  const id = typeof window !== "undefined"
+    ? window.location.pathname.split("/property/")[1]?.split("/")[0] || paramId
+    : paramId;
   const router = useRouter();
   const { token } = useAuthStore();
   const isLoggedIn = !!token;

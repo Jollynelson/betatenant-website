@@ -479,7 +479,7 @@ function ReportsOnlyCard({ data, phone }: { data: any; phone: string }) {
       </div>
 
       <button
-        onClick={() => router.push("/agents/report")}
+        onClick={() => router.push(`/agents/report?phone=${encodeURIComponent(phone)}`)}
         className="w-full py-3 rounded-full bg-bt-primary text-white font-semibold text-sm hover:bg-bt-primary-light transition-colors"
       >
         Add Your Report

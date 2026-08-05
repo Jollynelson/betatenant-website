@@ -207,7 +207,8 @@ function LoginPage() {
               <button
                 type="button"
                 onClick={() => {
-                  window.location.href = "https://api.betatenant.com/v1/auth/login/federated/google";
+                  const apiBase = window.location.hostname === "localhost" ? "/api/bt" : "https://api.betatenant.com";
+                  window.location.href = `${apiBase}/v1/auth/login/federated/google`;
                 }}
                 className="w-full py-3.5 rounded-full border-2 border-neutral-200 text-neutral-700 font-medium hover:bg-neutral-50 transition-colors flex items-center justify-center gap-3"
               >
