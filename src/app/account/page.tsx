@@ -6,8 +6,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import {
-  User, Heart, MessageCircle, Home, Shield,
-  LogOut, ChevronRight, Phone, Mail, Loader2, Bell,
+  Heart, MessageCircle, Home, LayoutDashboard, Shield,
+  LogOut, ChevronRight, Phone, Mail, Bell, Repeat2, Plus,
 } from "lucide-react";
 import { AuthGuard } from "@/components/auth-guard";
 import { useAuthStore } from "@/lib/auth-store";
@@ -20,17 +20,24 @@ function AccountContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
+  const role = user?.role ?? "user";
+  const isAgentOrLandlord = role === "agent" || role === "landlord";
+
   const fetchProfile = () => {
     setLoading(true);
-    api.get<any>("/v1/user/profile")
-      .then((r) => { setProfile(r.profile ?? r); setError(false); })
+    const endpoint = isAgentOrLandlord
+      ? "/v1/landlordandagent/profile"
+      : "/v1/user/profile";
+    api.get<any>(endpoint)
+      .then((r) => { setProfile(r.profile ?? r.user ?? r); setError(false); })
       .catch(() => { setError(true); })
       .finally(() => setLoading(false));
   };
 
   useEffect(() => {
     fetchProfile();
-  }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAgentOrLandlord]);
 
   const handleSignOut = () => {
     clearAuth();
@@ -41,13 +48,23 @@ function AccountContent() {
     ? user.fullName.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()
     : "?";
 
-  const menuItems = [
-    { icon: Home,          label: "My Properties",    href: "/account/properties", description: "Your listed properties" },
+  const tenantMenu = [
     { icon: Heart,         label: "Saved Properties", href: "/saved",        description: "Properties you favourited" },
-    { icon: Bell,          label: "Listing Alerts",   href: "/alerts",       description: "Get notified of new listings" },
+    { icon: Bell,          label: "Listing Alerts",   href: "/alerts",       description: "Get notified when listings match" },
     { icon: MessageCircle, label: "Messages",         href: "/messages",     description: "Chat with agents" },
+    { icon: Repeat2,       label: "Tenant Switch",    href: "/tenant-switch",description: "Swap apartments with other tenants" },
     { icon: Shield,        label: "Report Agent",     href: "/agents",       description: "Check or report an agent" },
   ];
+
+  const agentMenu = [
+    { icon: Home,            label: "My Listings",      href: "/account/properties", description: "Manage your property listings" },
+    { icon: Plus,            label: "Add Listing",      href: "/host/new",           description: "List a new property" },
+    { icon: LayoutDashboard, label: "Dashboard",        href: "/host",               description: "Bookings, stats, and inquiries" },
+    { icon: MessageCircle,   label: "Messages",         href: "/messages",           description: "Chat with tenants" },
+    { icon: Bell,            label: "Notifications",    href: "/alerts",             description: "Manage push notifications" },
+  ];
+
+  const menuItems = isAgentOrLandlord ? agentMenu : tenantMenu;
 
   if (error) {
     return (
@@ -109,7 +126,7 @@ function AccountContent() {
                     )}
                   </div>
                   <span className="inline-block mt-1.5 px-2 py-0.5 rounded-full bg-bt-primary/8 text-bt-primary text-[11px] font-semibold capitalize">
-                    {profile?.role ?? user?.role ?? "user"}
+                    {role}
                   </span>
                 </>
               )}
