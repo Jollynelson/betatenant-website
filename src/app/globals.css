@@ -129,9 +129,8 @@
     user-select: none;
     touch-action: manipulation;
   }
-  /* Smooth active state for buttons */
-  button:active, a:active {
-    transform: scale(0.97);
+  /* Smooth active state — only on non-animated elements */
+  button:active:not([data-framer]):not(.no-scale) {
     transition: transform 80ms ease;
   }
 }

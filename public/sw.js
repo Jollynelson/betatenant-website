@@ -2,7 +2,7 @@
    Beta Tenant Service Worker — Production PWA
    ───────────────────────────────────────────────────────────────────────────── */
 
-const APP_VERSION = "bt-v4";
+const APP_VERSION = "bt-v5";
 const CACHE_STATIC = `${APP_VERSION}-static`;
 const CACHE_PAGES  = `${APP_VERSION}-pages`;
 const CACHE_IMAGES = `${APP_VERSION}-images`;
@@ -133,6 +133,30 @@ async function staleWhileRevalidate(req, cacheName) {
 }
 
 async function navigationHandler(req) {
+  const url = new URL(req.url);
+
+  // For dynamic routes, rewrite to the placeholder path that was pre-built
+  const dynamicPrefixes = [
+    { prefix: "/property/",          placeholder: "/property/placeholder" },
+    { prefix: "/payment/",           placeholder: "/payment/placeholder" },
+    { prefix: "/m/",                 placeholder: "/m/placeholder" },
+    { prefix: "/s/",                 placeholder: "/s/placeholder" },
+    { prefix: "/agents/portfolio/",  placeholder: "/agents/portfolio/placeholder" },
+  ];
+  for (const { prefix, placeholder } of dynamicPrefixes) {
+    if (url.pathname.startsWith(prefix) && url.pathname !== prefix + "placeholder") {
+      const placeholderReq = new Request(new URL(placeholder, url.origin).href);
+      // Try network for placeholder, fall back to cache
+      try {
+        const res = await fetch(placeholderReq);
+        if (res.ok) return res;
+      } catch {}
+      const cached = await caches.match(placeholderReq);
+      if (cached) return cached;
+    }
+  }
+
+  // Normal navigation: network first, then cache, then offline page
   try {
     const res = await fetch(req);
     if (res.ok) {
@@ -141,27 +165,19 @@ async function navigationHandler(req) {
     }
     return res;
   } catch {
-    // Try exact cache match first
     const cached = await caches.match(req);
     if (cached) return cached;
 
-    // For dynamic routes (/property/xxx, /payment/xxx) return the placeholder shell
-    const url = new URL(req.url);
-    const dynamicPrefixes = ["/property/", "/payment/", "/m/", "/s/", "/agents/portfolio/"];
-    for (const prefix of dynamicPrefixes) {
-      if (url.pathname.startsWith(prefix)) {
-        const shell = await caches.match(new URL(prefix + "placeholder", url.origin).href);
-        if (shell) return shell;
-      }
-    }
-
-    // Fallback to cached home or offline page
     const offline = await caches.match("/offline.html");
     if (offline) return offline;
-    return caches.match("/") || new Response("<h1>You are offline</h1>", {
-      status: 200,
-      headers: { "Content-Type": "text/html" },
-    });
+
+    return new Response(
+      `<!DOCTYPE html><html><body style="font-family:sans-serif;text-align:center;padding:4rem;background:#0A0876;color:white">
+        <h1>You're Offline</h1><p>Check your connection and try again.</p>
+        <button onclick="location.reload()" style="background:white;color:#0A0876;border:none;padding:.75rem 2rem;border-radius:50px;font-weight:700;cursor:pointer;margin-top:1rem">Retry</button>
+      </body></html>`,
+      { status: 200, headers: { "Content-Type": "text/html" } }
+    );
   }
 }
 

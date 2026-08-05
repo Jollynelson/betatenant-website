@@ -8,6 +8,7 @@ export function SWRegister() {
 
   useEffect(() => {
     if (!("serviceWorker" in navigator)) return;
+    if (process.env.NODE_ENV !== "production") return;
 
     const register = async () => {
       try {
