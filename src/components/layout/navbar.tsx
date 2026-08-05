@@ -295,7 +295,8 @@ export function Navbar() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.15 }}
-              className="absolute top-[72px] left-0 right-0 bg-white border-b border-neutral-100 shadow-xl z-50 lg:hidden"
+              className="fixed top-[72px] left-0 right-0 bottom-0 bg-white z-50 lg:hidden overflow-y-auto"
+              style={{ paddingBottom: "calc(4rem + env(safe-area-inset-bottom) + 1rem)" }}
             >
               <div className="px-5 py-5 space-y-1">
                 <MobileNavLink href="/properties" onClick={() => setMobileMenuOpen(false)}>Browse Properties</MobileNavLink>
