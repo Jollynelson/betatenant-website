@@ -122,7 +122,7 @@ export default function OnboardingPage() {
       {!isLast && (
         <button
           onClick={skip}
-          className="absolute top-[max(1.5rem,env(safe-area-inset-top))] right-5 z-20 px-4 py-2 rounded-full bg-white/15 text-white/80 text-sm font-medium backdrop-blur-sm active:bg-white/25 transition-colors"
+          className="absolute top-[calc(env(safe-area-inset-top)+1rem)] right-5 z-20 px-4 py-2 rounded-full bg-white/15 text-white/80 text-sm font-medium backdrop-blur-sm active:bg-white/25 transition-colors"
         >
           Skip
         </button>
@@ -138,7 +138,7 @@ export default function OnboardingPage() {
         className="absolute inset-0 flex flex-col"
       >
         {/* Visual area — top 55% */}
-        <div className="flex-1 flex items-center justify-center px-8 pt-[max(5rem,env(safe-area-inset-top))]">
+        <div className="flex-1 flex items-center justify-center px-8 pt-[calc(env(safe-area-inset-top)+3.5rem)]">
           <AnimatePresence mode="wait">
             <motion.div
               key={`visual-${current}`}
@@ -154,7 +154,8 @@ export default function OnboardingPage() {
         </div>
 
         {/* Text + nav area — bottom 45% */}
-        <div className="shrink-0 px-6 pb-[max(2rem,env(safe-area-inset-bottom))]">
+        {/* pb adds safe-area PLUS extra space so browser toolbar never covers buttons */}
+        <div className="shrink-0 px-6 pb-[calc(env(safe-area-inset-bottom)+4.5rem)]">
           {/* Text */}
           <AnimatePresence mode="wait">
             <motion.div
