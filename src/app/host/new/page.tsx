@@ -871,34 +871,36 @@ function NewListingContent() {
   const [step, setStep] = useState(0);
 
   return (
-    <div className="min-h-screen bg-bt-surface">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
+    <div className="min-h-screen bg-bt-surface overflow-x-hidden">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 overflow-x-hidden">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-neutral-900">Create a New Listing</h1>
           <p className="text-neutral-500 text-sm mt-1">List your property on BetaTenant in 3 simple steps</p>
         </div>
 
-        {/* Step indicator */}
-        <div className="flex items-center gap-3 mb-10">
+        {/* Step indicator — flex with min-w-0 so labels don't overflow on mobile */}
+        <div className="flex items-center mb-10 overflow-hidden">
           {STEPS.map((label, i) => (
-            <div key={label} className="flex items-center gap-3">
-              <div className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold transition-colors ${
-                i < step
-                  ? "bg-bt-success text-white"
-                  : i === step
-                  ? "bg-bt-primary text-white"
-                  : "bg-neutral-100 text-neutral-400"
-              }`}>
-                {i < step ? <Check className="w-4 h-4" /> : i + 1}
+            <div key={label} className={`flex items-center ${i < STEPS.length - 1 ? "flex-1" : ""}`}>
+              <div className="flex items-center gap-2 shrink-0">
+                <div className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold transition-colors shrink-0 ${
+                  i < step
+                    ? "bg-bt-success text-white"
+                    : i === step
+                    ? "bg-bt-primary text-white"
+                    : "bg-neutral-100 text-neutral-400"
+                }`}>
+                  {i < step ? <Check className="w-4 h-4" /> : i + 1}
+                </div>
+                <span className={`text-sm font-medium whitespace-nowrap ${
+                  i === step ? "text-neutral-900" : i < step ? "text-bt-success" : "text-neutral-400"
+                }`}>
+                  {label}
+                </span>
               </div>
-              <span className={`text-sm font-medium ${
-                i === step ? "text-neutral-900" : i < step ? "text-bt-success" : "text-neutral-400"
-              }`}>
-                {label}
-              </span>
               {i < STEPS.length - 1 && (
-                <div className={`h-px w-8 sm:w-16 transition-colors ${i < step ? "bg-bt-success" : "bg-neutral-200"}`} />
+                <div className={`flex-1 h-px mx-3 min-w-[12px] transition-colors ${i < step ? "bg-bt-success" : "bg-neutral-200"}`} />
               )}
             </div>
           ))}

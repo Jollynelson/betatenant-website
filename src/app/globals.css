@@ -118,6 +118,7 @@
     /* iOS PWA: prevent rubber-band bounce revealing navy background */
     background-color: #FFFFFF;
     overscroll-behavior-y: none;
+    overflow-x: hidden; /* prevent horizontal scroll / right-edge artifact */
     /* Safe area insets for notch / Dynamic Island / home indicator */
     padding-left: env(safe-area-inset-left);
     padding-right: env(safe-area-inset-right);

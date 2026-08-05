@@ -203,7 +203,7 @@ export default function OnboardingPage() {
               </button>
               <button
                 onClick={() => finish()}
-                className="w-full py-4 rounded-full bg-white/15 text-white font-semibold text-base backdrop-blur-sm active:bg-white/25 transition-colors"
+                className="w-full py-4 rounded-full bg-white/20 border border-white/30 text-white font-semibold text-base active:bg-white/30 transition-colors"
               >
                 Browse Without Account
               </button>
@@ -217,7 +217,7 @@ export default function OnboardingPage() {
           ) : (
             <button
               onClick={next}
-              className="w-full py-4 rounded-full bg-white/20 text-white font-semibold text-base flex items-center justify-center gap-2 backdrop-blur-sm active:bg-white/30 transition-colors border border-white/20"
+              className="w-full py-4 rounded-full bg-white text-bt-primary font-bold text-base flex items-center justify-center gap-2 shadow-[0_8px_24px_rgba(0,0,0,0.18)] active:scale-[0.98] transition-transform"
             >
               Continue
               <ArrowRight className="w-5 h-5" />
