@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useRef, useEffect, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useState, useRef, useEffect, useCallback, Suspense } from "react";
+import { useSearchParams, useRouter as useNextRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { PropertyCard } from "@/components/property/property-card";
@@ -23,22 +23,68 @@ const SORT_LABELS: Record<SortOption, string> = {
   price_desc: "Price: High to low",
 };
 
+const VM_KEY = "BT_PROP_VIEW";
+
 function PropertiesContent() {
   const searchParams = useSearchParams();
+  const urlRouter = useNextRouter();
   const [activePanel, setActivePanel] = useState<FilterPanel>(null);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-  const [page, setPage] = useState(1);
-  const [sort, setSort] = useState<SortOption>("newest");
+  const [page, setPage] = useState(() => Number(searchParams.get("page") || 1));
+  const [sort, setSort] = useState<SortOption>((searchParams.get("sort") as SortOption) || "newest");
   const panelRef = useRef<HTMLDivElement>(null);
 
   const [filters, setFilters] = useState({
     state: searchParams.get("state") || "",
     lga:   searchParams.get("lga") || "",
     apartmentType: searchParams.get("apartmentType") || "",
-    minPrice: "",
-    maxPrice: "",
+    minPrice: searchParams.get("minPrice") || "",
+    maxPrice: searchParams.get("maxPrice") || "",
     amenities: [] as string[],
   });
+
+  // Restore view mode from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem(VM_KEY);
+    if (saved === "list" || saved === "grid") setViewMode(saved);
+  }, []);
+
+  // Persist view mode to localStorage
+  const handleSetViewMode = useCallback((mode: "grid" | "list") => {
+    setViewMode(mode);
+    localStorage.setItem(VM_KEY, mode);
+  }, []);
+
+  // Sync filters + sort + page to URL so browser back/forward works
+  const syncUrl = useCallback((newFilters: typeof filters, newSort: SortOption, newPage: number) => {
+    const params = new URLSearchParams();
+    if (newFilters.state)        params.set("state", newFilters.state);
+    if (newFilters.lga)          params.set("lga", newFilters.lga);
+    if (newFilters.apartmentType) params.set("apartmentType", newFilters.apartmentType);
+    if (newFilters.minPrice)     params.set("minPrice", newFilters.minPrice);
+    if (newFilters.maxPrice)     params.set("maxPrice", newFilters.maxPrice);
+    if (newSort !== "newest")    params.set("sort", newSort);
+    if (newPage > 1)             params.set("page", String(newPage));
+    urlRouter.replace(`/properties${params.toString() ? `?${params.toString()}` : ""}`, { scroll: false });
+  }, [urlRouter]);
+
+  const setFiltersAndSync = useCallback((newFilters: typeof filters) => {
+    setFilters(newFilters);
+    setPage(1);
+    syncUrl(newFilters, sort, 1);
+  }, [sort, syncUrl]);
+
+  const setSortAndSync = useCallback((newSort: SortOption) => {
+    setSort(newSort);
+    setPage(1);
+    syncUrl(filters, newSort, 1);
+  }, [filters, syncUrl]);
+
+  const setPageAndSync = useCallback((newPage: number) => {
+    setPage(newPage);
+    syncUrl(filters, sort, newPage);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [filters, sort, syncUrl]);
 
   // When picking a state in location panel, show LGA step
   const [locationStep, setLocationStep] = useState<"state" | "lga">("state");
@@ -52,8 +98,6 @@ function PropertiesContent() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-
-  useEffect(() => { setPage(1); }, [filters, sort]);
 
   // Reset location step when panel opens
   useEffect(() => {
@@ -101,11 +145,12 @@ function PropertiesContent() {
   const togglePanel = (panel: FilterPanel) =>
     setActivePanel(activePanel === panel ? null : panel);
 
-  const toggleAmenity = (a: string) =>
-    setFilters((f) => ({
-      ...f,
-      amenities: f.amenities.includes(a) ? f.amenities.filter((x) => x !== a) : [...f.amenities, a],
-    }));
+  const toggleAmenity = (a: string) => {
+    const newAmenities = filters.amenities.includes(a)
+      ? filters.amenities.filter((x) => x !== a)
+      : [...filters.amenities, a];
+    setFiltersAndSync({ ...filters, amenities: newAmenities });
+  };
 
   // LGAs for selected state
   const selectedStateLGAs = locationData.find((d) => d.state === filters.state)?.cities ?? [];
@@ -173,10 +218,10 @@ function PropertiesContent() {
                 {SORT_LABELS[sort]}
               </button>
               <div className="flex items-center gap-0.5 p-1 bg-neutral-100 rounded-lg">
-                <button onClick={() => setViewMode("grid")} className={cn("p-1.5 rounded-md transition-all", viewMode === "grid" ? "bg-white shadow-sm text-neutral-900" : "text-neutral-400 hover:text-neutral-600")}>
+                <button onClick={() => handleSetViewMode("grid")} className={cn("p-1.5 rounded-md transition-all", viewMode === "grid" ? "bg-white shadow-sm text-neutral-900" : "text-neutral-400 hover:text-neutral-600")}>
                   <Grid3X3 className="w-4 h-4" />
                 </button>
-                <button onClick={() => setViewMode("list")} className={cn("p-1.5 rounded-md transition-all", viewMode === "list" ? "bg-white shadow-sm text-neutral-900" : "text-neutral-400 hover:text-neutral-600")}>
+                <button onClick={() => handleSetViewMode("list")} className={cn("p-1.5 rounded-md transition-all", viewMode === "list" ? "bg-white shadow-sm text-neutral-900" : "text-neutral-400 hover:text-neutral-600")}>
                   <List className="w-4 h-4" />
                 </button>
               </div>
@@ -213,10 +258,10 @@ function PropertiesContent() {
               {sort === "newest" ? "Sort" : sort === "price_asc" ? "Price ↑" : "Price ↓"}
             </button>
             <div className="flex items-center gap-0.5 p-1 bg-neutral-100 rounded-lg shrink-0">
-              <button onClick={() => setViewMode("grid")} className={cn("p-1.5 rounded-md transition-all", viewMode === "grid" ? "bg-white shadow-sm text-neutral-900" : "text-neutral-400")}>
+              <button onClick={() => handleSetViewMode("grid")} className={cn("p-1.5 rounded-md transition-all", viewMode === "grid" ? "bg-white shadow-sm text-neutral-900" : "text-neutral-400")}>
                 <Grid3X3 className="w-4 h-4" />
               </button>
-              <button onClick={() => setViewMode("list")} className={cn("p-1.5 rounded-md transition-all", viewMode === "list" ? "bg-white shadow-sm text-neutral-900" : "text-neutral-400")}>
+              <button onClick={() => handleSetViewMode("list")} className={cn("p-1.5 rounded-md transition-all", viewMode === "list" ? "bg-white shadow-sm text-neutral-900" : "text-neutral-400")}>
                 <List className="w-4 h-4" />
               </button>
             </div>
@@ -243,7 +288,7 @@ function PropertiesContent() {
                       {(["newest", "price_asc", "price_desc"] as SortOption[]).map((s) => (
                         <button
                           key={s}
-                          onClick={() => { setSort(s); setActivePanel(null); }}
+                          onClick={() => { setSortAndSync(s); setActivePanel(null); }}
                           className={cn(
                             "flex items-center gap-2.5 px-4 py-3 rounded-xl text-sm text-left transition-all",
                             sort === s
@@ -273,7 +318,7 @@ function PropertiesContent() {
                             <button
                               key={state}
                               onClick={() => {
-                                setFilters({ ...filters, state, lga: "" });
+                                setFiltersAndSync({ ...filters, state, lga: "" });
                                 setLocationStep("lga");
                               }}
                               className={cn(
@@ -289,7 +334,7 @@ function PropertiesContent() {
                           ))}
                         </div>
                         <PanelFooter count={properties.length} loading={isFetching}
-                          onClear={() => { setFilters({ ...filters, state: "", lga: "" }); setLocationStep("state"); }}
+                          onClear={() => { setFiltersAndSync({ ...filters, state: "", lga: "" }); setLocationStep("state"); }}
                           onApply={() => setActivePanel(null)} />
                       </>
                     ) : (
@@ -310,7 +355,7 @@ function PropertiesContent() {
                         {/* "Any area in [State]" option */}
                         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 max-h-[260px] overflow-y-auto">
                           <button
-                            onClick={() => { setFilters({ ...filters, lga: "" }); }}
+                            onClick={() => { setFiltersAndSync({ ...filters, lga: "" }); }}
                             className={cn(
                               "flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm text-left transition-all",
                               !filters.lga
@@ -324,7 +369,7 @@ function PropertiesContent() {
                           {selectedStateLGAs.map((lga) => (
                             <button
                               key={lga}
-                              onClick={() => setFilters({ ...filters, lga: filters.lga === lga ? "" : lga })}
+                              onClick={() => setFiltersAndSync({ ...filters, lga: filters.lga === lga ? "" : lga })}
                               className={cn(
                                 "flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm text-left transition-all",
                                 filters.lga === lga
@@ -339,7 +384,7 @@ function PropertiesContent() {
                           ))}
                         </div>
                         <PanelFooter count={properties.length} loading={isFetching}
-                          onClear={() => { setFilters({ ...filters, state: "", lga: "" }); setLocationStep("state"); }}
+                          onClear={() => { setFiltersAndSync({ ...filters, state: "", lga: "" }); setLocationStep("state"); }}
                           onApply={() => setActivePanel(null)} />
                       </>
                     )}
@@ -354,7 +399,7 @@ function PropertiesContent() {
                       {APARTMENT_TYPES.map((type) => (
                         <button
                           key={type.value}
-                          onClick={() => setFilters({ ...filters, apartmentType: filters.apartmentType === type.value ? "" : type.value })}
+                          onClick={() => setFiltersAndSync({ ...filters, apartmentType: filters.apartmentType === type.value ? "" : type.value })}
                           className={cn(
                             "flex items-center gap-2.5 px-4 py-3 rounded-xl text-sm text-left transition-all",
                             filters.apartmentType === type.value
@@ -369,7 +414,7 @@ function PropertiesContent() {
                       ))}
                     </div>
                     <PanelFooter count={properties.length} loading={isFetching}
-                      onClear={() => setFilters({ ...filters, apartmentType: "" })}
+                      onClear={() => setFiltersAndSync({ ...filters, apartmentType: "" })}
                       onApply={() => setActivePanel(null)} />
                   </div>
                 )}
@@ -384,7 +429,7 @@ function PropertiesContent() {
                         <div className="relative">
                           <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm text-neutral-400">₦</span>
                           <input type="text" value={filters.minPrice ? Number(filters.minPrice).toLocaleString() : ""}
-                            onChange={(e) => setFilters({ ...filters, minPrice: e.target.value.replace(/[^0-9]/g, "") })}
+                            onChange={(e) => setFiltersAndSync({ ...filters, minPrice: e.target.value.replace(/[^0-9]/g, "") })}
                             placeholder="0"
                             className="w-full pl-8 pr-4 py-3 rounded-xl border border-neutral-200 text-[16px] font-medium focus:outline-none focus:ring-2 focus:ring-bt-primary/20 focus:border-bt-primary transition-all"
                           />
@@ -396,7 +441,7 @@ function PropertiesContent() {
                         <div className="relative">
                           <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm text-neutral-400">₦</span>
                           <input type="text" value={filters.maxPrice ? Number(filters.maxPrice).toLocaleString() : ""}
-                            onChange={(e) => setFilters({ ...filters, maxPrice: e.target.value.replace(/[^0-9]/g, "") })}
+                            onChange={(e) => setFiltersAndSync({ ...filters, maxPrice: e.target.value.replace(/[^0-9]/g, "") })}
                             placeholder="Any"
                             className="w-full pl-8 pr-4 py-3 rounded-xl border border-neutral-200 text-[16px] font-medium focus:outline-none focus:ring-2 focus:ring-bt-primary/20 focus:border-bt-primary transition-all"
                           />
@@ -406,7 +451,7 @@ function PropertiesContent() {
                     <div className="flex flex-wrap gap-2">
                       {PRICE_RANGES.map((r) => (
                         <button key={r.label}
-                          onClick={() => setFilters({ ...filters, minPrice: String(r.min), maxPrice: String(r.max) })}
+                          onClick={() => setFiltersAndSync({ ...filters, minPrice: String(r.min), maxPrice: String(r.max) })}
                           className={cn(
                             "px-3.5 py-2 rounded-lg text-xs font-medium border transition-all",
                             filters.minPrice === String(r.min) && filters.maxPrice === String(r.max)
@@ -419,7 +464,7 @@ function PropertiesContent() {
                       ))}
                     </div>
                     <PanelFooter count={properties.length} loading={isFetching}
-                      onClear={() => setFilters({ ...filters, minPrice: "", maxPrice: "" })}
+                      onClear={() => setFiltersAndSync({ ...filters, minPrice: "", maxPrice: "" })}
                       onApply={() => setActivePanel(null)} />
                   </div>
                 )}
@@ -437,7 +482,7 @@ function PropertiesContent() {
                       ))}
                     </div>
                     <PanelFooter count={properties.length} loading={isFetching}
-                      onClear={() => setFilters({ ...filters, amenities: [] })}
+                      onClear={() => setFiltersAndSync({ ...filters, amenities: [] })}
                       onApply={() => setActivePanel(null)} />
                   </div>
                 )}
@@ -455,13 +500,13 @@ function PropertiesContent() {
             {filters.state && (
               <ActiveTag
                 label={filters.lga ? `${filters.state} · ${filters.lga}` : filters.state}
-                onRemove={() => setFilters({ ...filters, state: "", lga: "" })}
+                onRemove={() => setFiltersAndSync({ ...filters, state: "", lga: "" })}
               />
             )}
-            {filters.apartmentType && <ActiveTag label={APARTMENT_TYPES.find((t) => t.value === filters.apartmentType)?.label || filters.apartmentType} onRemove={() => setFilters({ ...filters, apartmentType: "" })} />}
-            {(filters.minPrice || filters.maxPrice) && <ActiveTag label={`₦${Number(filters.minPrice || 0).toLocaleString()} – ₦${Number(filters.maxPrice || 10000000).toLocaleString()}`} onRemove={() => setFilters({ ...filters, minPrice: "", maxPrice: "" })} />}
-            {sort !== "newest" && <ActiveTag label={SORT_LABELS[sort]} onRemove={() => setSort("newest")} />}
-            <button onClick={() => { setFilters({ state: "", lga: "", apartmentType: "", minPrice: "", maxPrice: "", amenities: [] }); setSort("newest"); }} className="text-xs font-medium text-neutral-500 hover:text-neutral-800 underline underline-offset-2">
+            {filters.apartmentType && <ActiveTag label={APARTMENT_TYPES.find((t) => t.value === filters.apartmentType)?.label || filters.apartmentType} onRemove={() => setFiltersAndSync({ ...filters, apartmentType: "" })} />}
+            {(filters.minPrice || filters.maxPrice) && <ActiveTag label={`₦${Number(filters.minPrice || 0).toLocaleString()} – ₦${Number(filters.maxPrice || 10000000).toLocaleString()}`} onRemove={() => setFiltersAndSync({ ...filters, minPrice: "", maxPrice: "" })} />}
+            {sort !== "newest" && <ActiveTag label={SORT_LABELS[sort]} onRemove={() => setSortAndSync("newest")} />}
+            <button onClick={() => { setFiltersAndSync({ state: "", lga: "", apartmentType: "", minPrice: "", maxPrice: "", amenities: [] }); setSortAndSync("newest"); }} className="text-xs font-medium text-neutral-500 hover:text-neutral-800 underline underline-offset-2">
               Clear all
             </button>
           </div>
@@ -476,14 +521,14 @@ function PropertiesContent() {
         </div>
 
         {isLoading ? (
-          <div className={cn(viewMode === "grid" ? "grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-5" : "space-y-3")}>
-            {Array.from({ length: 12 }).map((_, i) => (
-              <div key={i} className="rounded-2xl bg-neutral-100 animate-pulse h-[280px]" />
+          <div className={cn(viewMode === "grid" ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5" : "space-y-3")}>
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="rounded-2xl bg-neutral-100 animate-pulse h-[320px]" />
             ))}
           </div>
         ) : properties.length > 0 ? (
           <>
-            <div className={cn(viewMode === "grid" ? "grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-5" : "space-y-3")}>
+            <div className={cn(viewMode === "grid" ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5" : "space-y-3")}>
               {(properties as any[]).map((p) => (
                 <PropertyCard key={p._id} property={p} variant={viewMode === "list" ? "horizontal" : "default"} />
               ))}
@@ -491,12 +536,12 @@ function PropertiesContent() {
 
             {totalPages > 1 && (
               <div className="flex items-center justify-center gap-2 mt-10">
-                <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}
+                <button onClick={() => setPageAndSync(Math.max(1, page - 1))} disabled={page === 1}
                   className="px-4 py-2 rounded-lg text-sm font-medium border border-neutral-200 disabled:opacity-40 hover:bg-neutral-50 transition-colors">
                   Previous
                 </button>
                 <span className="text-sm text-neutral-500 px-3">Page {page} of {totalPages}</span>
-                <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages}
+                <button onClick={() => setPageAndSync(Math.min(totalPages, page + 1))} disabled={page === totalPages}
                   className="px-4 py-2 rounded-lg text-sm font-medium border border-neutral-200 disabled:opacity-40 hover:bg-neutral-50 transition-colors">
                   Next
                 </button>
@@ -519,7 +564,7 @@ function PropertiesContent() {
             </div>
             <h3 className="text-lg font-semibold text-neutral-900 mb-2">No properties found</h3>
             <p className="text-sm text-neutral-500 mb-6 max-w-sm mx-auto">Try adjusting your filters or searching in a different location</p>
-            <button onClick={() => { setFilters({ state: "", lga: "", apartmentType: "", minPrice: "", maxPrice: "", amenities: [] }); setSort("newest"); }}
+            <button onClick={() => { setFiltersAndSync({ state: "", lga: "", apartmentType: "", minPrice: "", maxPrice: "", amenities: [] }); setSortAndSync("newest"); }}
               className="px-6 py-3 rounded-full bg-bt-primary text-white text-sm font-semibold hover:bg-bt-primary-light transition-colors">
               Clear Filters
             </button>
