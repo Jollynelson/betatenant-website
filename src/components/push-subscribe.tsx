@@ -60,7 +60,8 @@ export async function unsubscribeFromPush(): Promise<void> {
     const reg = await navigator.serviceWorker.ready;
     const sub = await reg.pushManager.getSubscription();
     if (sub) {
-      await api.post(getPushEndpoint("unsubscribe"), { endpoint: sub.endpoint }).catch(() => {});
+      // Backend DELETE endpoint expects endpoint in body
+      await api.del(getPushEndpoint("unsubscribe"), { endpoint: sub.endpoint }).catch(() => {});
       await sub.unsubscribe();
     }
   } catch {}
