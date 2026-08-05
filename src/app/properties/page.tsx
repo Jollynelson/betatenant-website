@@ -5,7 +5,7 @@ import { useSearchParams, useRouter as useNextRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { PropertyCard } from "@/components/property/property-card";
-import { propertyApi } from "@/lib/api";
+import { propertyApi, api } from "@/lib/api";
 import { APARTMENT_TYPES, NIGERIAN_STATES, PRICE_RANGES } from "@/lib/constants";
 import { locationData } from "@/lib/locations";
 import {
@@ -42,6 +42,14 @@ function PropertiesContent() {
     maxPrice: searchParams.get("maxPrice") || "",
     amenities: [] as string[],
   });
+
+  // Load amenities from API
+  const { data: amenityData } = useQuery({
+    queryKey: ["amenities-rent"],
+    queryFn: () => api.get<any>("/v1/user/amenities/rent"),
+    staleTime: 1000 * 60 * 60, // 1 hour
+  });
+  const availableAmenities: { _id: string; name: string }[] = amenityData?.amenities ?? [];
 
   // Restore view mode from localStorage
   useEffect(() => {
@@ -473,15 +481,19 @@ function PropertiesContent() {
                 {/* ── More Filters ── */}
                 {activePanel === "filters" && (
                   <div>
-                    <h3 className="text-base font-bold text-neutral-900 mb-4">Features</h3>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5">
-                      {["WiFi", "Air Conditioning", "Swimming Pool", "Generator", "Parking Space", "Security", "CCTV", "Elevator", "Balcony", "Gym", "Washing Machine", "Inverter Backup"].map((a) => (
-                        <label key={a} className={cn("flex items-center gap-2.5 px-3.5 py-2.5 rounded-lg cursor-pointer text-sm transition-all", filters.amenities.includes(a) ? "bg-bt-primary/8 text-bt-primary font-medium" : "text-neutral-600 hover:bg-neutral-50")}>
-                          <input type="checkbox" checked={filters.amenities.includes(a)} onChange={() => toggleAmenity(a)} className="w-4 h-4 rounded border-neutral-300 accent-bt-primary" />
-                          {a}
-                        </label>
-                      ))}
-                    </div>
+                    <h3 className="text-base font-bold text-neutral-900 mb-4">Features &amp; Amenities</h3>
+                    {availableAmenities.length === 0 ? (
+                      <p className="text-sm text-neutral-400 py-2">Loading amenities...</p>
+                    ) : (
+                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5">
+                        {availableAmenities.map((a) => (
+                          <label key={a._id} className={cn("flex items-center gap-2.5 px-3.5 py-2.5 rounded-lg cursor-pointer text-sm transition-all", filters.amenities.includes(a.name) ? "bg-bt-primary/8 text-bt-primary font-medium" : "text-neutral-600 hover:bg-neutral-50")}>
+                            <input type="checkbox" checked={filters.amenities.includes(a.name)} onChange={() => toggleAmenity(a.name)} className="w-4 h-4 rounded border-neutral-300 accent-bt-primary" />
+                            {a.name}
+                          </label>
+                        ))}
+                      </div>
+                    )}
                     <PanelFooter count={properties.length} loading={isFetching}
                       onClear={() => setFiltersAndSync({ ...filters, amenities: [] })}
                       onApply={() => setActivePanel(null)} />
