@@ -102,36 +102,305 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Mobile gallery */}
-      <div className="md:hidden relative">
-        <div className="relative aspect-[4/3] overflow-hidden bg-neutral-100">
-          <Image src={property.photos[currentImage] || "/placeholder-property.jpg"} alt={property.title} fill className="object-cover" priority />
-          <div className="absolute inset-0 flex items-center justify-between px-3">
-            <button onClick={() => setCurrentImage(currentImage > 0 ? currentImage - 1 : property.photos.length - 1)} className="w-11 h-11 rounded-full bg-white/95 flex items-center justify-center shadow-md">
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-            <button onClick={() => setCurrentImage(currentImage < property.photos.length - 1 ? currentImage + 1 : 0)} className="w-11 h-11 rounded-full bg-white/95 flex items-center justify-center shadow-md">
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
-          <div className="absolute top-4 left-0 right-0 flex items-center justify-between px-4">
-            <Link href="/properties" className="w-11 h-11 rounded-full bg-white/95 flex items-center justify-center shadow-md">
-              <ArrowLeft className="w-4 h-4" />
+
+      {/* ── MOBILE: full-screen immersive layout ─────────────────────────────── */}
+      <div className="md:hidden">
+        {/* Full-bleed photo — fills from status bar to fold */}
+        <div className="relative w-full bg-neutral-900" style={{ height: "62vh", minHeight: 320 }}>
+          <Image
+            src={property.photos[currentImage] || "/placeholder-property.jpg"}
+            alt={property.title}
+            fill
+            className="object-cover"
+            priority
+          />
+
+          {/* Dark gradient at top for button legibility */}
+          <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/50 to-transparent pointer-events-none" />
+          {/* Dark gradient at bottom for dots + price */}
+          <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-black/60 to-transparent pointer-events-none" />
+
+          {/* Top bar: back + share/heart — safe area aware */}
+          <div
+            className="absolute left-0 right-0 flex items-center justify-between px-4 z-10"
+            style={{ top: "calc(env(safe-area-inset-top) + 0.75rem)" }}
+          >
+            <Link
+              href="/properties"
+              className="w-10 h-10 rounded-full bg-black/30 backdrop-blur-md flex items-center justify-center"
+            >
+              <ArrowLeft className="w-5 h-5 text-white" />
             </Link>
             <div className="flex items-center gap-2">
-              <button onClick={() => setLiked(toggleFavorite(property._id))} className="w-11 h-11 rounded-full bg-white/95 flex items-center justify-center shadow-md">
-                <Heart className={cn("w-4 h-4", liked ? "fill-red-500 text-red-500" : "text-neutral-700")} />
+              <button
+                onClick={async () => {
+                  try {
+                    await navigator.share({ title: property.title, url: window.location.href });
+                  } catch {
+                    await navigator.clipboard.writeText(window.location.href).catch(() => {});
+                  }
+                }}
+                className="w-10 h-10 rounded-full bg-black/30 backdrop-blur-md flex items-center justify-center"
+              >
+                <Share2 className="w-5 h-5 text-white" />
               </button>
-              <button className="w-11 h-11 rounded-full bg-white/95 flex items-center justify-center shadow-md">
-                <Share2 className="w-4 h-4" />
+              <button
+                onClick={() => setLiked(toggleFavorite(property._id))}
+                className="w-10 h-10 rounded-full bg-black/30 backdrop-blur-md flex items-center justify-center"
+              >
+                <Heart className={cn("w-5 h-5", liked ? "fill-red-400 text-red-400" : "text-white")} />
               </button>
             </div>
           </div>
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1">
+
+          {/* Photo counter */}
+          <div className="absolute bottom-16 right-4 px-2.5 py-1 rounded-full bg-black/50 backdrop-blur-sm text-white text-xs font-semibold">
+            {currentImage + 1} / {property.photos.length}
+          </div>
+
+          {/* Swipe chevrons */}
+          {property.photos.length > 1 && (
+            <>
+              <button
+                onClick={() => setCurrentImage(currentImage > 0 ? currentImage - 1 : property.photos.length - 1)}
+                className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/25 backdrop-blur-sm flex items-center justify-center"
+              >
+                <ChevronLeft className="w-5 h-5 text-white" />
+              </button>
+              <button
+                onClick={() => setCurrentImage(currentImage < property.photos.length - 1 ? currentImage + 1 : 0)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/25 backdrop-blur-sm flex items-center justify-center"
+              >
+                <ChevronRight className="w-5 h-5 text-white" />
+              </button>
+            </>
+          )}
+
+          {/* Price overlaid on photo */}
+          <div className="absolute bottom-5 left-5">
+            <p className="text-white text-2xl font-bold drop-shadow-md">
+              {formatPriceFullNumber(property.price)}
+              <span className="text-sm font-normal text-white/80 ml-1">/yr</span>
+            </p>
+          </div>
+
+          {/* Dot indicators */}
+          <div className="absolute bottom-5 right-5 flex gap-1">
             {property.photos.slice(0, 6).map((_: string, i: number) => (
-              <span key={i} className={cn("h-1.5 rounded-full transition-all", i === currentImage ? "bg-white w-4" : "bg-white/50 w-1.5")} />
+              <span key={i} className={cn("h-1.5 rounded-full transition-all", i === currentImage ? "bg-white w-4" : "bg-white/40 w-1.5")} />
             ))}
           </div>
+        </div>
+
+        {/* Bottom sheet content — rounded top corners like a native sheet */}
+        <div className="relative -mt-5 bg-white rounded-t-3xl z-10 pb-[calc(5rem+env(safe-area-inset-bottom))]">
+          {/* Drag handle */}
+          <div className="flex justify-center pt-3 pb-1">
+            <div className="w-10 h-1 rounded-full bg-neutral-200" />
+          </div>
+
+          <div className="px-5 pt-3">
+            {/* Badges */}
+            <div className="flex flex-wrap items-center gap-2 mb-3">
+              <span className="px-2.5 py-1 rounded-full bg-bt-primary/8 text-bt-primary text-xs font-semibold">For Rent</span>
+              <span className="px-2.5 py-1 rounded-full bg-neutral-100 text-neutral-600 text-xs font-medium">{apartmentLabel}</span>
+              {property.host?.isVerified && (
+                <span className="px-2.5 py-1 rounded-full bg-bt-success/10 text-bt-success text-xs font-semibold flex items-center gap-1">
+                  <BadgeCheck className="w-3 h-3" /> Verified
+                </span>
+              )}
+            </div>
+
+            {/* Title + location */}
+            <h1 className="text-xl font-bold text-neutral-900 tracking-[-0.02em] leading-snug">{property.title}</h1>
+            <p className="text-sm text-neutral-500 mt-1.5 flex items-center gap-1.5">
+              <MapPin className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
+              {property.address}, {property.lga}, {property.state}
+            </p>
+
+            {/* Stats row */}
+            <div className="flex items-center gap-4 mt-4 pt-4 border-t border-neutral-100">
+              <div className="flex items-center gap-1.5 text-sm text-neutral-700">
+                <Bed className="w-4 h-4 text-neutral-400" />
+                <span className="font-semibold">{property.bedrooms}</span>
+                <span className="text-neutral-400">{property.bedrooms === 1 ? "bed" : "beds"}</span>
+              </div>
+              <div className="w-px h-4 bg-neutral-200" />
+              <div className="flex items-center gap-1.5 text-sm text-neutral-700">
+                <Bath className="w-4 h-4 text-neutral-400" />
+                <span className="font-semibold">{property.bathrooms}</span>
+                <span className="text-neutral-400">{property.bathrooms === 1 ? "bath" : "baths"}</span>
+              </div>
+              {!!property.rating && (
+                <>
+                  <div className="w-px h-4 bg-neutral-200" />
+                  <div className="flex items-center gap-1 text-sm">
+                    <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                    <span className="font-semibold text-neutral-700">{property.rating.toFixed(1)}</span>
+                  </div>
+                </>
+              )}
+              <div className="ml-auto flex items-center gap-1 text-xs text-neutral-400">
+                <Eye className="w-3.5 h-3.5" />
+                {(property.views ?? 0).toLocaleString()}
+              </div>
+            </div>
+          </div>
+
+          {/* Tabs */}
+          <div className="sticky top-0 z-20 bg-white border-b border-neutral-100 mt-4">
+            <div className="flex overflow-x-auto no-scrollbar px-5">
+              {TABS.map((tab) => (
+                <button
+                  key={tab.key}
+                  onClick={() => scrollToSection(tab.key)}
+                  className={cn(
+                    "px-4 py-3.5 text-sm font-medium whitespace-nowrap border-b-2 -mb-px transition-all",
+                    activeTab === tab.key ? "border-bt-primary text-bt-primary" : "border-transparent text-neutral-400"
+                  )}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Content sections */}
+          <div className="px-5 pt-5 space-y-6">
+            {/* Overview */}
+            <div id="tab-overview">
+              {property.description && (
+                <p className="text-[15px] text-neutral-600 leading-relaxed">{property.description}</p>
+              )}
+              {property.amenities.length > 0 && (
+                <div className="mt-5">
+                  <h3 className="text-sm font-bold text-neutral-900 mb-3">Amenities</h3>
+                  <div className="grid grid-cols-2 gap-2">
+                    {property.amenities.map((amenity: string) => {
+                      const directKey = amenitySlugToKey(amenity.toLowerCase().replace(/[^a-z0-9]/g, "-").replace(/-+/g, "-"));
+                      const iconSrc = AMENITY_ICONS[directKey] || Object.entries(AMENITY_ICONS).find(([k]) => amenity.toLowerCase().replace(/\s/g, "").includes(k.toLowerCase()))?.[1];
+                      return (
+                        <div key={amenity} className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-neutral-50 border border-neutral-100">
+                          {iconSrc ? <Image src={iconSrc} alt="" width={16} height={16} className="w-4 h-4 shrink-0" /> : <Check className="w-3.5 h-3.5 text-bt-success shrink-0" />}
+                          <span className="text-sm text-neutral-700">{amenity}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Price breakdown */}
+            <div id="tab-price" className="pt-2 border-t border-neutral-100">
+              <h3 className="text-sm font-bold text-neutral-900 mb-3">Price Breakdown</h3>
+              <div className="space-y-2.5">
+                <div className="flex items-center justify-between py-2 border-b border-neutral-50">
+                  <span className="text-sm text-neutral-600">Annual Rent</span>
+                  <span className="text-sm font-bold text-neutral-900">{formatPriceFullNumber(property.price)}</span>
+                </div>
+                {!!property.cautionFee && (
+                  <div className="flex items-center justify-between py-2 border-b border-neutral-50">
+                    <span className="text-sm text-neutral-600">Caution Fee</span>
+                    <span className="text-sm font-semibold text-neutral-900">{formatPriceFullNumber(property.cautionFee)}</span>
+                  </div>
+                )}
+                <div className="flex items-center justify-between py-2">
+                  <span className="text-sm font-bold text-neutral-900">Total Move-in</span>
+                  <span className="text-sm font-bold text-bt-primary">{formatPriceFullNumber(property.price + (property.cautionFee ?? 0))}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* House rules */}
+            {property.houseRules.length > 0 && (
+              <div id="tab-rules" className="pt-2 border-t border-neutral-100">
+                <h3 className="text-sm font-bold text-neutral-900 mb-3">House Rules</h3>
+                <div className="space-y-2">
+                  {property.houseRules.map((rule: string) => (
+                    <div key={rule} className="flex items-start gap-2.5 text-sm text-neutral-600">
+                      <Check className="w-3.5 h-3.5 text-bt-success mt-0.5 shrink-0" />
+                      {rule}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Agent card */}
+            <div className="border-t border-neutral-100 pt-5 pb-2">
+              <div className="flex items-center gap-3">
+                {property.host.avatar ? (
+                  <Image src={property.host.avatar} alt="" width={44} height={44} className="w-11 h-11 rounded-full object-cover shrink-0" />
+                ) : (
+                  <div className="w-11 h-11 rounded-full bg-bt-primary/8 flex items-center justify-center shrink-0 text-bt-primary font-bold text-sm">
+                    {property.host.firstName?.[0]}{property.host.lastName?.[0]}
+                  </div>
+                )}
+                <div>
+                  <p className="text-sm font-semibold text-neutral-900 capitalize">{property.host.firstName} {property.host.lastName}</p>
+                  <p className="text-xs text-neutral-500 capitalize">{property.host.role}</p>
+                </div>
+                {property.host.isVerified && (
+                  <BadgeCheck className="w-4 h-4 text-bt-success ml-auto shrink-0" />
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Mobile sticky CTA bar — above safe area */}
+        <div
+          className="fixed bottom-0 left-0 right-0 bg-white border-t border-neutral-100 z-50 px-4 py-3 flex items-center gap-3"
+          style={{ paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom))" }}
+        >
+          {property.host.phone && (
+            isLoggedIn ? (
+              <a
+                href={`tel:${property.host.phone}`}
+                className="w-12 h-12 rounded-full border border-neutral-200 flex items-center justify-center shrink-0"
+              >
+                <Phone className="w-5 h-5 text-neutral-700" />
+              </a>
+            ) : (
+              <button
+                onClick={() => requireAuth(() => {})}
+                className="w-12 h-12 rounded-full border border-neutral-200 flex items-center justify-center shrink-0"
+              >
+                <Phone className="w-5 h-5 text-neutral-700" />
+              </button>
+            )
+          )}
+          {property.host.phone && (
+            isLoggedIn ? (
+              <a
+                href={`https://wa.me/${property.host.phone.replace(/\D/g, "")}?text=${encodeURIComponent(`Hi, I'm interested in the property listed on Beta Tenant: ${property.title}. Please share more details.`)}`}
+                target="_blank" rel="noopener noreferrer"
+                className="flex-1 py-3.5 rounded-full bg-[#25D366] text-white font-bold text-sm flex items-center justify-center gap-2"
+              >
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" /></svg>
+                WhatsApp
+              </a>
+            ) : (
+              <button
+                onClick={() => requireAuth(() => {})}
+                className="flex-1 py-3.5 rounded-full bg-[#25D366] text-white font-bold text-sm flex items-center justify-center gap-2"
+              >
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" /></svg>
+                WhatsApp
+              </button>
+            )
+          )}
+          {/* Message button — only for non-imported listings */}
+          {property.host.email && !property.host.email.endsWith("@imported.betatenant.local") && (
+            <button
+              onClick={() => requireAuth(() => router.push("/messages"))}
+              className="flex-1 py-3.5 rounded-full bg-bt-primary text-white font-bold text-sm flex items-center justify-center gap-2"
+            >
+              <Mail className="w-5 h-5" />
+              Message
+            </button>
+          )}
         </div>
       </div>
 
@@ -473,39 +742,6 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
         )}
       </div>
 
-      {/* Mobile sticky bar */}
-      <div className="fixed bottom-16 left-0 right-0 md:hidden bg-white/95 backdrop-blur-md border-t border-neutral-100 px-5 py-3 flex items-center justify-between z-40 gap-3">
-        <div>
-          <p className="text-base font-bold text-neutral-900">{formatPriceFullNumber(property.price)}</p>
-          <p className="text-xs text-neutral-500">per year</p>
-        </div>
-        <div className="flex items-center gap-2">
-          {property.host.phone && (
-            <>
-              {isLoggedIn ? (
-                <a href={`https://wa.me/${property.host.phone.replace(/\D/g, "")}?text=${encodeURIComponent(`Hi, I'm interested in the property listed on Beta Tenant: ${property.title}. Please share more details.`)}`} target="_blank" rel="noopener noreferrer" className="p-3 rounded-full bg-[#25D366] text-white">
-                  {WHATSAPP_SVG}
-                </a>
-              ) : (
-                <button onClick={() => requireAuth(() => {})} className="p-3 rounded-full bg-[#25D366] text-white">
-                  {WHATSAPP_SVG}
-                </button>
-              )}
-              {isLoggedIn ? (
-                <a href={`tel:${property.host.phone}`} className="px-5 py-3 rounded-full bg-bt-primary text-white font-semibold text-sm flex items-center gap-2">
-                  <Phone className="w-4 h-4" />
-                  Call {property.host.role}
-                </a>
-              ) : (
-                <button onClick={() => requireAuth(() => {})} className="px-5 py-3 rounded-full bg-bt-primary text-white font-semibold text-sm flex items-center gap-2">
-                  <Phone className="w-4 h-4" />
-                  Call {property.host.role}
-                </button>
-              )}
-            </>
-          )}
-        </div>
-      </div>
     </div>
   );
 }

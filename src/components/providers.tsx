@@ -48,26 +48,33 @@ function AppShell({ children }: { children: React.ReactNode }) {
 
   const isOnboarding = pathname.startsWith("/onboarding");
   const isAuthPage = ONBOARDING_PATHS.some((p) => pathname.startsWith(p));
+  // Property detail: full-screen immersive on mobile — hide nav chrome
+  const isPropertyPage = /^\/property\/[^/]+/.test(pathname);
 
-  // On onboarding: render children fullscreen, no chrome
-  if (isOnboarding) {
-    return <>{children}</>;
-  }
-
-  // While doing the onboarding redirect check, render nothing to avoid flash
+  if (isOnboarding) return <>{children}</>;
   if (!ready && !isAuthPage) return null;
 
   return (
     <>
       <OfflineBanner />
-      <Navbar />
-      <main className="flex-1 pt-[72px] lg:pt-[78px] pb-[calc(4rem+env(safe-area-inset-bottom))] lg:pb-0">
+      {/* Hide navbar on mobile property pages — full-screen immersive layout */}
+      <div className={isPropertyPage ? "hidden lg:block" : ""}>
+        <Navbar />
+      </div>
+      <main className={
+        isPropertyPage
+          ? "flex-1 lg:pt-[78px]"  // no top padding on mobile — photo goes edge to edge
+          : "flex-1 pt-[72px] lg:pt-[78px] pb-[calc(4rem+env(safe-area-inset-bottom))] lg:pb-0"
+      }>
         {children}
       </main>
       <div className="hidden lg:block">
         <Footer />
       </div>
-      <MobileNav />
+      {/* Hide mobile nav on property pages — sticky CTA bar replaces it */}
+      <div className={isPropertyPage ? "hidden" : ""}>
+        <MobileNav />
+      </div>
       <PWAInstallPrompt />
       <PushPermissionBanner />
     </>
