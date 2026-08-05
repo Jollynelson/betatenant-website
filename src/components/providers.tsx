@@ -30,7 +30,8 @@ function OnboardingGate({ children }: { children: React.ReactNode }) {
     if (onboardingPaths.some((p) => pathname.startsWith(p))) return;
 
     const onboarded = localStorage.getItem("BT_ONBOARDED");
-    if (!onboarded) {
+    const isMobile = window.innerWidth < 768;
+    if (!onboarded && isMobile) {
       router.replace("/onboarding");
     }
   }, [hydrate, pathname, router]);

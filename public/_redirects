@@ -1,0 +1,5 @@
+/property/:id  /property/placeholder  200
+/payment/:id   /payment/placeholder   200
+/m/:code       /m/placeholder         200
+/s/:code       /s/placeholder         200
+/agents/portfolio/:shareId  /agents/portfolio/placeholder  200

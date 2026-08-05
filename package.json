@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "pages:build": "npx opennextjs-cloudflare build && node scripts/prepare-pages.mjs && echo '{\"version\":1,\"include\":[\"/*\"],\"exclude\":[\"/favicon.ico\",\"/icons/*\",\"/images/*\",\"/manifest.json\",\"/sw.js\",\"/_next/static/*\"]}' > .open-next/_routes.json",
+    "pages:build": "next build",
     "start": "next start",
     "lint": "eslint"
   },

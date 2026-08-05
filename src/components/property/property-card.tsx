@@ -182,7 +182,7 @@ export function PropertyCard({ property, variant = "default", onRemove }: Proper
           <p className="text-[13px] text-neutral-500 mt-1.5 truncate">
             {property.lga}, {property.state}
           </p>
-          {property.views && (
+          {!!property.views && (
             <div className="flex items-center gap-1 mt-2 text-[11px] text-neutral-400">
               <Eye className="w-3 h-3" />
               {property.views.toLocaleString()} views

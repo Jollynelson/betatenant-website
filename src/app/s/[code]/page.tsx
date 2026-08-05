@@ -1,6 +1,9 @@
-import { redirect } from "next/navigation";
+import ShortLinkPage from "./client";
 
-export default async function ShortLinkPage({ params }: { params: Promise<{ code: string }> }) {
-  const { code } = await params;
-  redirect(`https://api.betatenant.com/s/${code}`);
+export function generateStaticParams() {
+  return [{ code: "placeholder" }];
+}
+
+export default function Page({ params }: { params: Promise<{ code: string }> }) {
+  return <ShortLinkPage params={params} />;
 }
