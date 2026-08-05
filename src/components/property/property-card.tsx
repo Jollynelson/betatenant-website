@@ -1,25 +1,22 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import {
-  Heart, MapPin, Bed, Bath, Eye, Star,
-  ChevronLeft, ChevronRight, BadgeCheck,
-} from "lucide-react";
+import { Heart, MapPin, Bed, Bath, BadgeCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { isFavorited, toggleFavorite } from "@/lib/favorites";
 import type { Property } from "@/types";
 
 const APPT_LABELS: Record<string, string> = {
   "single-room/shared-apartment": "Single Room",
-  "self-contained": "Self Contained",
-  "mini-flat/one-bedroom": "Mini Flat",
-  "two-bedroom": "2 Bedroom",
-  "three-bedroom": "3 Bedroom",
-  "four-bedroom": "4 Bedroom",
-  "big-family-house-4plus": "4+ Bedroom",
+  "self-contained":               "Self Contained",
+  "mini-flat/one-bedroom":        "Mini Flat",
+  "two-bedroom":                  "2 Bedroom",
+  "three-bedroom":                "3 Bedroom",
+  "four-bedroom":                 "4 Bedroom",
+  "big-family-house-4plus":       "4+ Bedroom",
 };
 
 interface PropertyCardProps {
@@ -32,6 +29,7 @@ export function PropertyCard({ property, variant = "default", onRemove }: Proper
   const [liked, setLiked] = useState(false);
   const [imgIdx, setImgIdx] = useState(0);
   const router = useRouter();
+  const touchStartX = useRef<number | null>(null);
 
   useEffect(() => {
     setLiked(isFavorited(property._id));
@@ -39,173 +37,147 @@ export function PropertyCard({ property, variant = "default", onRemove }: Proper
 
   const handleHeart = (e: React.MouseEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     const nowLiked = toggleFavorite(property._id);
     setLiked(nowLiked);
     if (!nowLiked && onRemove) onRemove(property._id);
   };
 
-  // View Transitions API — animates like native navigation
   const handleNavigate = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    if (!("startViewTransition" in document)) return; // fallback: normal link
+    if (!("startViewTransition" in document)) return;
     e.preventDefault();
-    (document as any).startViewTransition(() => {
-      router.push(`/property/${property._id}`);
-    });
+    (document as any).startViewTransition(() => router.push(`/property/${property._id}`));
   };
 
   const typeLabel = APPT_LABELS[property.apartmentType] || property.apartmentType;
+  const agentName = `${property.host.firstName} ${property.host.lastName}`.trim();
 
+  // ── Horizontal variant (list view) ──────────────────────────────────────────
   if (variant === "horizontal") {
     return (
       <Link
         href={`/property/${property._id}`}
-        className="group flex gap-5 p-4 rounded-2xl border border-transparent hover:border-neutral-200 hover:bg-white hover:shadow-sm transition-all"
+        className="flex gap-4 p-3.5 rounded-2xl bg-white border border-neutral-100 hover:border-neutral-200 hover:shadow-sm transition-all group"
       >
-        <div className="relative w-[200px] h-[140px] rounded-xl overflow-hidden shrink-0">
-          <Image
-            src={property.photos[0] || "/placeholder-property.jpg"}
-            alt={property.title}
-            fill
-            className="object-cover group-hover:scale-105 transition-transform duration-500"
-          />
-          {property.host?.isVerified && (
-            <div className="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-bt-success/90 text-white text-[10px] font-semibold flex items-center gap-1">
-              <BadgeCheck className="w-3 h-3" />
-              Verified
-            </div>
-          )}
+        <div className="relative w-[120px] h-[90px] rounded-xl overflow-hidden shrink-0 bg-neutral-100">
+          <Image src={property.photos[0] || "/placeholder-property.jpg"} alt={property.title} fill className="object-cover group-hover:scale-105 transition-transform duration-500" />
         </div>
-        <div className="flex-1 min-w-0 py-1 flex flex-col justify-between">
+        <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
           <div>
-            <p className="text-xs font-medium text-neutral-400 uppercase tracking-wider">
-              {property.apartmentType}
+            <p className="text-[15px] font-bold text-neutral-900 leading-snug truncate">
+              &#8358;{property.price.toLocaleString()}
+              <span className="text-xs font-normal text-neutral-400 ml-1">/yr</span>
             </p>
-            <h3 className="font-semibold text-neutral-900 mt-1 text-base leading-snug">
-              {property.bedrooms} Bed in {property.lga}
-            </h3>
-            <p className="text-sm text-neutral-500 flex items-center gap-1 mt-1">
-              <MapPin className="w-3.5 h-3.5 shrink-0" />
-              <span className="truncate">{property.address}</span>
+            <p className="text-[12px] text-neutral-500 mt-0.5">
+              {property.bedrooms} bd · {property.bathrooms} ba · {typeLabel}
+            </p>
+            <p className="text-[12px] text-neutral-400 truncate mt-0.5">
+              {property.address ? `${property.address}, ` : ""}{property.lga}, {property.state}
             </p>
           </div>
-          <p className="text-lg font-bold text-[#08065E]">
-            &#8358;{property.price.toLocaleString()}
-            <span className="text-sm text-neutral-400 font-normal">/year</span>
-          </p>
+          <p className="text-[11px] text-neutral-400 uppercase tracking-wide font-medium truncate">{agentName}</p>
         </div>
       </Link>
     );
   }
 
+  // ── Default grid card ────────────────────────────────────────────────────────
   return (
-    <div className="group w-full">
+    <div className="w-full">
       <Link
         href={`/property/${property._id}`}
         onClick={handleNavigate}
-        className="block rounded-xl overflow-hidden bg-white border border-neutral-100 hover:shadow-[0_12px_40px_-12px_rgba(0,0,0,0.12)] transition-all duration-300 hover:-translate-y-0.5"
+        className="block rounded-2xl overflow-hidden bg-white border border-neutral-100 hover:border-neutral-200 hover:shadow-[0_4px_24px_rgba(0,0,0,0.08)] transition-all duration-200"
         style={{ viewTransitionName: `card-${property._id}` } as React.CSSProperties}
       >
-        {/* Image */}
-        <div className="relative w-full aspect-[16/11] overflow-hidden bg-neutral-100">
+        {/* ── Image ── */}
+        <div
+          className="relative w-full aspect-[4/3] overflow-hidden bg-neutral-100"
+          onTouchStart={(e) => { touchStartX.current = e.touches[0].clientX; }}
+          onTouchEnd={(e) => {
+            if (touchStartX.current === null) return;
+            const dx = e.changedTouches[0].clientX - touchStartX.current;
+            if (Math.abs(dx) > 40) {
+              e.preventDefault();
+              if (dx < 0) setImgIdx((i) => (i < property.photos.length - 1 ? i + 1 : 0));
+              else setImgIdx((i) => (i > 0 ? i - 1 : property.photos.length - 1));
+            }
+            touchStartX.current = null;
+          }}
+        >
           <Image
             src={property.photos[imgIdx] || "/placeholder-property.jpg"}
             alt={property.title}
             fill
-            className="object-cover group-hover:scale-[1.02] transition-transform duration-700"
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+            className="object-cover"
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
             style={{ viewTransitionName: `card-img-${property._id}` } as React.CSSProperties}
           />
 
-          {/* Badges */}
-          <div className="absolute top-3 left-3 flex items-center gap-1.5">
-            {property.host?.isVerified && (
-              <span className="px-2 py-1 rounded-md bg-bt-success text-white text-[10px] font-bold uppercase tracking-wide flex items-center gap-1 shadow-sm">
-                <BadgeCheck className="w-3 h-3" />
-                Verified
-              </span>
-            )}
-            {property.isPromoted && (
-              <span className="px-2 py-1 rounded-md bg-bt-secondary text-white text-[10px] font-bold uppercase tracking-wide shadow-sm">
-                Featured
-              </span>
-            )}
-          </div>
+          {/* Top-left badge */}
+          {(property.host?.isVerified || property.isPromoted) && (
+            <div className="absolute top-2.5 left-2.5 flex gap-1">
+              {property.isPromoted && (
+                <span className="px-2 py-0.5 rounded-md bg-[#FB6514] text-white text-[10px] font-bold">
+                  Featured
+                </span>
+              )}
+              {property.host?.isVerified && (
+                <span className="px-2 py-0.5 rounded-md bg-bt-success text-white text-[10px] font-bold flex items-center gap-1">
+                  <BadgeCheck className="w-2.5 h-2.5" /> Verified
+                </span>
+              )}
+            </div>
+          )}
 
-          {/* Heart — wired to localStorage */}
+          {/* Heart — top right */}
           <button
             onClick={handleHeart}
-            className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-md hover:scale-110 active:scale-95 transition-transform"
-            aria-label={liked ? "Remove from saved" : "Save property"}
+            className="absolute top-2.5 right-2.5 w-8 h-8 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center shadow-sm active:scale-90 transition-transform"
+            aria-label={liked ? "Remove from saved" : "Save"}
           >
-            <Heart
-              className={cn(
-                "w-4 h-4 transition-all",
-                liked ? "fill-red-500 text-red-500" : "text-neutral-500"
-              )}
-            />
+            <Heart className={cn("w-[15px] h-[15px]", liked ? "fill-red-500 text-red-500" : "text-neutral-500")} />
           </button>
 
-          {/* Carousel */}
+          {/* Dot indicators — only when multiple photos */}
           {property.photos.length > 1 && (
-            <>
-              <button
-                onClick={(e) => { e.preventDefault(); setImgIdx(imgIdx > 0 ? imgIdx - 1 : property.photos.length - 1); }}
-                className="absolute left-2.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-white/95 flex items-center justify-center shadow opacity-0 group-hover:opacity-100 group-active:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity duration-200"
-              >
-                <ChevronLeft className="w-3.5 h-3.5 text-neutral-700" />
-              </button>
-              <button
-                onClick={(e) => { e.preventDefault(); setImgIdx(imgIdx < property.photos.length - 1 ? imgIdx + 1 : 0); }}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-white/95 flex items-center justify-center shadow opacity-0 group-hover:opacity-100 group-active:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity duration-200"
-              >
-                <ChevronRight className="w-3.5 h-3.5 text-neutral-700" />
-              </button>
-              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1">
-                {property.photos.slice(0, 5).map((_, i) => (
-                  <span key={i} className={cn("h-1.5 rounded-full transition-all duration-200", i === imgIdx ? "bg-white w-4" : "bg-white/50 w-1.5")} />
-                ))}
-              </div>
-            </>
+            <div className="absolute bottom-2.5 left-1/2 -translate-x-1/2 flex gap-1">
+              {property.photos.slice(0, 5).map((_, i) => (
+                <span
+                  key={i}
+                  className={cn("rounded-full transition-all duration-200", i === imgIdx ? "bg-white w-4 h-1.5" : "bg-white/50 w-1.5 h-1.5")}
+                />
+              ))}
+            </div>
           )}
         </div>
 
-        {/* Content */}
-        <div className="p-4">
-          <div className="flex items-baseline justify-between gap-2">
-            <p className="text-[17px] font-bold text-neutral-900">
-              &#8358;{property.price.toLocaleString()}
-              <span className="text-[13px] text-neutral-400 font-normal ml-0.5">/yr</span>
-            </p>
-            {!!property.rating && (
-              <span className="flex items-center gap-1 text-[13px] text-neutral-600">
-                <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                {property.rating.toFixed(1)}
-                <span className="text-neutral-300">({property.reviewCount})</span>
-              </span>
-            )}
-          </div>
-          <div className="flex items-center gap-2 mt-2 text-[13px] text-neutral-600">
-            <span className="flex items-center gap-1">
-              <Bed className="w-3.5 h-3.5 text-neutral-400" />
-              {property.bedrooms} bed
-            </span>
-            <span className="text-neutral-300">&bull;</span>
-            <span className="flex items-center gap-1">
-              <Bath className="w-3.5 h-3.5 text-neutral-400" />
-              {property.bathrooms} bath
-            </span>
-            <span className="text-neutral-300">&bull;</span>
-            <span>{typeLabel}</span>
-          </div>
-          <p className="text-[13px] text-neutral-500 mt-1.5 truncate">
-            {property.lga}, {property.state}
+        {/* ── Content ── */}
+        <div className="p-3.5">
+          {/* Price — large and bold, primary action */}
+          <p className="text-[18px] font-bold text-neutral-900 leading-none">
+            &#8358;{property.price.toLocaleString()}
+            <span className="text-[12px] font-normal text-neutral-400 ml-1">/yr</span>
           </p>
-          {!!property.views && (
-            <div className="flex items-center gap-1 mt-2 text-[11px] text-neutral-400">
-              <Eye className="w-3 h-3" />
-              {property.views.toLocaleString()} views
-            </div>
-          )}
+
+          {/* Beds · Baths · Type — compact inline row */}
+          <p className="text-[12.5px] text-neutral-600 mt-1.5 font-medium">
+            {property.bedrooms} bds
+            <span className="text-neutral-300 mx-1.5">|</span>
+            {property.bathrooms} ba
+            <span className="text-neutral-300 mx-1.5">|</span>
+            {typeLabel}
+          </p>
+
+          {/* Address */}
+          <p className="text-[12px] text-neutral-500 mt-1 truncate">
+            {property.address ? `${property.address}, ` : ""}{property.lga}, {property.state}
+          </p>
+
+          {/* Agent name — subtle, like Zillow's brokerage line */}
+          <p className="text-[10.5px] text-neutral-400 uppercase tracking-wide font-medium mt-2 truncate">
+            {agentName}
+          </p>
         </div>
       </Link>
     </div>
