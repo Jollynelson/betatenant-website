@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Share, Plus } from "lucide-react";
@@ -14,37 +15,47 @@ const DISMISS_KEY = "BT_INSTALL_DISMISSED";
 const DISMISS_DAYS = 14;
 
 export function PWAInstallPrompt() {
+  const pathname = usePathname();
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [show, setShow] = useState(false);
   const [platform, setPlatform] = useState<"android" | "ios" | null>(null);
 
   useEffect(() => {
+    // Never show on onboarding or auth pages
+    if (["/onboarding", "/auth"].some((p) => pathname.startsWith(p))) return;
+
     // Already installed as PWA
     if (window.matchMedia("(display-mode: standalone)").matches) return;
     if ((navigator as any).standalone === true) return;
 
-    // Dismissed recently
+    // Check dismiss cooldown
     const dismissed = localStorage.getItem(DISMISS_KEY);
     if (dismissed && Date.now() - Number(dismissed) < DISMISS_DAYS * 86400_000) return;
 
     const ua = navigator.userAgent.toLowerCase();
     const isIOS = /iphone|ipad|ipod/.test(ua) && !(ua.includes("crios") || ua.includes("fxios"));
 
+    let timer: ReturnType<typeof setTimeout>;
+
     if (isIOS) {
       setPlatform("ios");
-      setTimeout(() => setShow(true), 5000);
+      // Show after user has been on the page 8s — enough time to actually see the content
+      timer = setTimeout(() => setShow(true), 8000);
     }
 
     const handler = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
       setPlatform("android");
-      setTimeout(() => setShow(true), 4000);
+      timer = setTimeout(() => setShow(true), 5000);
     };
 
     window.addEventListener("beforeinstallprompt", handler);
-    return () => window.removeEventListener("beforeinstallprompt", handler);
-  }, []);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("beforeinstallprompt", handler);
+    };
+  }, [pathname]);
 
   const handleInstall = async () => {
     if (!deferredPrompt) return;
@@ -84,13 +95,13 @@ export function PWAInstallPrompt() {
                 </p>
                 <p className="text-white/60 text-xs mt-0.5 leading-relaxed">
                   {platform === "ios"
-                    ? "Get the full app — faster, offline-ready, no App Store needed."
-                    : "Install for faster access, offline browsing, and push alerts."}
+                    ? "Get the full app — faster, works offline, no App Store."
+                    : "Faster access, offline browsing, and push alerts."}
                 </p>
               </div>
               <button
                 onClick={handleDismiss}
-                className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center shrink-0 active:bg-white/20 transition-colors"
+                className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center shrink-0"
                 aria-label="Dismiss"
               >
                 <X className="w-3.5 h-3.5 text-white/60" />

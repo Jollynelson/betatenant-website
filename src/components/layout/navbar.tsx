@@ -79,10 +79,10 @@ function useNotifications(user: AuthUser) {
       }
     }
 
-    fetch();
-    // Poll every 60 s while page is open
+    // Delay first fetch by 3s so it doesn't compete with page load
+    const initial = setTimeout(fetch, 3000);
     const interval = setInterval(fetch, 60_000);
-    return () => { cancelled = true; clearInterval(interval); };
+    return () => { cancelled = true; clearTimeout(initial); clearInterval(interval); };
   }, [user]);
 
   return { count, items };

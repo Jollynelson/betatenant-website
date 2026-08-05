@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { motion } from "framer-motion";
 import {
   Heart, MapPin, Bed, Bath, Eye, Star,
   ChevronLeft, ChevronRight, BadgeCheck,
@@ -77,13 +76,7 @@ export function PropertyCard({ property, variant = "default", onRemove }: Proper
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 16 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-40px" }}
-      transition={{ duration: 0.35 }}
-      className="group w-full"
-    >
+    <div className="group w-full">
       <Link
         href={`/property/${property._id}`}
         className="block rounded-xl overflow-hidden bg-white border border-neutral-100 hover:shadow-[0_12px_40px_-12px_rgba(0,0,0,0.12)] transition-all duration-300 hover:-translate-y-0.5"
@@ -190,6 +183,6 @@ export function PropertyCard({ property, variant = "default", onRemove }: Proper
           )}
         </div>
       </Link>
-    </motion.div>
+    </div>
   );
 }
