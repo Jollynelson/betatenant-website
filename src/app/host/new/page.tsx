@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useEffect, useCallback, ChangeEvent } from "react";
+import { useState, useEffect, useCallback, useRef, ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
 import { AuthGuard } from "@/components/auth-guard";
 import { api } from "@/lib/api";
 import { locationData } from "@/lib/locations";
 import {
   Bath, Bed, Tv, Upload, X, Loader2, Check, ChevronRight,
+  Video, Play, AlertCircle, RefreshCw,
 } from "lucide-react";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -15,6 +16,8 @@ interface FileEntry {
   url: string;
   file: File | null;
   fileName: string;
+  progress?: number;  // 0-100, undefined = done
+  error?: string;
 }
 
 interface Amenity {
@@ -56,21 +59,84 @@ function safeParse(val: string): number {
   return parseFloat(cleaned) || 0;
 }
 
-// ── Upload helper ─────────────────────────────────────────────────────────────
-async function uploadFiles(files: File[]): Promise<string[]> {
-  if (files.length === 0) return [];
-  const token = typeof window !== "undefined" ? localStorage.getItem("BT_TOKEN") : null;
-  const formData = new FormData();
-  files.forEach((f) => formData.append("files", f));
-  const res = await fetch("/api/bt/v1/user/aws-upload", {
-    method: "POST",
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
-    body: formData,
+// ── Upload helpers ────────────────────────────────────────────────────────────
+
+// Client-side image compression before upload (reduces size for slow networks)
+async function compressImage(file: File, maxSizePx = 1920, quality = 0.82): Promise<File> {
+  if (!file.type.startsWith("image/")) return file;
+  return new Promise((resolve) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const { width, height } = img;
+      const scale = Math.min(1, maxSizePx / Math.max(width, height));
+      const canvas = document.createElement("canvas");
+      canvas.width  = Math.round(width  * scale);
+      canvas.height = Math.round(height * scale);
+      const ctx = canvas.getContext("2d")!;
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      canvas.toBlob(
+        (blob) => {
+          if (!blob || blob.size >= file.size) { resolve(file); return; }
+          resolve(new File([blob], file.name, { type: "image/jpeg" }));
+        },
+        "image/jpeg",
+        quality
+      );
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); resolve(file); };
+    img.src = url;
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.message || "Upload failed");
-  return data.data as string[];
 }
+
+// Upload a single file with XHR so we get progress events, with retry
+async function uploadSingleFile(
+  file: File,
+  onProgress: (pct: number) => void,
+  retries = 2
+): Promise<string> {
+  const token = localStorage.getItem("BT_TOKEN");
+  const apiBase = window.location.hostname === "localhost"
+    ? "/api/bt" : "https://api.betatenant.com";
+
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const url = await new Promise<string>((resolve, reject) => {
+        const formData = new FormData();
+        formData.append("files", file);
+        const xhr = new XMLHttpRequest();
+        xhr.open("POST", `${apiBase}/v1/user/aws-upload`);
+        if (token) xhr.setRequestHeader("Authorization", `Bearer ${token}`);
+        xhr.upload.onprogress = (e) => {
+          if (e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 100));
+        };
+        xhr.onload = () => {
+          try {
+            const data = JSON.parse(xhr.responseText);
+            if (xhr.status >= 200 && xhr.status < 300 && data.data?.[0]) {
+              resolve(data.data[0]);
+            } else {
+              reject(new Error(data.message || `Upload failed (${xhr.status})`));
+            }
+          } catch { reject(new Error("Invalid server response")); }
+        };
+        xhr.onerror = () => reject(new Error("Network error — check your connection"));
+        xhr.ontimeout = () => reject(new Error("Upload timed out"));
+        xhr.timeout = 120_000; // 2 min timeout per file
+        xhr.send(formData);
+      });
+      return url;
+    } catch (err) {
+      if (attempt === retries) throw err;
+      await new Promise((r) => setTimeout(r, 1500 * (attempt + 1))); // backoff
+    }
+  }
+  throw new Error("Upload failed after retries");
+}
+
+// Draft persistence key
+const DRAFT_KEY = "BT_LISTING_DRAFT";
 
 // ── Step 1: Create Listing ────────────────────────────────────────────────────
 function StepCreate({
@@ -92,12 +158,16 @@ function StepCreate({
   const [houseName, setHouseName] = useState("");
   const [houseDescription, setHouseDescription] = useState("");
 
+  const [videoURLs, setVideoURLs] = useState<FileEntry[]>([]);
+
   const [amenityList, setAmenityList] = useState<Amenity[]>([]);
   const [houseRuleList, setHouseRuleList] = useState<HouseRule[]>([]);
-  const [areImagesUploading, setImagesUploading] = useState(false);
   const [isImageDeleting, setImageDeleting] = useState(false);
   const [isCreating, setCreating] = useState(false);
   const [error, setError] = useState("");
+  const uploadingCount = photoURLs.filter((p) => p.progress !== undefined).length
+    + videoURLs.filter((v) => v.progress !== undefined).length;
+  const hasUploadErrors = photoURLs.some((p) => p.error) || videoURLs.some((v) => v.error);
 
   // fetch amenities + house rules
   useEffect(() => {
@@ -105,23 +175,109 @@ function StepCreate({
     api.get<any>("/v1/user/houserules/rent").then((d) => setHouseRuleList(d.houseRules ?? [])).catch(() => {});
   }, []);
 
+  // ── Draft: save to localStorage on every field change ──────────────────────
+  useEffect(() => {
+    const draft = {
+      apartmentType, roomCount, bathroomCount, livingRoomCount,
+      streetAddress, closeLandmark, propertyState, propertyLGA,
+      amenities, houseRules,
+      photoURLs: photoURLs.filter((p) => p.progress === undefined && !p.error).map((p) => ({ url: p.url, fileName: p.fileName, id: p.id })),
+      videoURLs: videoURLs.filter((v) => v.progress === undefined && !v.error).map((v) => ({ url: v.url, fileName: v.fileName, id: v.id })),
+      houseName, houseDescription,
+    };
+    localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+  }, [apartmentType, roomCount, bathroomCount, livingRoomCount, streetAddress, closeLandmark,
+      propertyState, propertyLGA, amenities, houseRules, photoURLs, videoURLs, houseName, houseDescription]);
+
+  // ── Draft: restore on mount ─────────────────────────────────────────────────
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(DRAFT_KEY);
+      if (!raw) return;
+      const d = JSON.parse(raw);
+      if (d.apartmentType)   setApartmentType(d.apartmentType);
+      if (d.roomCount)       setRoomCount(d.roomCount);
+      if (d.bathroomCount)   setBathroomCount(d.bathroomCount);
+      if (d.livingRoomCount) setLivingRoomCount(d.livingRoomCount);
+      if (d.streetAddress)   setStreetAddress(d.streetAddress);
+      if (d.closeLandmark)   setCloseLandmark(d.closeLandmark);
+      if (d.propertyState)   setPropertyState(d.propertyState);
+      if (d.propertyLGA)     setPropertyLGA(d.propertyLGA);
+      if (d.houseName)       setHouseName(d.houseName);
+      if (d.houseDescription) setHouseDescription(d.houseDescription);
+      if (Array.isArray(d.amenities))  setAmenities(d.amenities);
+      if (Array.isArray(d.houseRules)) setHouseRules(d.houseRules);
+      if (Array.isArray(d.photoURLs) && d.photoURLs.length > 0)
+        setPhotoURLs(d.photoURLs.map((p: any) => ({ ...p, file: null })));
+      if (Array.isArray(d.videoURLs) && d.videoURLs.length > 0)
+        setVideoURLs(d.videoURLs.map((v: any) => ({ ...v, file: null })));
+    } catch {}
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const handleImageChange = async (e: ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files?.length) return;
-    setImagesUploading(true);
     setError("");
+    const files = Array.from(e.target.files).filter((f) => !photoURLs.find((p) => p.fileName === f.name));
+    if (!files.length) return;
+
+    // Add placeholder entries with progress=0
+    const placeholders: FileEntry[] = files.map((f) => ({
+      id: makeId(), file: f, fileName: f.name, url: "", progress: 0,
+    }));
+    setPhotoURLs((prev) => [...prev, ...placeholders]);
+    e.target.value = "";
+
+    // Upload each file individually with progress tracking
+    for (const placeholder of placeholders) {
+      try {
+        const compressed = await compressImage(placeholder.file!);
+        const url = await uploadSingleFile(compressed, (pct) => {
+          setPhotoURLs((prev) => prev.map((p) => p.id === placeholder.id ? { ...p, progress: pct } : p));
+        });
+        setPhotoURLs((prev) => prev.map((p) => p.id === placeholder.id ? { ...p, url, progress: undefined, error: undefined } : p));
+      } catch (err: any) {
+        setPhotoURLs((prev) => prev.map((p) => p.id === placeholder.id ? { ...p, progress: undefined, error: err.message || "Upload failed" } : p));
+      }
+    }
+  };
+
+  const handleVideoChange = async (e: ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files?.length) return;
+    setError("");
+    const files = Array.from(e.target.files).filter((f) => !videoURLs.find((v) => v.fileName === f.name));
+    if (!files.length) return;
+
+    const placeholders: FileEntry[] = files.map((f) => ({
+      id: makeId(), file: f, fileName: f.name, url: "", progress: 0,
+    }));
+    setVideoURLs((prev) => [...prev, ...placeholders]);
+    e.target.value = "";
+
+    for (const placeholder of placeholders) {
+      try {
+        const url = await uploadSingleFile(placeholder.file!, (pct) => {
+          setVideoURLs((prev) => prev.map((v) => v.id === placeholder.id ? { ...v, progress: pct } : v));
+        });
+        setVideoURLs((prev) => prev.map((v) => v.id === placeholder.id ? { ...v, url, progress: undefined, error: undefined } : v));
+      } catch (err: any) {
+        setVideoURLs((prev) => prev.map((v) => v.id === placeholder.id ? { ...v, progress: undefined, error: err.message || "Upload failed" } : v));
+      }
+    }
+  };
+
+  const retryUpload = async (entry: FileEntry, type: "photo" | "video") => {
+    if (!entry.file) return;
+    const setter = type === "photo" ? setPhotoURLs : setVideoURLs;
+    setter((prev) => prev.map((p) => p.id === entry.id ? { ...p, error: undefined, progress: 0 } : p));
     try {
-      const files = Array.from(e.target.files);
-      const newFiles = files.filter((f) => !photoURLs.find((p) => p.fileName === f.name));
-      const urls = await uploadFiles(newFiles);
-      const entries: FileEntry[] = newFiles.map((f, i) => ({
-        id: makeId(), file: f, fileName: f.name, url: urls[i],
-      }));
-      setPhotoURLs((prev) => [...prev, ...entries]);
-    } catch {
-      setError("Failed to upload image(s). Please try again.");
-    } finally {
-      setImagesUploading(false);
-      e.target.value = "";
+      const file = type === "photo" ? await compressImage(entry.file) : entry.file;
+      const url = await uploadSingleFile(file, (pct) => {
+        setter((prev) => prev.map((p) => p.id === entry.id ? { ...p, progress: pct } : p));
+      });
+      setter((prev) => prev.map((p) => p.id === entry.id ? { ...p, url, progress: undefined, error: undefined } : p));
+    } catch (err: any) {
+      setter((prev) => prev.map((p) => p.id === entry.id ? { ...p, progress: undefined, error: err.message } : p));
     }
   };
 
@@ -160,7 +316,12 @@ function StepCreate({
     if (!propertyLGA) return setError("Please select a town/LGA.");
     if (!houseName) return setError("House name is required.");
     if (!houseDescription) return setError("Description is required.");
-    if (photoURLs.length < 5) return setError("Please upload at least 5 photos.");
+    const readyPhotos = photoURLs.filter((p) => p.url && !p.error && p.progress === undefined);
+    if (uploadingCount > 0) return setError("Please wait for all uploads to finish.");
+    if (hasUploadErrors) return setError("Some files failed to upload. Retry or remove them.");
+    if (readyPhotos.length < 5) return setError("Please upload at least 5 photos.");
+
+    const readyVideos = videoURLs.filter((v) => v.url && !v.error && v.progress === undefined);
 
     const form = {
       rentType: "rent",
@@ -176,7 +337,8 @@ function StepCreate({
       propertyState,
       amenities,
       houseRules,
-      photoURLs: photoURLs.map((p) => p.url),
+      photoURLs: readyPhotos.map((p) => p.url),
+      videoURLs: readyVideos.map((v) => v.url),
       houseName,
       houseDescription,
     };
@@ -186,8 +348,8 @@ function StepCreate({
       const res = await api.post<any>("/v1/landlordandagent/create-listing", form);
       const propertyDetails = res?.propertyDetails ?? res;
       const propertyId: string = res?.propertyId ?? propertyDetails?._id ?? "";
-      // Store for pricing step
       sessionStorage.setItem("propertyToEdit", JSON.stringify(propertyDetails));
+      localStorage.removeItem(DRAFT_KEY); // clear draft on success
       onNext(propertyId, propertyDetails);
     } catch (err: any) {
       setError(err.message || "Failed to create listing. Please try again.");
@@ -406,49 +568,129 @@ function StepCreate({
       <section className="border-b border-neutral-200 pb-10">
         <div className="flex flex-wrap gap-8">
           <div className="basis-64 shrink-0">
-            <h2 className="font-semibold text-neutral-900">Photo upload</h2>
-            <p className="text-sm text-neutral-500 mt-1">Show us what your listing looks like</p>
+            <h2 className="font-semibold text-neutral-900">Photos</h2>
+            <p className="text-sm text-neutral-500 mt-1">At least 5 photos required. Images are auto-compressed for fast upload.</p>
           </div>
           <div className="flex-1 min-w-64">
-            <p className="text-sm font-medium text-neutral-700 mb-3">
-              Upload at least 5 photos <span className="text-red-500">*</span>
-            </p>
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-sm font-medium text-neutral-700">
+                Photos ({photoURLs.filter(p => p.url && !p.error).length}/5 minimum)
+                <span className="text-red-500"> *</span>
+              </p>
+              {isImageDeleting && <span className="text-xs text-neutral-400 flex items-center gap-1"><Loader2 className="w-3 h-3 animate-spin" /> Removing…</span>}
+            </div>
             <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-2">
+              {/* Upload trigger */}
               <label
                 htmlFor="photo-upload"
-                className="aspect-square rounded-xl border-2 border-dashed border-neutral-200 hover:border-bt-primary/50 flex flex-col items-center justify-center gap-1 cursor-pointer bg-neutral-50 hover:bg-bt-primary/3 transition-colors"
+                className="aspect-square rounded-xl border-2 border-dashed border-neutral-200 hover:border-bt-primary/50 flex flex-col items-center justify-center gap-1 cursor-pointer bg-neutral-50 hover:bg-bt-primary/4 transition-colors"
               >
                 <Upload className="w-5 h-5 text-neutral-400" />
-                <span className="text-xs text-neutral-500 text-center leading-tight px-1">Click to upload</span>
+                <span className="text-xs text-neutral-500 text-center leading-tight px-1">Add photos</span>
               </label>
-              <input
-                type="file"
-                id="photo-upload"
-                accept="image/*"
-                multiple
-                className="hidden"
-                onChange={handleImageChange}
-              />
-              {photoURLs.map((p, i) => (
-                <div key={p.id} className="aspect-square relative rounded-xl overflow-hidden">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={p.url} alt={`Upload ${i + 1}`} className="w-full h-full object-cover" />
-                  <button
-                    type="button"
-                    onClick={() => removeImage(p.id)}
-                    className="absolute top-1.5 right-1.5 w-8 h-8 rounded-full bg-black/60 flex items-center justify-center hover:bg-black/80"
-                  >
-                    <X className="w-3 h-3 text-white" />
-                  </button>
+              <input type="file" id="photo-upload" accept="image/*" multiple className="hidden" onChange={handleImageChange} />
+
+              {photoURLs.map((p) => (
+                <div key={p.id} className="aspect-square relative rounded-xl overflow-hidden bg-neutral-100">
+                  {/* Uploaded image */}
+                  {p.url && !p.error && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={p.url} alt="Upload" className="w-full h-full object-cover" />
+                  )}
+
+                  {/* Progress overlay */}
+                  {p.progress !== undefined && (
+                    <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center gap-1.5 p-2">
+                      <div className="w-full bg-white/20 rounded-full h-1.5">
+                        <div className="bg-white h-1.5 rounded-full transition-all duration-300" style={{ width: `${p.progress}%` }} />
+                      </div>
+                      <span className="text-white text-[10px] font-medium">{p.progress}%</span>
+                    </div>
+                  )}
+
+                  {/* Error overlay with retry */}
+                  {p.error && (
+                    <div className="absolute inset-0 bg-red-500/80 flex flex-col items-center justify-center gap-1 p-2">
+                      <AlertCircle className="w-4 h-4 text-white" />
+                      <span className="text-white text-[9px] text-center leading-tight">{p.error}</span>
+                      {p.file && (
+                        <button type="button" onClick={() => retryUpload(p, "photo")} className="mt-1 flex items-center gap-1 text-[10px] text-white bg-white/20 rounded px-1.5 py-0.5">
+                          <RefreshCw className="w-3 h-3" /> Retry
+                        </button>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Remove button (only when not uploading) */}
+                  {p.progress === undefined && !p.error && (
+                    <button type="button" onClick={() => removeImage(p.id)} className="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/60 flex items-center justify-center hover:bg-black/80">
+                      <X className="w-3 h-3 text-white" />
+                    </button>
+                  )}
                 </div>
               ))}
             </div>
-            {(areImagesUploading || isImageDeleting) && (
-              <div className="flex items-center gap-2 mt-2 text-sm text-neutral-500">
-                <Loader2 className="w-4 h-4 animate-spin" />
-                {areImagesUploading ? "Uploading..." : "Removing..."}
+            <p className="text-xs text-neutral-400 mt-2">Photos are automatically compressed. Supports JPG, PNG, HEIC.</p>
+          </div>
+        </div>
+      </section>
+
+      {/* Video Upload */}
+      <section className="border-b border-neutral-200 pb-10">
+        <div className="flex flex-wrap gap-8">
+          <div className="basis-64 shrink-0">
+            <h2 className="font-semibold text-neutral-900">Video <span className="text-neutral-400 font-normal text-sm">(optional)</span></h2>
+            <p className="text-sm text-neutral-500 mt-1">A short walkthrough video greatly increases interest. Max 1 video.</p>
+          </div>
+          <div className="flex-1 min-w-64">
+            {videoURLs.length === 0 ? (
+              <label
+                htmlFor="video-upload"
+                className="flex flex-col items-center justify-center gap-3 py-8 rounded-xl border-2 border-dashed border-neutral-200 hover:border-bt-primary/40 cursor-pointer bg-neutral-50 hover:bg-bt-primary/4 transition-colors"
+              >
+                <div className="w-12 h-12 rounded-full bg-bt-primary/8 flex items-center justify-center">
+                  <Video className="w-5 h-5 text-bt-primary" />
+                </div>
+                <div className="text-center">
+                  <p className="text-sm font-medium text-neutral-700">Upload a video tour</p>
+                  <p className="text-xs text-neutral-400 mt-0.5">MP4, MOV — up to 500MB</p>
+                </div>
+              </label>
+            ) : (
+              <div className="space-y-2">
+                {videoURLs.map((v) => (
+                  <div key={v.id} className="flex items-center gap-3 p-3 rounded-xl border border-neutral-200 bg-white">
+                    <div className="w-10 h-10 rounded-lg bg-bt-primary/8 flex items-center justify-center shrink-0">
+                      <Video className="w-5 h-5 text-bt-primary" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-neutral-800 truncate">{v.fileName}</p>
+                      {v.progress !== undefined && (
+                        <div className="mt-1.5">
+                          <div className="w-full bg-neutral-100 rounded-full h-1.5">
+                            <div className="bg-bt-primary h-1.5 rounded-full transition-all" style={{ width: `${v.progress}%` }} />
+                          </div>
+                          <span className="text-xs text-neutral-400">{v.progress}% — uploading…</span>
+                        </div>
+                      )}
+                      {v.error && (
+                        <p className="text-xs text-red-500 mt-0.5 flex items-center gap-1">
+                          <AlertCircle className="w-3 h-3" /> {v.error}
+                          {v.file && <button type="button" onClick={() => retryUpload(v, "video")} className="ml-1 underline">Retry</button>}
+                        </p>
+                      )}
+                      {!v.progress && !v.error && v.url && <p className="text-xs text-bt-success">✓ Uploaded</p>}
+                    </div>
+                    {v.progress === undefined && (
+                      <button type="button" onClick={() => setVideoURLs((prev) => prev.filter((x) => x.id !== v.id))} className="w-7 h-7 rounded-full bg-neutral-100 flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-colors">
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+                ))}
               </div>
             )}
+            <input type="file" id="video-upload" accept="video/*" className="hidden" onChange={handleVideoChange} />
           </div>
         </div>
       </section>

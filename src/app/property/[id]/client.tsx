@@ -10,6 +10,7 @@ import { useQuery } from "@tanstack/react-query";
 import {
   ArrowLeft, Heart, Share2, MapPin, Bed, Bath, Maximize2, Star,
   Shield, Check, ChevronLeft, ChevronRight, BadgeCheck, Eye, Clock, Phone, Mail, Lock,
+  Play, X, CircleX,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { isFavorited, toggleFavorite } from "@/lib/favorites";
@@ -58,6 +59,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
   const [currentImage, setCurrentImage] = useState(0);
   const [liked, setLiked] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>("overview");
+  const [videoOpen, setVideoOpen] = useState(false);
 
   const requireAuth = (action: () => void) => {
     if (!isLoggedIn) {
@@ -262,6 +264,21 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
             </div>
           </div>
 
+          {/* Video button — only shown when listing has a video */}
+          {property.videos && property.videos.length > 0 && (
+            <div className="px-5 mt-4">
+              <button
+                onClick={() => setVideoOpen(true)}
+                className="w-full flex items-center justify-center gap-2.5 py-3 rounded-xl bg-bt-primary/8 border border-bt-primary/20 text-bt-primary font-semibold text-sm hover:bg-bt-primary/12 active:scale-[0.98] transition-all"
+              >
+                <div className="w-7 h-7 rounded-full bg-bt-primary flex items-center justify-center">
+                  <Play className="w-3.5 h-3.5 text-white fill-white" />
+                </div>
+                Watch Property Video
+              </button>
+            </div>
+          )}
+
           {/* Tabs */}
           <div className="sticky top-0 z-20 bg-white border-b border-neutral-100 mt-4">
             <div className="flex overflow-x-auto no-scrollbar px-5">
@@ -441,7 +458,46 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
             </div>
           ))}
         </div>
+        {/* Video button under desktop gallery */}
+        {property.videos && property.videos.length > 0 && (
+          <div className="mt-4 flex items-center gap-3">
+            <button
+              onClick={() => setVideoOpen(true)}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-bt-primary/8 border border-bt-primary/20 text-bt-primary font-semibold text-sm hover:bg-bt-primary/12 transition-colors"
+            >
+              <Play className="w-4 h-4 fill-bt-primary" />
+              Watch Video Tour
+            </button>
+          </div>
+        )}
       </div>
+
+      {/* Video Modal */}
+      {videoOpen && property.videos && property.videos.length > 0 && (
+        <div
+          className="fixed inset-0 z-[200] bg-black/90 flex items-center justify-center p-4"
+          onClick={() => setVideoOpen(false)}
+        >
+          <button
+            onClick={() => setVideoOpen(false)}
+            className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors"
+            aria-label="Close video"
+          >
+            <CircleX className="w-5 h-5 text-white" />
+          </button>
+          <div className="w-full max-w-3xl" onClick={(e) => e.stopPropagation()}>
+            <video
+              controls
+              autoPlay
+              className="w-full rounded-2xl max-h-[80vh]"
+              src={property.videos[0]}
+            >
+              <source src={property.videos[0]} type="video/mp4" />
+              Your browser does not support video playback.
+            </video>
+          </div>
+        </div>
+      )}
 
       {/* Body — desktop only, mobile has its own bottom-sheet layout above */}
       <div className="hidden md:block max-w-[1360px] mx-auto px-5 lg:px-10 py-6 md:py-10">
