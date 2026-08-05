@@ -32,6 +32,11 @@ export function PWAInstallPrompt() {
     const dismissed = localStorage.getItem(DISMISS_KEY);
     if (dismissed && Date.now() - Number(dismissed) < DISMISS_DAYS * 86400_000) return;
 
+    // Engagement gate: track page views, only show after 3 unique pages visited
+    const views = Number(sessionStorage.getItem("BT_PAGE_VIEWS") || 0) + 1;
+    sessionStorage.setItem("BT_PAGE_VIEWS", String(views));
+    if (views < 3) return; // too early — user hasn't engaged yet
+
     const ua = navigator.userAgent.toLowerCase();
     const isIOS = /iphone|ipad|ipod/.test(ua) && !(ua.includes("crios") || ua.includes("fxios"));
 
@@ -39,15 +44,15 @@ export function PWAInstallPrompt() {
 
     if (isIOS) {
       setPlatform("ios");
-      // Show after user has been on the page 8s — enough time to actually see the content
-      timer = setTimeout(() => setShow(true), 8000);
+      // Show after 5s on 3rd+ page visit
+      timer = setTimeout(() => setShow(true), 5000);
     }
 
     const handler = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
       setPlatform("android");
-      timer = setTimeout(() => setShow(true), 5000);
+      timer = setTimeout(() => setShow(true), 3000);
     };
 
     window.addEventListener("beforeinstallprompt", handler);

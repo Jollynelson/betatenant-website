@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { setAppBadge } from "@/components/sw-register";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -74,8 +75,14 @@ function useNotifications(user: AuthUser) {
       }
 
       if (!cancelled) {
+        const total = notifications.reduce((n, item) => {
+          const m = item.label.match(/^(\d+)/);
+          return n + (m ? parseInt(m[1]) : 1);
+        }, 0);
         setCount(notifications.length);
         setItems(notifications);
+        // Update OS app badge (home screen icon badge)
+        setAppBadge(total);
       }
     }
 

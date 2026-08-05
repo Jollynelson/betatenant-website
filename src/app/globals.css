@@ -96,14 +96,18 @@
   * {
     @apply border-border outline-ring/50;
     -webkit-tap-highlight-color: transparent;
+    box-sizing: border-box;
   }
   html {
     font-family: "Satoshi", sans-serif;
     font-weight: 500;
-    scroll-behavior: smooth;
-    /* iOS overscroll color matches app theme */
+    /* NO global scroll-behavior: smooth — kills mobile perf, use per-element */
+    /* iOS overscroll color matches navy theme */
     background-color: #0A0876;
     overflow-y: scroll;
+    /* Prevent iOS font size inflation in landscape */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
   }
   body {
     @apply bg-background text-foreground antialiased;
@@ -111,27 +115,81 @@
     font-weight: 500;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    /* iOS PWA: prevent overscroll rubber-band showing white */
+    /* iOS PWA: prevent rubber-band bounce revealing navy background */
     background-color: #FFFFFF;
     overscroll-behavior-y: none;
-    /* Safe area padding for notch / home indicator */
+    /* Safe area insets for notch / Dynamic Island / home indicator */
     padding-left: env(safe-area-inset-left);
     padding-right: env(safe-area-inset-right);
+    /* Faster touch response */
+    touch-action: pan-y;
   }
-  /* Native-feeling scroll momentum */
-  .scroll-touch {
-    -webkit-overflow-scrolling: touch;
-    overflow-scrolling: touch;
+  /* Prevent long-press callout on images (feels more app-like) */
+  img, video {
+    -webkit-touch-callout: none;
+    user-select: none;
+    -webkit-user-drag: none;
   }
-  /* Prevent text selection on interactive tap elements */
-  button, a, [role="button"] {
+  /* Interactive elements: no tap delay, no text selection */
+  button, a, [role="button"], label {
     -webkit-user-select: none;
     user-select: none;
     touch-action: manipulation;
+    cursor: pointer;
   }
-  /* Smooth active state — only on non-animated elements */
-  button:active:not([data-framer]):not(.no-scale) {
-    transition: transform 80ms ease;
+  /* Inputs: allow text selection, proper font size to prevent iOS zoom */
+  input, textarea, select {
+    font-size: 16px; /* prevents iOS auto-zoom on focus */
+    touch-action: manipulation;
+  }
+  /* Focus-visible only for keyboard navigation — not touch */
+  *:focus:not(:focus-visible) {
+    outline: none;
+  }
+  /* Scrollable containers feel native */
+  .scroll-smooth { scroll-behavior: smooth; }
+  .scroll-touch { -webkit-overflow-scrolling: touch; }
+  .overscroll-contain { overscroll-behavior: contain; }
+}
+
+/* ── View Transitions API — native-feeling page navigation ──────────────────── */
+@keyframes slide-in-from-right {
+  from { transform: translateX(100%); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+@keyframes slide-out-to-left {
+  from { transform: translateX(0);     opacity: 1; }
+  to   { transform: translateX(-30%);  opacity: 0; }
+}
+@keyframes slide-in-from-left {
+  from { transform: translateX(-30%); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+@keyframes slide-out-to-right {
+  from { transform: translateX(0);    opacity: 1; }
+  to   { transform: translateX(100%); opacity: 0; }
+}
+
+/* Forward navigation (default) */
+::view-transition-old(root) {
+  animation: 220ms ease-out both slide-out-to-left;
+}
+::view-transition-new(root) {
+  animation: 220ms ease-out both slide-in-from-right;
+}
+
+/* Shared element: property card → detail page */
+::view-transition-old(card-image),
+::view-transition-new(card-image) {
+  animation-duration: 300ms;
+  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Reduce motion — respect user preference */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none;
   }
 }
 

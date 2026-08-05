@@ -48,6 +48,7 @@ export const metadata: Metadata = {
     "format-detection": "telephone=no",
     "msapplication-TileColor": "#0A0876",
     "msapplication-tap-highlight": "no",
+    "color-scheme": "light",
   },
 };
 
@@ -55,12 +56,18 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className="h-full antialiased">
       <head>
-        <link href="https://api.fontshare.com/v2/css?f[]=satoshi@500,700&display=swap" rel="stylesheet" />
+        {/* Font: preconnect first, then load non-blocking with fallback display */}
+        <link rel="preconnect" href="https://api.fontshare.com" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://api.fontshare.com" />
+        <link
+          href="https://api.fontshare.com/v2/css?f[]=satoshi@500,700&display=fallback"
+          rel="stylesheet"
+        />
+        {/* iOS PWA status bar */}
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
       </head>
-      <body
-        className="min-h-full flex flex-col"
-        style={{ WebkitTapHighlightColor: "transparent" } as React.CSSProperties}
-      >
+      <body className="min-h-full flex flex-col">
         <Providers>
           {children}
         </Providers>

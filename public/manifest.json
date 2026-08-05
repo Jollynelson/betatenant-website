@@ -2,18 +2,26 @@
   "name": "Beta Tenant",
   "short_name": "BetaTenant",
   "description": "Nigeria's most trusted property rental marketplace — find verified homes, connect with real agents.",
+  "id": "https://betatenant.com/?source=pwa",
   "start_url": "/?source=pwa",
+  "scope": "/",
   "display": "standalone",
   "display_override": ["standalone", "minimal-ui"],
   "background_color": "#0A0876",
   "theme_color": "#0A0876",
   "orientation": "portrait-primary",
-  "scope": "/",
-  "id": "betatenant-pwa",
   "lang": "en-NG",
   "dir": "ltr",
   "categories": ["lifestyle", "shopping", "utilities"],
   "prefer_related_applications": false,
+  "related_applications": [],
+  "launch_handler": {
+    "client_mode": ["navigate-existing", "auto"]
+  },
+  "handle_links": "preferred",
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
   "icons": [
     {
       "src": "/icons/icon-192.png",
@@ -28,22 +36,22 @@
       "purpose": "maskable"
     },
     {
+      "src": "/icons/icon-192-monochrome.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "monochrome"
+    },
+    {
       "src": "/icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icons/icon-512.png",
+      "src": "/icons/icon-512-maskable.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
-    },
-    {
-      "src": "/icons/icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any"
     },
     {
       "src": "/icons/apple-touch-icon.png",
@@ -52,37 +60,59 @@
       "purpose": "any"
     }
   ],
+  "screenshots": [
+    {
+      "src": "/screenshots/home-mobile.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Browse verified rental listings across Nigeria"
+    },
+    {
+      "src": "/screenshots/search-mobile.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Filter by price, location and property type"
+    },
+    {
+      "src": "/screenshots/property-mobile.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Detailed property view with agent contact"
+    }
+  ],
   "shortcuts": [
     {
       "name": "Browse Rentals",
       "short_name": "Browse",
       "description": "Search available rental properties",
       "url": "/properties?source=shortcut",
-      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+      "icons": [{ "src": "/icons/shortcut-browse.png", "sizes": "96x96", "type": "image/png" }]
     },
     {
       "name": "Messages",
       "short_name": "Messages",
       "description": "View your conversations",
       "url": "/messages?source=shortcut",
-      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+      "icons": [{ "src": "/icons/shortcut-messages.png", "sizes": "96x96", "type": "image/png" }]
     },
     {
       "name": "Saved Homes",
       "short_name": "Saved",
       "description": "Your saved properties",
       "url": "/saved?source=shortcut",
-      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+      "icons": [{ "src": "/icons/shortcut-saved.png", "sizes": "96x96", "type": "image/png" }]
     },
     {
       "name": "Find Agents",
       "short_name": "Agents",
       "description": "Search verified agents",
       "url": "/agents?source=shortcut",
-      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+      "icons": [{ "src": "/icons/shortcut-agents.png", "sizes": "96x96", "type": "image/png" }]
     }
   ],
-  "related_applications": [],
   "share_target": {
     "action": "/search",
     "method": "GET",
@@ -91,5 +121,11 @@
       "text": "q",
       "url": "q"
     }
-  }
+  },
+  "protocol_handlers": [
+    {
+      "protocol": "web+betatenant",
+      "url": "/property/%s"
+    }
+  ]
 }

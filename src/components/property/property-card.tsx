@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import {
   Heart, MapPin, Bed, Bath, Eye, Star,
   ChevronLeft, ChevronRight, BadgeCheck,
@@ -10,6 +11,16 @@ import {
 import { cn } from "@/lib/utils";
 import { isFavorited, toggleFavorite } from "@/lib/favorites";
 import type { Property } from "@/types";
+
+const APPT_LABELS: Record<string, string> = {
+  "single-room/shared-apartment": "Single Room",
+  "self-contained": "Self Contained",
+  "mini-flat/one-bedroom": "Mini Flat",
+  "two-bedroom": "2 Bedroom",
+  "three-bedroom": "3 Bedroom",
+  "four-bedroom": "4 Bedroom",
+  "big-family-house-4plus": "4+ Bedroom",
+};
 
 interface PropertyCardProps {
   property: Property;
@@ -20,8 +31,8 @@ interface PropertyCardProps {
 export function PropertyCard({ property, variant = "default", onRemove }: PropertyCardProps) {
   const [liked, setLiked] = useState(false);
   const [imgIdx, setImgIdx] = useState(0);
+  const router = useRouter();
 
-  // Hydrate from localStorage on mount
   useEffect(() => {
     setLiked(isFavorited(property._id));
   }, [property._id]);
@@ -32,6 +43,17 @@ export function PropertyCard({ property, variant = "default", onRemove }: Proper
     setLiked(nowLiked);
     if (!nowLiked && onRemove) onRemove(property._id);
   };
+
+  // View Transitions API — animates like native navigation
+  const handleNavigate = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    if (!("startViewTransition" in document)) return; // fallback: normal link
+    e.preventDefault();
+    (document as any).startViewTransition(() => {
+      router.push(`/property/${property._id}`);
+    });
+  };
+
+  const typeLabel = APPT_LABELS[property.apartmentType] || property.apartmentType;
 
   if (variant === "horizontal") {
     return (
@@ -79,7 +101,9 @@ export function PropertyCard({ property, variant = "default", onRemove }: Proper
     <div className="group w-full">
       <Link
         href={`/property/${property._id}`}
+        onClick={handleNavigate}
         className="block rounded-xl overflow-hidden bg-white border border-neutral-100 hover:shadow-[0_12px_40px_-12px_rgba(0,0,0,0.12)] transition-all duration-300 hover:-translate-y-0.5"
+        style={{ viewTransitionName: `card-${property._id}` } as React.CSSProperties}
       >
         {/* Image */}
         <div className="relative w-full aspect-[16/11] overflow-hidden bg-neutral-100">
@@ -89,6 +113,7 @@ export function PropertyCard({ property, variant = "default", onRemove }: Proper
             fill
             className="object-cover group-hover:scale-[1.02] transition-transform duration-700"
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+            style={{ viewTransitionName: `card-img-${property._id}` } as React.CSSProperties}
           />
 
           {/* Badges */}
@@ -170,7 +195,7 @@ export function PropertyCard({ property, variant = "default", onRemove }: Proper
               {property.bathrooms} bath
             </span>
             <span className="text-neutral-300">&bull;</span>
-            <span>{property.apartmentType}</span>
+            <span>{typeLabel}</span>
           </div>
           <p className="text-[13px] text-neutral-500 mt-1.5 truncate">
             {property.lga}, {property.state}
