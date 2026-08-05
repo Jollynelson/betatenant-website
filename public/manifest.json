@@ -1,39 +1,89 @@
 {
   "name": "Beta Tenant",
   "short_name": "BetaTenant",
-  "description": "Nigeria's most trusted property rental marketplace",
-  "start_url": "/",
+  "description": "Nigeria's most trusted property rental marketplace — find verified homes, connect with real agents.",
+  "start_url": "/?source=pwa",
   "display": "standalone",
-  "background_color": "#ffffff",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "background_color": "#0A0876",
   "theme_color": "#0A0876",
   "orientation": "portrait-primary",
+  "scope": "/",
+  "id": "betatenant-pwa",
+  "lang": "en-NG",
+  "dir": "ltr",
+  "categories": ["lifestyle", "shopping", "utilities"],
+  "prefer_related_applications": false,
   "icons": [
     {
       "src": "/icons/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
     },
     {
       "src": "/icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
     }
   ],
-  "categories": ["lifestyle", "utilities"],
-  "lang": "en-NG",
-  "screenshots": [],
   "shortcuts": [
     {
       "name": "Browse Rentals",
-      "url": "/properties",
-      "description": "Browse available rental properties"
+      "short_name": "Browse",
+      "description": "Search available rental properties",
+      "url": "/properties?source=shortcut",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
     },
     {
       "name": "Messages",
-      "url": "/messages",
-      "description": "View your messages"
+      "short_name": "Messages",
+      "description": "View your conversations",
+      "url": "/messages?source=shortcut",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Saved Homes",
+      "short_name": "Saved",
+      "description": "Your saved properties",
+      "url": "/saved?source=shortcut",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Find Agents",
+      "short_name": "Agents",
+      "description": "Search verified agents",
+      "url": "/agents?source=shortcut",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
     }
-  ]
+  ],
+  "related_applications": [],
+  "share_target": {
+    "action": "/search",
+    "method": "GET",
+    "params": {
+      "title": "q",
+      "text": "q",
+      "url": "q"
+    }
+  }
 }
