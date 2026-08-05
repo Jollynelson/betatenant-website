@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -14,14 +15,18 @@ export function MobileNav() {
   const pathname = usePathname();
   const router = useRouter();
   const { token, user } = useAuthStore();
+  const [unread, setUnread] = useState(0);
 
   const role = user?.role ?? "user";
   const isAgentOrLandlord = role === "agent" || role === "landlord";
 
-  const unread =
-    typeof window !== "undefined"
-      ? Number(localStorage.getItem("BT_UNREAD_COUNT") || 0)
-      : 0;
+  useEffect(() => {
+    const update = () => setUnread(Number(localStorage.getItem("BT_UNREAD_COUNT") || 0));
+    update();
+    window.addEventListener("storage", update);
+    const interval = setInterval(update, 30_000);
+    return () => { window.removeEventListener("storage", update); clearInterval(interval); };
+  }, []);
 
   const handleProtectedNav = (href: string) => {
     if (!token) {
@@ -41,7 +46,7 @@ export function MobileNav() {
 
   // Tenants: Search, Saved, Messages, Profile
   const tenantItems: NavItem[] = [
-    { href: "/properties", icon: Search,        label: "Search" },
+    { href: "/search",     icon: Search,        label: "Search" },
     { href: "/saved",      icon: Heart,         label: "Saved",    protected: true },
     { href: "/messages",   icon: MessageCircle, label: "Messages", protected: true },
     { href: "/account",    icon: User,          label: "Profile",  protected: true },

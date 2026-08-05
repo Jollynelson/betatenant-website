@@ -8,6 +8,16 @@ import { PropertyCard } from "@/components/property/property-card";
 import { getFavorites } from "@/lib/favorites";
 import { propertyApi } from "@/lib/api";
 
+async function fetchInChunks<T>(items: T[], fn: (item: T) => Promise<any>, chunkSize = 8) {
+  const results: PromiseSettledResult<any>[] = [];
+  for (let i = 0; i < items.length; i += chunkSize) {
+    const chunk = items.slice(i, i + chunkSize);
+    const chunkResults = await Promise.allSettled(chunk.map(fn));
+    results.push(...chunkResults);
+  }
+  return results;
+}
+
 function SavedContent() {
   const [properties, setProperties] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -15,7 +25,7 @@ function SavedContent() {
   useEffect(() => {
     const ids = getFavorites();
     if (ids.length === 0) { setLoading(false); return; }
-    Promise.allSettled(ids.map((id) => propertyApi.get(id).then((r) => r.property)))
+    fetchInChunks(ids, (id) => propertyApi.get(id).then((r) => r.property))
       .then((results) => {
         setProperties(
           results

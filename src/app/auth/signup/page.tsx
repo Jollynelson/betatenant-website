@@ -7,7 +7,7 @@ import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { Eye, EyeOff, Lock, Mail, User, Home, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { authApi } from "@/lib/api";
+import { authApi, api } from "@/lib/api";
 import toast from "react-hot-toast";
 
 type Step = "role" | "form" | "verify";
@@ -88,7 +88,7 @@ export default function SignupPage() {
     if (!validate()) return;
     setLoading(true);
     try {
-      const res = await authApi.register(form.firstName, form.lastName, form.email, form.password);
+      const res = await authApi.register(form.firstName, form.lastName, form.email, form.password, role);
       if (res.successful) {
         setVerificationId(res.verificationId);
         localStorage.setItem("verifyVTK", res.verificationId);
@@ -123,11 +123,8 @@ export default function SignupPage() {
   const handleResend = async () => {
     setResendLoading(true);
     try {
-      await fetch("/api/bt/v1/auth/resend-otp", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: form.email }),
-      });
+      const r = await api.post<any>("/v1/auth/resend-otp", { email: form.email || localStorage.getItem("usrEml") || "" });
+      if (r.verificationToken) setVerificationId(r.verificationToken);
       toast.success("Code resent to your email");
     } catch {
       toast.error("Failed to resend. Try again.");
@@ -343,7 +340,7 @@ export default function SignupPage() {
                     type="text"
                     placeholder="000-000"
                     value={otp}
-                    onChange={(e) => setOtp(e.target.value)}
+                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
                     maxLength={6}
                     className={cn(inputCls(false), "pl-11 text-center text-xl tracking-[0.3em] font-bold")}
                   />

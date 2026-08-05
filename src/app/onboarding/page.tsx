@@ -87,9 +87,9 @@ export default function OnboardingPage() {
     finish();
   };
 
-  const finish = () => {
+  const finish = (redirectTo = "/") => {
     if (typeof window !== "undefined") localStorage.setItem("BT_ONBOARDED", "1");
-    router.replace("/");
+    router.replace(redirectTo);
   };
 
   const handleDragEnd = (_: any, info: { offset: { x: number } }) => {
@@ -195,26 +195,20 @@ export default function OnboardingPage() {
           {isLast ? (
             <div className="space-y-3">
               <button
-                onClick={() => {
-                  finish();
-                  router.push("/auth/signup");
-                }}
+                onClick={() => finish("/auth/signup")}
                 className="w-full py-4 rounded-full bg-white text-bt-primary font-bold text-base flex items-center justify-center gap-2 shadow-[0_8px_24px_rgba(0,0,0,0.2)] active:scale-[0.98] transition-transform"
               >
                 Create Free Account
                 <ArrowRight className="w-5 h-5" />
               </button>
               <button
-                onClick={finish}
+                onClick={() => finish()}
                 className="w-full py-4 rounded-full bg-white/15 text-white font-semibold text-base backdrop-blur-sm active:bg-white/25 transition-colors"
               >
                 Browse Without Account
               </button>
               <button
-                onClick={() => {
-                  finish();
-                  router.push("/auth/login");
-                }}
+                onClick={() => finish("/auth/login")}
                 className="w-full py-2 text-white/70 text-sm font-medium"
               >
                 Already have an account? <span className="text-white underline underline-offset-2">Sign in</span>

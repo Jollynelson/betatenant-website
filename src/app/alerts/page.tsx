@@ -82,13 +82,7 @@ function AlertsContent() {
   const handleDelete = async (id: string) => {
     setDeletingId(id);
     try {
-      await api.post(`/v1/user/alerts/${id}`, {});
-      // Use DELETE method via fetch directly
-      const token = localStorage.getItem("BT_TOKEN");
-      await fetch(`/api/bt/v1/user/alerts/${id}`, {
-        method: "DELETE",
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
+      await api.del(`/v1/user/alerts/${id}`);
       setAlerts((prev) => prev.filter((a) => a._id !== id));
       toast.success("Alert removed");
     } catch {

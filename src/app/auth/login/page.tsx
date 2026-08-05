@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
@@ -13,8 +13,13 @@ import toast from "react-hot-toast";
 
 type Step = "login" | "verify" | "forgot" | "reset";
 
-export default function LoginPage() {
+export default function LoginPageWrapper() {
+  return <Suspense><LoginPage /></Suspense>;
+}
+
+function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const setAuth = useAuthStore((s) => s.setAuth);
 
   const [step, setStep] = useState<Step>("login");
@@ -39,7 +44,8 @@ export default function LoginPage() {
       if (res.successful) {
         setAuth(res.token, res.userDetails);
         toast.success("Login successful!");
-        setTimeout(() => router.push("/"), 1500);
+        const from = searchParams.get("from") || "/";
+        setTimeout(() => router.push(from), 300);
       }
     } catch (err: any) {
       const msg = err.message || "";

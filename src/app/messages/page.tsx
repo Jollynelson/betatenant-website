@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { MessageCircle, Search, Loader2, Send } from "lucide-react";
+import toast from "react-hot-toast";
 import { AuthGuard } from "@/components/auth-guard";
 import { api } from "@/lib/api";
 import { useAuthStore } from "@/lib/auth-store";
@@ -20,11 +21,15 @@ function MessagesContent() {
   const [search, setSearch] = useState("");
 
   useEffect(() => {
-    api.get<any>("/v1/user/chats")
+    const chatEndpoint =
+      user?.role === "agent" || user?.role === "landlord"
+        ? "/v1/landlordandagent/chats"
+        : "/v1/user/chats";
+    api.get<any>(chatEndpoint)
       .then((r) => setChats(r.chats ?? r ?? []))
       .catch(() => setChats([]))
       .finally(() => setLoading(false));
-  }, []);
+  }, [user?.role]);
 
   const openChat = async (chat: any) => {
     setSelected(chat);
@@ -45,17 +50,23 @@ function MessagesContent() {
     e.preventDefault();
     if (!newMsg.trim() || !selected) return;
     setSending(true);
+    const text = newMsg.trim();
     const otherId = selected.userId?._id ?? selected.userId ?? selected._id;
     try {
-      await api.post("/v1/user/message", { to: otherId, message: newMsg.trim() });
-      setMessages((prev) => [...prev, {
-        _id: Date.now().toString(),
-        message: newMsg.trim(),
-        from: { _id: user?.userId },
-        createdAt: new Date().toISOString(),
-      }]);
+      await api.post("/v1/user/message", { to: otherId, message: text });
+      setMessages((prev) => [
+        ...prev,
+        {
+          _id: Date.now().toString(),
+          message: text,
+          from: { _id: user?.userId },
+          createdAt: new Date().toISOString(),
+        },
+      ]);
       setNewMsg("");
-    } catch { /* silent */ }
+    } catch {
+      toast.error("Message failed to send. Tap to retry.");
+    }
     setSending(false);
   };
 

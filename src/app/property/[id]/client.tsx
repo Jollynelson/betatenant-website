@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { use } from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -12,6 +12,7 @@ import {
   Shield, Check, ChevronLeft, ChevronRight, BadgeCheck, Eye, Clock, Phone, Mail, Lock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { isFavorited, toggleFavorite } from "@/lib/favorites";
 import { formatPriceFullNumber, AMENITY_ICONS, amenitySlugToKey } from "@/lib/constants";
 import { propertyApi } from "@/lib/api";
 import { useAuthStore } from "@/lib/auth-store";
@@ -65,10 +66,14 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
     staleTime: 1000 * 60 * 5,
   });
 
-  if (isLoading) return <PropertySkeleton />;
-
   const property = data?.property;
   const similarProperties = data?.similarProperties ?? [];
+
+  useEffect(() => {
+    if (property?._id) setLiked(isFavorited(property._id));
+  }, [property?._id]);
+
+  if (isLoading) return <PropertySkeleton />;
 
   if (!property) return (
     <div className="min-h-screen flex items-center justify-center">
@@ -85,7 +90,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
     setActiveTab(key);
     const el = document.getElementById(`tab-${key}`);
     if (el) {
-      const y = el.getBoundingClientRect().top + window.scrollY - 160;
+      const y = el.getBoundingClientRect().top + window.scrollY - 130;
       window.scrollTo({ top: y, behavior: "smooth" });
     }
   };
@@ -109,7 +114,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
               <ArrowLeft className="w-4 h-4" />
             </Link>
             <div className="flex items-center gap-2">
-              <button onClick={() => setLiked(!liked)} className="w-11 h-11 rounded-full bg-white/95 flex items-center justify-center shadow-md">
+              <button onClick={() => setLiked(toggleFavorite(property._id))} className="w-11 h-11 rounded-full bg-white/95 flex items-center justify-center shadow-md">
                 <Heart className={cn("w-4 h-4", liked ? "fill-red-500 text-red-500" : "text-neutral-700")} />
               </button>
               <button className="w-11 h-11 rounded-full bg-white/95 flex items-center justify-center shadow-md">
@@ -409,7 +414,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
                   {/* Only show Message for non-imported listings */}
                   {property.host.email && !property.host.email.endsWith("@imported.betatenant.local") && (
                     <button
-                      onClick={() => requireAuth(() => {})}
+                      onClick={() => requireAuth(() => router.push("/messages"))}
                       className="w-full py-3 rounded-full border border-neutral-200 text-neutral-700 font-medium text-sm flex items-center justify-center gap-2 hover:bg-neutral-50 transition-colors"
                     >
                       <Mail className="w-4 h-4" />
@@ -473,7 +478,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
           {property.host.phone && (
             <>
               {isLoggedIn ? (
-                <a href={`https://wa.me/${property.host.phone.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" className="p-3 rounded-full bg-[#25D366] text-white">
+                <a href={`https://wa.me/${property.host.phone.replace(/\D/g, "")}?text=${encodeURIComponent(`Hi, I'm interested in the property listed on Beta Tenant: ${property.title}. Please share more details.`)}`} target="_blank" rel="noopener noreferrer" className="p-3 rounded-full bg-[#25D366] text-white">
                   {WHATSAPP_SVG}
                 </a>
               ) : (

@@ -103,7 +103,7 @@ function HostDashboardContent() {
         <div className="bg-white rounded-2xl border border-neutral-200 overflow-hidden">
           <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-200">
             <h2 className="font-semibold text-neutral-900">My Listings</h2>
-            <Link href="/host/listings" className="text-sm text-bt-primary font-medium">
+            <Link href="/account/properties" className="text-sm text-bt-primary font-medium">
               View all
             </Link>
           </div>

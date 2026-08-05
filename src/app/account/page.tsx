@@ -18,12 +18,18 @@ function AccountContent() {
   const { user, clearAuth } = useAuthStore();
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  const fetchProfile = () => {
+    setLoading(true);
+    api.get<any>("/v1/user/profile")
+      .then((r) => { setProfile(r.profile ?? r); setError(false); })
+      .catch(() => { setError(true); })
+      .finally(() => setLoading(false));
+  };
 
   useEffect(() => {
-    api.get<any>("/v1/user/profile")
-      .then((r) => setProfile(r.profile ?? r))
-      .catch(() => {})
-      .finally(() => setLoading(false));
+    fetchProfile();
   }, []);
 
   const handleSignOut = () => {
@@ -42,6 +48,22 @@ function AccountContent() {
     { icon: MessageCircle, label: "Messages",         href: "/messages",     description: "Chat with agents" },
     { icon: Shield,        label: "Report Agent",     href: "/agents",       description: "Check or report an agent" },
   ];
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-bt-surface flex items-start justify-center pt-20">
+        <div className="flex flex-col items-center justify-center py-20 gap-4">
+          <p className="text-neutral-500">Could not load profile</p>
+          <button
+            onClick={() => { setError(false); fetchProfile(); }}
+            className="px-6 py-2.5 rounded-full bg-bt-primary text-white text-sm font-semibold"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-bt-surface">

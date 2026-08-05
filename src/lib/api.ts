@@ -30,6 +30,15 @@ async function request<T>(
   });
 
   const data = await res.json().catch(() => ({}));
+  if (res.status === 401) {
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("BT_TOKEN");
+      localStorage.removeItem("BT_USER");
+      if (!window.location.pathname.startsWith("/auth")) {
+        window.location.href = "/auth/login";
+      }
+    }
+  }
   if (!res.ok) throw new Error(data.message || data.errorMessage || `HTTP ${res.status}`);
   return data as T;
 }
@@ -37,6 +46,7 @@ async function request<T>(
 export const api = {
   get: <T>(path: string, signal?: AbortSignal) => request<T>("GET", path, undefined, signal),
   post: <T>(path: string, body: unknown, signal?: AbortSignal) => request<T>("POST", path, body, signal),
+  del: <T>(path: string) => request<T>("DELETE", path),
 };
 
 // ── Field mapper ──────────────────────────────────────────────────────────────
@@ -107,8 +117,8 @@ export const authApi = {
   login: (email: string, password: string) =>
     api.post<LoginResponse>("/v1/auth/login", { email, password }),
 
-  register: (firstName: string, lastName: string, email: string, password: string) =>
-    api.post<RegisterResponse>("/v1/auth/register", { firstName, lastName, email, password }),
+  register: (firstName: string, lastName: string, email: string, password: string, role = "user") =>
+    api.post<RegisterResponse>("/v1/auth/register", { firstName, lastName, email, password, role }),
 
   verifyEmail: (verificationId: string, otp: string) =>
     api.post("/v1/auth/verify-email", { verificationId, otp }),

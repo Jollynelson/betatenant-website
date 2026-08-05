@@ -58,7 +58,7 @@ function PropertiesContent() {
 
   type PropertyListResult = { properties: any[]; totalPages: number; totalDocs?: number; totalResults?: number; page: number };
 
-  const { data, isLoading, isFetching } = useQuery<PropertyListResult>({
+  const { data, isLoading, isFetching, isError, refetch } = useQuery<PropertyListResult>({
     queryKey: ["properties", searchBody] as const,
     queryFn: () =>
       hasFilters
@@ -269,8 +269,8 @@ function PropertiesContent() {
 
         <div className="flex items-center justify-between mb-5">
           <p className="text-sm text-neutral-500">
-            {isLoading ? "Loading..." : (
-              <><span className="font-semibold text-neutral-900">{properties.length}</span> properties{filters.state && <span className="text-neutral-400"> in {filters.state}</span>}</>
+            {isLoading ? "Loading..." : isError ? "Error loading results" : (
+              <><span className="font-semibold text-neutral-900">{(data?.totalResults ?? data?.totalDocs ?? properties.length).toLocaleString()}</span> properties{filters.state && <span className="text-neutral-400"> in {filters.state}</span>}</>
             )}
           </p>
         </div>
@@ -310,6 +310,17 @@ function PropertiesContent() {
               </div>
             )}
           </>
+        ) : isError ? (
+          <div className="text-center py-24">
+            <div className="w-16 h-16 rounded-2xl bg-red-50 flex items-center justify-center mx-auto mb-4">
+              <Home className="w-7 h-7 text-red-300" />
+            </div>
+            <h3 className="text-lg font-semibold text-neutral-900 mb-2">Could not load properties</h3>
+            <p className="text-sm text-neutral-500 mb-6 max-w-sm mx-auto">Check your connection and try again</p>
+            <button onClick={() => refetch()} className="px-6 py-3 rounded-full bg-bt-primary text-white text-sm font-semibold hover:bg-bt-primary-light transition-colors">
+              Retry
+            </button>
+          </div>
         ) : (
           <div className="text-center py-24">
             <div className="w-16 h-16 rounded-2xl bg-neutral-100 flex items-center justify-center mx-auto mb-4">

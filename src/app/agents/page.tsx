@@ -140,25 +140,27 @@ export default function AgentsPage() {
         </div>
       </div>
 
-      {/* Top Rated Agents */}
-      <div className="max-w-[1360px] mx-auto px-5 lg:px-10 py-12 md:py-16">
-        <h2 className="text-xl font-bold text-neutral-900 mb-6 tracking-[-0.02em]">
-          Top Rated Agents
-        </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {mockTopAgents.map((agent, i) => (
-            <motion.div
-              key={agent.id}
-              initial={{ opacity: 0, y: 16 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.08 }}
-            >
-              <TopAgentCard agent={agent} />
-            </motion.div>
-          ))}
+      {/* Top Rated Agents — hidden until real data is available (mock data removed to avoid showing fake trust info) */}
+      {false && (
+        <div className="max-w-[1360px] mx-auto px-5 lg:px-10 py-12 md:py-16">
+          <h2 className="text-xl font-bold text-neutral-900 mb-6 tracking-[-0.02em]">
+            Top Rated Agents
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {mockTopAgents.map((agent, i) => (
+              <motion.div
+                key={agent.id}
+                initial={{ opacity: 0, y: 16 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.08 }}
+              >
+                <TopAgentCard agent={agent} />
+              </motion.div>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       <style jsx global>{`
         .phone-input-bt {
@@ -371,6 +373,7 @@ function NoReportsCard({ phone, onReset }: { phone: string; onReset: () => void 
 
 /* ── Reports exist, no BT profile ── */
 function ReportsOnlyCard({ data, phone }: { data: any; phone: string }) {
+  const router = useRouter();
   const risk: string = data.riskLevel ?? "MODERATE";
   const styles = RISK_STYLES[risk] ?? RISK_STYLES.MODERATE;
   const displayPhone = (data.agentPhoneNumber ?? "").replace("234", "0");
@@ -427,10 +430,16 @@ function ReportsOnlyCard({ data, phone }: { data: any; phone: string }) {
           Claim this profile to verify your identity, reveal your number, and manage reviews.
         </p>
         <div className="flex flex-col sm:flex-row gap-2">
-          <button className="flex-1 py-2.5 rounded-full border-2 border-neutral-300 text-neutral-600 font-medium text-sm hover:bg-neutral-100 transition-colors">
+          <button
+            onClick={() => toast("Coming soon", { icon: "🔔" })}
+            className="flex-1 py-2.5 rounded-full border-2 border-neutral-300 text-neutral-600 font-medium text-sm hover:bg-neutral-100 transition-colors"
+          >
             Respond to reviews
           </button>
-          <button className={cn("flex-1 py-2.5 rounded-full text-white font-semibold text-sm transition-colors", styles.badge, "hover:opacity-90")}>
+          <button
+            onClick={() => toast("Coming soon", { icon: "🔔" })}
+            className={cn("flex-1 py-2.5 rounded-full text-white font-semibold text-sm transition-colors", styles.badge, "hover:opacity-90")}
+          >
             Claim account
           </button>
         </div>
@@ -469,7 +478,10 @@ function ReportsOnlyCard({ data, phone }: { data: any; phone: string }) {
         ))}
       </div>
 
-      <button className="w-full py-3 rounded-full bg-bt-primary text-white font-semibold text-sm hover:bg-bt-primary-light transition-colors">
+      <button
+        onClick={() => router.push("/agents/report")}
+        className="w-full py-3 rounded-full bg-bt-primary text-white font-semibold text-sm hover:bg-bt-primary-light transition-colors"
+      >
         Add Your Report
       </button>
     </div>

@@ -50,7 +50,7 @@ self.addEventListener("fetch", (e) => {
 
   // ── API calls: network-first, short-lived cache ──
   if (url.hostname === "api.betatenant.com") {
-    e.respondWith(networkFirstWithCache(req, CACHE_API, 30 * 60)); // 30 min
+    e.respondWith(networkFirstWithCache(req, CACHE_API, 5 * 60)); // 5 min
     return;
   }
 
