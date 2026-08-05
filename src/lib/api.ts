@@ -1,8 +1,11 @@
 // Central API client for the BT backend.
-// All calls go through the Next.js rewrite (/api/bt → https://api.betatenant.com)
-// so no CORS issues in any deployment.
+// In development: calls go through the Next.js rewrite (/api/bt → https://api.betatenant.com)
+// In production (Cloudflare Workers): calls go directly to the API (rewrites don't work in Workers)
 
-const BASE = "/api/bt";
+const BASE =
+  typeof window !== "undefined" && window.location.hostname !== "localhost"
+    ? "https://api.betatenant.com"
+    : "/api/bt";
 
 function getToken(): string | null {
   if (typeof window === "undefined") return null;
