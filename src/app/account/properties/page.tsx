@@ -7,13 +7,14 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Home, Plus, Eye, Loader2, X, RefreshCw, Trash2,
   Edit3, ExternalLink, CheckCircle, AlertTriangle, ChevronRight,
-  Bed, Bath, MapPin,
+  Bed, Bath, MapPin, Zap,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { AuthGuard } from "@/components/auth-guard";
 import { api } from "@/lib/api";
 import { formatPriceFullNumber } from "@/lib/constants";
 import { cn } from "@/lib/utils";
+import { BoostModal } from "@/components/boost-modal";
 
 type Status = "all" | "available" | "delisted" | "draft" | "rented";
 
@@ -54,6 +55,7 @@ function AccountPropertiesContent() {
   const [filter, setFilter] = useState<Status>("all");
   const [selected, setSelected] = useState<Property | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
+  const [boostTarget, setBoostTarget] = useState<Property | null>(null);
 
   const fetchAll = useCallback(() => {
     setLoading(true);
@@ -226,6 +228,14 @@ function AccountPropertiesContent() {
                           <Eye className="w-3 h-3" />{p.totalViews}
                         </span>
                       )}
+                      {p.propertyStatus === "available" && (
+                        <button
+                          onClick={(e) => { e.preventDefault(); e.stopPropagation(); setBoostTarget(p); }}
+                          className="flex items-center gap-1 px-2 py-1 rounded-lg bg-bt-primary/8 text-bt-primary text-[11px] font-bold hover:bg-bt-primary/15 transition-colors"
+                        >
+                          <Zap className="w-3 h-3" /> Boost
+                        </button>
+                      )}
                       <ChevronRight className="w-4 h-4 text-neutral-300" />
                     </div>
                   </div>
@@ -236,6 +246,15 @@ function AccountPropertiesContent() {
           </div>
         )}
       </div>
+
+      {/* Boost Modal */}
+      <BoostModal
+        open={!!boostTarget}
+        onClose={() => setBoostTarget(null)}
+        propertyId={boostTarget?._id ?? ""}
+        propertyName={boostTarget?.houseName || `${boostTarget?.apartmentType ?? "Property"} in ${boostTarget?.propertyLGA}`}
+        onSuccess={() => setBoostTarget(null)}
+      />
 
       {/* Listing detail sheet */}
       <AnimatePresence>
@@ -257,6 +276,7 @@ function AccountPropertiesContent() {
                 onClose={() => setSelected(null)}
                 onUpdateStatus={updateStatus}
                 onDelete={deleteListing}
+                onBoost={selected.propertyStatus === "available" ? () => { setSelected(null); setBoostTarget(selected); } : undefined}
               />
             </motion.div>
           </>
@@ -268,12 +288,13 @@ function AccountPropertiesContent() {
 
 // ─── Listing Detail Sheet ─────────────────────────────────────────────────────
 
-function ListingSheet({ property: p, loading, onClose, onUpdateStatus, onDelete }: {
+function ListingSheet({ property: p, loading, onClose, onUpdateStatus, onDelete, onBoost }: {
   property: Property;
   loading: boolean;
   onClose: () => void;
   onUpdateStatus: (id: string, status: string) => void;
   onDelete: (id: string) => void;
+  onBoost?: () => void;
 }) {
   const status = p.propertyStatus ?? "available";
   const style = STATUS_STYLE[status] ?? { bg: "bg-neutral-100", text: "text-neutral-500", label: status };
@@ -337,6 +358,16 @@ function ListingSheet({ property: p, loading, onClose, onUpdateStatus, onDelete 
 
       {/* Actions */}
       <div className="px-5 mt-5 space-y-2.5">
+        {/* Boost — only for active listings */}
+        {status === "available" && onBoost && (
+          <button
+            onClick={onBoost}
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-bt-primary text-white text-sm font-bold hover:bg-bt-primary-light transition-colors"
+          >
+            <Zap className="w-4 h-4" /> Boost This Listing
+          </button>
+        )}
+
         {/* View public listing */}
         {status !== "draft" && (
           <Link
@@ -403,6 +434,9 @@ function ListingSheet({ property: p, loading, onClose, onUpdateStatus, onDelete 
     </div>
   );
 }
+
+// ─── Bottom of AccountPropertiesContent — add BoostModal ─────────────────────
+// (already rendered inline in AccountPropertiesContent via boostTarget state)
 
 export default function AccountPropertiesPage() {
   return <AuthGuard><AccountPropertiesContent /></AuthGuard>;

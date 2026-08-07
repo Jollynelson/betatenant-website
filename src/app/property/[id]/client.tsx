@@ -10,8 +10,9 @@ import { useQuery } from "@tanstack/react-query";
 import {
   ArrowLeft, Heart, Share2, MapPin, Bed, Bath, Maximize2, Star,
   Shield, Check, ChevronLeft, ChevronRight, BadgeCheck, Eye, Clock, Phone, Mail, Lock,
-  Play, X, CircleX, ZoomIn, Edit3, RefreshCw, AlertTriangle, Trash2, Loader2,
+  Play, X, CircleX, ZoomIn, Edit3, RefreshCw, AlertTriangle, Trash2, Loader2, Zap,
 } from "lucide-react";
+import { BoostModal } from "@/components/boost-modal";
 import { cn } from "@/lib/utils";
 import { isFavorited, toggleFavorite } from "@/lib/favorites";
 import { formatPriceFullNumber, AMENITY_ICONS, amenitySlugToKey } from "@/lib/constants";
@@ -64,6 +65,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const [actionLoading, setActionLoading] = useState(false);
   const [propertyStatus, setPropertyStatus] = useState<string | null>(null);
+  const [boostOpen, setBoostOpen] = useState(false);
 
   const openLightbox = useCallback((index: number) => {
     setLightboxIndex(index);
@@ -440,6 +442,12 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
         {isOwner ? (
           /* Owner actions */
           <>
+            {propertyStatus === "available" && (
+              <button onClick={() => setBoostOpen(true)}
+                className="w-12 h-12 rounded-full bg-bt-primary flex items-center justify-center shrink-0 shadow-md hover:bg-bt-primary-light transition-colors">
+                <Zap className="w-5 h-5 text-white" />
+              </button>
+            )}
             <Link href={`/host/edit/${property._id}`}
               className="flex-1 py-3.5 rounded-full border border-bt-primary/30 bg-bt-primary/5 text-bt-primary font-bold text-sm flex items-center justify-center gap-2">
               <Edit3 className="w-4 h-4" /> Edit
@@ -577,6 +585,20 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
           </div>
         )}
       </div>
+
+      {/* Boost Modal */}
+      {isOwner && property && (
+        <BoostModal
+          open={boostOpen}
+          onClose={() => setBoostOpen(false)}
+          propertyId={property._id}
+          propertyName={property.title}
+          onSuccess={(type) => {
+            setBoostOpen(false);
+            // Reflect boost badge visually if possible
+          }}
+        />
+      )}
 
       {/* Photo Lightbox */}
       <PhotoLightbox
@@ -768,6 +790,12 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
                       {propertyStatus === "available" ? "Active" : propertyStatus === "draft" ? "Draft" : propertyStatus ?? ""}
                     </span>
                   </div>
+                  {propertyStatus === "available" && (
+                    <button onClick={() => setBoostOpen(true)}
+                      className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-bt-primary text-white text-sm font-bold hover:bg-bt-primary-light transition-colors">
+                      <Zap className="w-4 h-4" /> Boost This Listing
+                    </button>
+                  )}
                   <Link href={`/host/edit/${property._id}`}
                     className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-bt-primary/30 bg-bt-primary/5 text-bt-primary text-sm font-semibold hover:bg-bt-primary/10 transition-colors">
                     <Edit3 className="w-4 h-4" /> Edit Listing
