@@ -179,13 +179,15 @@ function AccountPropertiesContent() {
             {displayed.map((p, i) => {
               const style = STATUS_STYLE[p.propertyStatus ?? ""] ?? { bg: "bg-neutral-100", text: "text-neutral-500", label: p.propertyStatus ?? "" };
               return (
-                <motion.button
+                <motion.div
                   key={p._id}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.04 }}
-                  onClick={() => setSelected(p)}
-                  className="w-full bg-white rounded-2xl border border-neutral-200 overflow-hidden flex items-center gap-4 p-4 hover:shadow-md hover:border-neutral-300 active:scale-[0.99] transition-all text-left"
+                >
+                <Link
+                  href={`/property/${p._id}`}
+                  className="w-full bg-white rounded-2xl border border-neutral-200 overflow-hidden flex items-center gap-4 p-4 hover:shadow-md hover:border-neutral-300 active:scale-[0.99] transition-all"
                 >
                   {/* Thumbnail */}
                   <div className="w-20 h-16 rounded-xl bg-neutral-100 overflow-hidden shrink-0">
@@ -227,7 +229,8 @@ function AccountPropertiesContent() {
                       <ChevronRight className="w-4 h-4 text-neutral-300" />
                     </div>
                   </div>
-                </motion.button>
+                </Link>
+                </motion.div>
               );
             })}
           </div>

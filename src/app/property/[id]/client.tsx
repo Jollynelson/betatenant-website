@@ -10,13 +10,14 @@ import { useQuery } from "@tanstack/react-query";
 import {
   ArrowLeft, Heart, Share2, MapPin, Bed, Bath, Maximize2, Star,
   Shield, Check, ChevronLeft, ChevronRight, BadgeCheck, Eye, Clock, Phone, Mail, Lock,
-  Play, X, CircleX, ZoomIn,
+  Play, X, CircleX, ZoomIn, Edit3, RefreshCw, AlertTriangle, Trash2, Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { isFavorited, toggleFavorite } from "@/lib/favorites";
 import { formatPriceFullNumber, AMENITY_ICONS, amenitySlugToKey } from "@/lib/constants";
-import { propertyApi } from "@/lib/api";
+import { propertyApi, api } from "@/lib/api";
 import { useAuthStore } from "@/lib/auth-store";
+import toast from "react-hot-toast";
 import { PropertyCard } from "@/components/property/property-card";
 import type { Property } from "@/types";
 
@@ -52,9 +53,8 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
     ? window.location.pathname.split("/property/")[1]?.split("/")[0] || paramId
     : paramId;
   const router = useRouter();
-  const { token } = useAuthStore();
+  const { token, user } = useAuthStore();
   const isLoggedIn = !!token;
-  // Touch swipe state for mobile gallery
   const touchStartX = useRef<number | null>(null);
   const [currentImage, setCurrentImage] = useState(0);
   const [liked, setLiked] = useState(false);
@@ -62,6 +62,8 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
   const [videoOpen, setVideoOpen] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [propertyStatus, setPropertyStatus] = useState<string | null>(null);
 
   const openLightbox = useCallback((index: number) => {
     setLightboxIndex(index);
@@ -86,8 +88,44 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
   const similarProperties = data?.similarProperties ?? [];
 
   useEffect(() => {
-    if (property?._id) setLiked(isFavorited(property._id));
-  }, [property?._id]);
+    if (property?._id) {
+      setLiked(isFavorited(property._id));
+      setPropertyStatus(property.status ?? "available");
+    }
+  }, [property?._id, property?.status]);
+
+  // Determine if current user is the owner
+  const ownerId = property?.host?._id;
+  const currentUserId = user?.userId ?? useAuthStore.getState().user?.userId;
+  const isOwner = !!(isLoggedIn && ownerId && currentUserId && ownerId === currentUserId);
+
+  const handleStatusChange = async (newStatus: string) => {
+    if (!property) return;
+    setActionLoading(true);
+    try {
+      await api.put(`/v1/landlordandagent/my-listings/${property._id}`, { propertyStatus: newStatus });
+      setPropertyStatus(newStatus);
+      toast.success(newStatus === "available" ? "Listing is now active" : newStatus === "delisted" ? "Listing delisted" : "Updated");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to update");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!property) return;
+    if (!confirm("Permanently delete this listing? This cannot be undone.")) return;
+    setActionLoading(true);
+    try {
+      await api.del(`/v1/landlordandagent/my-listings/${property._id}`);
+      toast.success("Listing deleted");
+      router.push("/account/properties");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to delete");
+      setActionLoading(false);
+    }
+  };
 
   if (isLoading) return <PropertySkeleton />;
 
@@ -399,6 +437,32 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
           className="fixed bottom-0 left-0 right-0 bg-white border-t border-neutral-100 z-50 px-4 py-3 flex items-center gap-3"
           style={{ paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom))" }}
         >
+        {isOwner ? (
+          /* Owner actions */
+          <>
+            <Link href={`/host/edit/${property._id}`}
+              className="flex-1 py-3.5 rounded-full border border-bt-primary/30 bg-bt-primary/5 text-bt-primary font-bold text-sm flex items-center justify-center gap-2">
+              <Edit3 className="w-4 h-4" /> Edit
+            </Link>
+            {(propertyStatus === "delisted" || propertyStatus === "draft") ? (
+              <button onClick={() => handleStatusChange("available")} disabled={actionLoading}
+                className="flex-1 py-3.5 rounded-full bg-emerald-600 text-white font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-60">
+                {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+                {propertyStatus === "draft" ? "Publish" : "Relist"}
+              </button>
+            ) : (
+              <button onClick={() => handleStatusChange("delisted")} disabled={actionLoading}
+                className="flex-1 py-3.5 rounded-full bg-neutral-100 text-neutral-700 font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-60">
+                {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <AlertTriangle className="w-4 h-4" />}
+                Delist
+              </button>
+            )}
+            <button onClick={handleDelete} disabled={actionLoading}
+              className="w-12 h-12 rounded-full border border-red-100 flex items-center justify-center shrink-0 text-red-500 disabled:opacity-60">
+              {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+            </button>
+          </>
+        ) : (<>
           {property.host.phone && (
             isLoggedIn ? (
               <a
@@ -446,6 +510,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
               Message
             </button>
           )}
+          </>)}
         </div>
       </div>
 
@@ -685,9 +750,49 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
             </div>
           </div>
 
-          {/* Right: Contact card */}
+          {/* Right: Owner actions or Contact card */}
           <div className="lg:col-span-1">
             <div className="sticky top-24 space-y-4">
+
+              {/* Owner management card */}
+              {isOwner && (
+                <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+                  className="p-5 rounded-2xl bg-white border border-neutral-200 shadow-[0_2px_16px_rgba(0,0,0,0.05)] space-y-2.5">
+                  <div className="flex items-center justify-between mb-1">
+                    <p className="text-xs font-semibold text-neutral-400 uppercase tracking-widest">Your Listing</p>
+                    <span className={cn("px-2.5 py-0.5 rounded-full text-[11px] font-bold",
+                      propertyStatus === "available" ? "bg-emerald-50 text-emerald-700" :
+                      propertyStatus === "draft"     ? "bg-amber-50 text-amber-700" :
+                      "bg-neutral-100 text-neutral-500"
+                    )}>
+                      {propertyStatus === "available" ? "Active" : propertyStatus === "draft" ? "Draft" : propertyStatus ?? ""}
+                    </span>
+                  </div>
+                  <Link href={`/host/edit/${property._id}`}
+                    className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-bt-primary/30 bg-bt-primary/5 text-bt-primary text-sm font-semibold hover:bg-bt-primary/10 transition-colors">
+                    <Edit3 className="w-4 h-4" /> Edit Listing
+                  </Link>
+                  {(propertyStatus === "delisted" || propertyStatus === "draft") ? (
+                    <button onClick={() => handleStatusChange("available")} disabled={actionLoading}
+                      className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-700 transition-colors disabled:opacity-60">
+                      {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+                      {propertyStatus === "draft" ? "Publish" : "Relist"}
+                    </button>
+                  ) : (
+                    <button onClick={() => handleStatusChange("delisted")} disabled={actionLoading}
+                      className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-neutral-100 text-neutral-700 text-sm font-semibold hover:bg-neutral-200 transition-colors disabled:opacity-60">
+                      {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <AlertTriangle className="w-4 h-4" />}
+                      Delist Property
+                    </button>
+                  )}
+                  <button onClick={handleDelete} disabled={actionLoading}
+                    className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-red-100 text-red-600 text-sm font-semibold hover:bg-red-50 transition-colors disabled:opacity-60">
+                    {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                    Delete Listing
+                  </button>
+                </motion.div>
+              )}
+
               <motion.div
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
