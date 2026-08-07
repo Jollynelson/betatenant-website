@@ -833,27 +833,36 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
                 {/* Agent identity */}
                 <div className="flex items-center gap-3 mb-5">
                   <div className="relative shrink-0">
-                    {property.host.avatar ? (
-                      <div className="w-12 h-12 rounded-full overflow-hidden relative">
-                        <Image src={property.host.avatar} alt={property.host.firstName} fill className="object-cover" />
-                      </div>
-                    ) : (
-                      <div className="w-12 h-12 rounded-full bg-bt-primary/8 flex items-center justify-center text-bt-primary font-bold text-base">
-                        {property.host.firstName[0]}{property.host.lastName[0]}
-                      </div>
-                    )}
+                    {/* Gold ring = premium subscriber */}
+                    <div className={cn("w-12 h-12 rounded-full",
+                      property.host.isPremium ? "ring-2 ring-amber-400 ring-offset-1" : "")}>
+                      {property.host.avatar ? (
+                        <div className="w-full h-full rounded-full overflow-hidden relative">
+                          <Image src={property.host.avatar} alt={property.host.firstName} fill className="object-cover" />
+                        </div>
+                      ) : (
+                        <div className="w-full h-full rounded-full bg-bt-primary/8 flex items-center justify-center text-bt-primary font-bold text-base">
+                          {property.host.firstName[0]}{property.host.lastName[0]}
+                        </div>
+                      )}
+                    </div>
+                    {/* Blue checkmark = identity verified */}
                     {property.host.isVerified && (
-                      <div className="absolute -bottom-0.5 -right-0.5 w-[18px] h-[18px] rounded-full bg-bt-success border-2 border-white flex items-center justify-center">
+                      <div className="absolute -bottom-0.5 -right-0.5 w-[18px] h-[18px] rounded-full bg-blue-600 border-2 border-white flex items-center justify-center">
                         <BadgeCheck className="w-2.5 h-2.5 text-white" />
                       </div>
                     )}
                   </div>
                   <div>
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1.5 flex-wrap">
                       <p className="text-[15px] font-semibold text-neutral-900 capitalize">
                         {property.host.firstName} {property.host.lastName}
                       </p>
-                      {property.host.isVerified && <BadgeCheck className="w-4 h-4 text-bt-success shrink-0" />}
+                      {/* Blue = identity verified, Gold = premium */}
+                      {property.host.isVerified && <BadgeCheck className="w-4 h-4 text-blue-600 shrink-0" />}
+                      {property.host.isPremium && (
+                        <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded-full border border-amber-200">★ Premium</span>
+                      )}
                     </div>
                     <div className="flex items-center gap-2 mt-0.5">
                       <span className="text-xs text-neutral-500 capitalize">{property.host.role}</span>

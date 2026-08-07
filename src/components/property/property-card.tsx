@@ -137,9 +137,16 @@ export function PropertyCard({ property, variant = "default", onRemove }: Proper
                   Featured
                 </span>
               )}
+              {/* Identity verified — blue checkmark (separate from premium) */}
               {property.host?.isVerified && (
-                <span className="px-2 py-0.5 rounded-md bg-bt-success text-white text-[10px] font-bold flex items-center gap-1">
-                  <BadgeCheck className="w-2.5 h-2.5" /> Verified
+                <span className="px-2 py-0.5 rounded-md bg-blue-600 text-white text-[10px] font-bold flex items-center gap-1">
+                  <BadgeCheck className="w-2.5 h-2.5" /> ID Verified
+                </span>
+              )}
+              {/* Premium subscriber — gold badge */}
+              {property.host?.isPremium && !property.host?.isVerified && (
+                <span className="px-2 py-0.5 rounded-md bg-amber-500 text-white text-[10px] font-bold flex items-center gap-1">
+                  ★ Premium
                 </span>
               )}
             </div>

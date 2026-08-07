@@ -35,6 +35,10 @@ function EditProfileContent() {
   const [email, setEmail] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [phoneVerified, setPhoneVerified] = useState(false);
+  const [secondaryPhone, setSecondaryPhone] = useState("");
+  const [secondaryPhoneVerified, setSecondaryPhoneVerified] = useState(false);
+  const [whatsappPhone, setWhatsappPhone] = useState<"primary" | "secondary">("primary");
+  const [identityVerified, setIdentityVerified] = useState(false);
   const [profilePic, setProfilePic] = useState("");
   const [agentBasedLocation, setAgentBasedLocation] = useState("");
   const [yearsOfRentalExperience, setYearsOfRentalExperience] = useState("");
@@ -54,6 +58,10 @@ function EditProfileContent() {
         const rawPhone = p.phoneNumber ? String(p.phoneNumber) : "";
         setPhoneNumber(rawPhone.replace(/^234/, "0"));
         setPhoneVerified(!!p.phoneNumberVerified);
+        setSecondaryPhone(p.secondaryPhoneNumber ? String(p.secondaryPhoneNumber).replace(/^234/, "0") : "");
+        setSecondaryPhoneVerified(!!p.secondaryPhoneVerified);
+        setWhatsappPhone(p.whatsappPhone ?? "primary");
+        setIdentityVerified(!!(p.userVerified || p.userVerificationObject?.status === "verified"));
         setProfilePic(p.profilePic ?? "");
         setAgentBasedLocation(p.agentBasedLocation ?? "");
         setYearsOfRentalExperience(p.yearsOfRentalExperience ? String(p.yearsOfRentalExperience) : "");
@@ -166,14 +174,31 @@ function EditProfileContent() {
             onToggle={() => setActiveSection(activeSection === "profile" ? null : "profile")}
           >
             <div className="space-y-4 pt-1">
+              {/* Verified identity notice */}
+              {identityVerified && (
+                <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-blue-50 border border-blue-100 text-xs text-blue-700">
+                  <Shield className="w-3.5 h-3.5 shrink-0" />
+                  Your identity is verified. Name cannot be changed to protect your verification status.
+                </div>
+              )}
               <Field label="First Name">
-                <input type="text" value={firstName} onChange={(e) => setFirstName(e.target.value)}
-                  className="w-full text-[16px] text-neutral-900 bg-transparent focus:outline-none placeholder:text-neutral-300"
+                <input type="text" value={firstName}
+                  onChange={(e) => !identityVerified && setFirstName(e.target.value)}
+                  readOnly={identityVerified}
+                  className={cn(
+                    "w-full text-[16px] text-neutral-900 bg-transparent focus:outline-none placeholder:text-neutral-300",
+                    identityVerified && "opacity-60 cursor-not-allowed"
+                  )}
                   placeholder="First name" />
               </Field>
               <Field label="Last Name">
-                <input type="text" value={lastName} onChange={(e) => setLastName(e.target.value)}
-                  className="w-full text-[16px] text-neutral-900 bg-transparent focus:outline-none placeholder:text-neutral-300"
+                <input type="text" value={lastName}
+                  onChange={(e) => !identityVerified && setLastName(e.target.value)}
+                  readOnly={identityVerified}
+                  className={cn(
+                    "w-full text-[16px] text-neutral-900 bg-transparent focus:outline-none placeholder:text-neutral-300",
+                    identityVerified && "opacity-60 cursor-not-allowed"
+                  )}
                   placeholder="Last name" />
               </Field>
               {isAgentOrLandlord && (
@@ -199,21 +224,81 @@ function EditProfileContent() {
             </div>
           </SectionCard>
 
-          {/* ── Phone Number ───────────────────────────────────────────────── */}
+          {/* ── Phone Numbers ──────────────────────────────────────────────── */}
           <SectionCard
-            title="Phone Number"
-            subtitle={phoneNumber ? `${phoneNumber}${phoneVerified ? " · Verified" : " · Unverified"}` : "Not set"}
+            title="Phone Numbers"
+            subtitle={phoneNumber ? `${phoneNumber}${phoneVerified ? " · Verified" : ""}${secondaryPhone ? ` · +1 more` : ""}` : "Not set"}
             open={activeSection === "phone"}
             onToggle={() => setActiveSection(activeSection === "phone" ? null : "phone")}
           >
-            <PhoneSection
-              currentPhone={phoneNumber}
-              onVerified={(num) => {
-                setPhoneNumber(num);
-                setPhoneVerified(true);
-                setActiveSection(null);
-              }}
-            />
+            <div className="space-y-4 pt-1">
+              {/* Primary phone */}
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <p className="text-[11px] text-neutral-400 font-medium uppercase tracking-wide">Primary Number</p>
+                  <div className="flex items-center gap-1">
+                    {phoneVerified && (
+                      <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-full">Verified</span>
+                    )}
+                    {whatsappPhone === "primary" && (
+                      <span className="text-[10px] font-semibold text-[#25D366] bg-[#25D366]/10 px-1.5 py-0.5 rounded-full">WhatsApp</span>
+                    )}
+                  </div>
+                </div>
+                <PhoneSection
+                  currentPhone={phoneNumber}
+                  onVerified={(num) => { setPhoneNumber(num); setPhoneVerified(true); }}
+                />
+              </div>
+
+              {/* Secondary phone */}
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <p className="text-[11px] text-neutral-400 font-medium uppercase tracking-wide">Secondary Number (optional)</p>
+                  <div className="flex items-center gap-1">
+                    {secondaryPhoneVerified && (
+                      <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-full">Verified</span>
+                    )}
+                    {whatsappPhone === "secondary" && (
+                      <span className="text-[10px] font-semibold text-[#25D366] bg-[#25D366]/10 px-1.5 py-0.5 rounded-full">WhatsApp</span>
+                    )}
+                  </div>
+                </div>
+                <PhoneSection
+                  currentPhone={secondaryPhone}
+                  isSecondary
+                  onVerified={(num) => { setSecondaryPhone(num); setSecondaryPhoneVerified(true); }}
+                />
+              </div>
+
+              {/* WhatsApp / Calls designation — only shown when both numbers exist */}
+              {phoneNumber && secondaryPhone && (
+                <div className="bg-neutral-50 rounded-xl p-3.5 space-y-2.5">
+                  <p className="text-[11px] text-neutral-500 font-semibold uppercase tracking-wide">Which number is WhatsApp?</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      { value: "primary" as const, label: phoneNumber },
+                      { value: "secondary" as const, label: secondaryPhone },
+                    ].map(({ value, label }) => (
+                      <button key={value} onClick={async () => {
+                        setWhatsappPhone(value);
+                        await api.put("/v1/user/profile", { whatsappPhone: value }).catch(() => {});
+                      }}
+                        className={cn(
+                          "flex items-center gap-2 px-3 py-2.5 rounded-xl border text-left transition-all",
+                          whatsappPhone === value
+                            ? "border-[#25D366] bg-[#25D366]/8 text-[#128C7E]"
+                            : "border-neutral-200 hover:border-neutral-300"
+                        )}>
+                        <MessageCircle className={cn("w-3.5 h-3.5 shrink-0", whatsappPhone === value ? "text-[#25D366]" : "text-neutral-400")} />
+                        <p className="text-xs font-medium truncate">{label}</p>
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-[10px] text-neutral-400">The other number will be shown as the call number on your listings.</p>
+                </div>
+              )}
+            </div>
           </SectionCard>
 
           {/* ── Email ──────────────────────────────────────────────────────── */}
@@ -255,7 +340,9 @@ function EditProfileContent() {
 
 // ─── Phone Section ────────────────────────────────────────────────────────────
 
-function PhoneSection({ currentPhone, onVerified }: { currentPhone: string; onVerified: (num: string) => void }) {
+function PhoneSection({ currentPhone, onVerified, isSecondary = false }: {
+  currentPhone: string; onVerified: (num: string) => void; isSecondary?: boolean;
+}) {
   const [method, setMethod] = useState<"sms" | "whatsapp" | null>(null);
   const [newPhone, setNewPhone] = useState(currentPhone || "");
 
@@ -279,7 +366,7 @@ function PhoneSection({ currentPhone, onVerified }: { currentPhone: string; onVe
     if (!newPhone.trim()) { toast.error("Enter your phone number"); return; }
     setSmsLoading(true);
     try {
-      const res = await api.put<any>("/v1/user/phone-number", { phoneNumber: newPhone.trim() });
+      const res = await api.put<any>("/v1/user/phone-number", { phoneNumber: newPhone.trim(), secondary: isSecondary });
       setSmsVerificationId(res.verificationId ?? res.data?.verificationId ?? "");
       setSmsSent(true);
       toast.success("OTP sent to your phone");

@@ -80,6 +80,7 @@ export function mapProperty(raw: any) {
     toilets: 0, // backend has no toiletCount field — not used
     status: raw.propertyStatus ?? "available",
     isPromoted: host.userSubscriptionObject?.status === "active",
+    isPremium:  host.userSubscriptionObject?.status === "active",
     rating: raw.averageReview ?? undefined,
     reviewCount: raw.totalReviews ?? 0,
     views: raw.totalViews ?? 0,
@@ -94,7 +95,8 @@ export function mapProperty(raw: any) {
       phone: host.phoneNumber ?? "",
       avatar: host.profilePic ?? undefined,
       role: (host.role ?? "agent") as "agent" | "landlord",
-      isVerified: host.userSubscriptionObject?.status === "active",
+      isVerified: !!(host.userVerified || host.userVerificationObject?.status === "verified"),
+      isPremium:  host.userSubscriptionObject?.status === "active",
       rating: host.agentStats?.averageRating ?? undefined,
       reviewCount: host.agentStats?.totalReviews ?? 0,
       listingCount: host.agentStats?.totalListings ?? 0,

@@ -38,6 +38,7 @@ export interface Host {
   avatar?: string;
   role: "agent" | "landlord";
   isVerified: boolean;
+  isPremium?: boolean;
   rating?: number;
   reviewCount?: number;
   listingCount?: number;
