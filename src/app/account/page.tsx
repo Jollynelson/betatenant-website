@@ -31,7 +31,7 @@ function AccountContent() {
     setLoading(true);
     const endpoint = isAgentOrLandlord ? "/v1/landlordandagent/profile" : "/v1/user/profile";
     api.get<any>(endpoint)
-      .then((r) => { setProfile(r.profile ?? r.user ?? r); setError(false); })
+      .then((r) => { setProfile(r.profile ?? r.userProfile ?? r.user ?? r); setError(false); })
       .catch(() => setError(true))
       .finally(() => setLoading(false));
   };

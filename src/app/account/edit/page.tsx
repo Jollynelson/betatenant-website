@@ -26,7 +26,7 @@ function EditProfileContent() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploadingPic, setUploadingPic] = useState(false);
-  const [activeSection, setActiveSection] = useState<Section | null>(null);
+  const [activeSection, setActiveSection] = useState<Section | null>("profile");
   const fileRef = useRef<HTMLInputElement>(null);
 
   // Profile fields
@@ -54,7 +54,7 @@ function EditProfileContent() {
     const endpoint = isAoL ? "/v1/landlordandagent/profile" : "/v1/user/profile";
     api.get<any>(endpoint)
       .then((r) => {
-        const p = r.profile ?? r.user ?? r;
+        const p = r.profile ?? r.userProfile ?? r.user ?? r;
         setFirstName(p.firstName ?? "");
         setLastName(p.lastName ?? "");
         setEmail(p.email ?? "");
