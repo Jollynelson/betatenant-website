@@ -56,16 +56,26 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className="h-full antialiased">
       <head>
-        {/* Font: preconnect first, then load non-blocking with fallback display */}
+        {/* Critical: preconnect to font CDN BEFORE requesting stylesheet */}
         <link rel="preconnect" href="https://api.fontshare.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://api.fontshare.com" />
+        {/* Font: non-blocking with swap — page renders with system font, swaps when ready */}
         <link
-          href="https://api.fontshare.com/v2/css?f[]=satoshi@500,700&display=fallback"
+          href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700&display=swap"
           rel="stylesheet"
+          media="print"
+          // @ts-ignore
+          onLoad="this.media='all'"
         />
-        {/* iOS PWA status bar */}
+        <noscript>
+          <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700&display=swap" rel="stylesheet" />
+        </noscript>
+        {/* iOS PWA */}
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        {/* Preload hero images for LCP */}
+        <link rel="preload" as="image" href="/images/hero-bg-desktop.jpg" media="(min-width: 640px)" />
+        <link rel="preload" as="image" href="/images/hero-bg-mobile.jpg" media="(max-width: 639px)" />
       </head>
       <body className="min-h-full flex flex-col">
         <Providers>

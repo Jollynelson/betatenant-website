@@ -4,7 +4,9 @@ import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { motion } from "framer-motion";
+// framer-motion loaded dynamically — only used for below-fold animations
+import dynamic from "next/dynamic";
+const MotionDiv = dynamic(() => import("framer-motion").then(m => ({ default: m.motion.div })), { ssr: false });
 import { useQuery } from "@tanstack/react-query";
 import { PropertyCard } from "@/components/property/property-card";
 import { HowItWorks } from "@/components/shared/how-it-works";
@@ -67,8 +69,8 @@ function HeroSection() {
   return (
     <section className="relative overflow-hidden h-[520px] sm:h-[640px] lg:h-[680px]">
       <div className="absolute inset-0">
-        <Image src="/images/hero-bg-desktop.png" alt="" fill className="object-cover hidden sm:block" priority />
-        <Image src="/images/hero-bg-mobile.svg" alt="" fill className="object-cover sm:hidden" priority />
+        <Image src="/images/hero-bg-desktop.jpg" alt="" fill className="object-cover hidden sm:block" priority />
+        <Image src="/images/hero-bg-mobile.jpg" alt="" fill className="object-cover sm:hidden" priority />
       </div>
       <div className="absolute inset-0 pointer-events-none hidden xl:block">
         <Image src="/icons/eli-hero-1.svg" alt="" width={24} height={24} className="absolute top-[30%] left-[15%] opacity-80" />
@@ -84,7 +86,8 @@ function HeroSection() {
 
       <div className="relative z-10 h-full flex items-center justify-center">
         <div className="max-w-[600px] w-full mx-auto px-5 text-center">
-          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45 }}>
+          {/* CSS animation — no JS, renders immediately */}
+          <div className="animate-[fadeUp_0.45s_ease_forwards]">
             <h1 className="text-[28px] sm:text-[36px] lg:text-[46px] font-extrabold text-neutral-900 leading-[1.15] tracking-[-0.03em]">
               The perfect house awaits.<br />
               <span className="text-bt-primary">Start your search now!</span>
@@ -92,9 +95,9 @@ function HeroSection() {
             <p className="mt-4 text-base sm:text-lg text-neutral-600 font-medium max-w-[460px] mx-auto leading-relaxed">
               Explore our curated selection of rental properties and find one that suits you.
             </p>
-          </motion.div>
+          </div>
 
-          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45, delay: 0.12 }} className="mt-8">
+          <div className="mt-8 animate-[fadeUp_0.45s_0.1s_ease_both]">
             <div className="flex items-center justify-center mb-4">
               <span className="px-4 py-1.5 text-sm font-semibold text-bt-secondary border-b-2 border-bt-secondary">
                 Rentals
@@ -120,11 +123,7 @@ function HeroSection() {
               </form>
 
               {showDropdown && results.length > 0 && (
-                <motion.div
-                  initial={{ opacity: 0, y: -4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="absolute top-full left-0 right-0 mt-2 bg-white border border-neutral-100 rounded-2xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.15)] overflow-hidden z-50"
-                >
+                <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-neutral-100 rounded-2xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.15)] overflow-hidden z-50 animate-[fadeUp_0.15s_ease_forwards]">
                   {results.map((item, i) => (
                     <button
                       key={`${item.state}-${item.city}-${i}`}
@@ -140,10 +139,10 @@ function HeroSection() {
                       </div>
                     </button>
                   ))}
-                </motion.div>
+                </div>
               )}
             </div>
-          </motion.div>
+          </div>
         </div>
       </div>
     </section>
@@ -270,7 +269,7 @@ function LocationDiscovery() {
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {locations.map((loc, i) => (
-            <motion.div key={loc.name} initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.08 }}>
+            <MotionDiv key={loc.name} initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.08 }}>
               <Link href={`/properties?state=${encodeURIComponent(loc.state)}`} className="group block relative h-[200px] rounded-2xl overflow-hidden">
                 <Image src={loc.image} alt={loc.name} fill className="object-cover group-hover:scale-105 transition-transform duration-700" sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
@@ -280,7 +279,7 @@ function LocationDiscovery() {
                   <p className="text-xs text-white/50 mt-1">{loc.count} listings</p>
                 </div>
               </Link>
-            </motion.div>
+            </MotionDiv>
           ))}
         </div>
       </div>
@@ -304,7 +303,7 @@ function TestimonialsSection() {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           {testimonials.map((t, i) => (
-            <motion.div key={t.name} initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }} className="bg-white rounded-2xl p-6 border border-neutral-100">
+            <MotionDiv key={t.name} initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }} className="bg-white rounded-2xl p-6 border border-neutral-100">
               <div className="flex items-center gap-0.5 mb-4">
                 {Array.from({ length: t.rating }).map((_, si) => (
                   <Star key={si} className="w-4 h-4 fill-amber-400 text-amber-400" />
@@ -320,7 +319,7 @@ function TestimonialsSection() {
                   <p className="text-xs text-neutral-400">{t.location}</p>
                 </div>
               </div>
-            </motion.div>
+            </MotionDiv>
           ))}
         </div>
       </div>

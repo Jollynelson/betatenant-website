@@ -145,7 +145,7 @@ function ReportAgentContent() {
 
         <div className="text-center mb-6">
           <Link href="/">
-            <Image src="/images/bt_logo_big.svg" alt="Beta Tenant" width={130} height={34} className="h-8 w-auto mx-auto mb-4" />
+            <Image src="/images/bt_logo_big.png" alt="Beta Tenant" width={130} height={34} className="h-8 w-auto mx-auto mb-4" />
           </Link>
         </div>
 
