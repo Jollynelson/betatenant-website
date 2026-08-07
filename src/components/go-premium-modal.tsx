@@ -1,22 +1,21 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { X, Crown, Check, CreditCard, Zap, TrendingUp, Shield, BarChart2 } from "lucide-react";
-import { usePaystackPayment } from "react-paystack";
+import { useEffect, useRef, useState } from "react";
+import { X, Crown, Check, CreditCard, Loader2, Zap, TrendingUp, Shield, BarChart2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const PK = process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY ?? "";
 const MONTHLY_PLAN = process.env.NEXT_PUBLIC_PAYSTACK_MONTHLY_PLAN_ID ?? "";
-const YEARLY_PLAN = process.env.NEXT_PUBLIC_PAYSTACK_YEARLY_PLAN_ID ?? "";
+const YEARLY_PLAN  = process.env.NEXT_PUBLIC_PAYSTACK_YEARLY_PLAN_ID ?? "";
 const MONTHLY_PRICE = Number(process.env.NEXT_PUBLIC_PAYSTACK_MONTHLY_PRICE ?? 5000);
-const YEARLY_PRICE = Math.round(MONTHLY_PRICE * 12 * 0.8);
+const YEARLY_PRICE  = Math.round(MONTHLY_PRICE * 12 * 0.8); // 20% off annual
 
 const FEATURES = [
-  { icon: Zap,        title: "Unlimited Listings",   desc: "Remove the 5-property limit and list as many homes as you manage" },
-  { icon: Crown,      title: "Premium Badge",         desc: "Stand out with a verified gold crown badge on your listings" },
-  { icon: TrendingUp, title: "Priority Placement",    desc: "Your properties appear first in search results" },
-  { icon: Shield,     title: "Verified Status",       desc: "Build trust with tenants through verified agent status" },
-  { icon: BarChart2,  title: "Advanced Analytics",    desc: "See exactly who is viewing and saving your listings" },
+  { icon: Zap,         title: "Unlimited Listings",  desc: "Remove the 5-property limit and list as many homes as you manage" },
+  { icon: Crown,       title: "Premium Badge",        desc: "Stand out with a verified gold crown badge on your listings" },
+  { icon: TrendingUp,  title: "Priority Placement",   desc: "Your properties appear first in search results" },
+  { icon: Shield,      title: "Verified Status",      desc: "Build trust with tenants through verified agent status" },
+  { icon: BarChart2,   title: "Advanced Analytics",   desc: "See exactly who is viewing and saving your listings" },
 ];
 
 interface Props {
@@ -27,46 +26,59 @@ interface Props {
   onSuccess?: () => void;
 }
 
-function PayButton({
-  email, userId, plan, price, planId, label, className, onSuccess, onClose,
-}: {
-  email: string; userId: string; plan: string; price: number; planId: string;
-  label: React.ReactNode; className: string; onSuccess?: () => void; onClose: () => void;
-}) {
-  const config = {
-    reference: `${plan}-sub-${userId}-${Date.now()}`,
-    email,
-    amount: price * 100,
-    plan: planId,
-    publicKey: PK,
-    channels: ["card"] as any,
-  };
-  const initPayment = usePaystackPayment(config);
-  return (
-    <button
-      disabled={!email || !PK}
-      className={className}
-      onClick={() => initPayment({ onSuccess: () => { onSuccess?.(); onClose(); }, onClose: () => {} })}
-    >
-      {label}
-    </button>
-  );
-}
-
 export function GoPremiumModal({ open, onClose, userEmail, userId, onSuccess }: Props) {
-  const [plan, setPlan] = useState<"monthly" | "yearly">("monthly");
+  const [plan, setPlan]       = useState<"monthly" | "yearly">("monthly");
+  const [loading, setLoading] = useState(false);
+  const scriptReady = useRef(false);
 
+  // Load Paystack v2 inline script once
   useEffect(() => {
-    if (open) document.body.style.overflow = "hidden";
-    else document.body.style.overflow = "";
+    if (typeof window === "undefined" || scriptReady.current) return;
+    if (document.querySelector('script[src*="paystack.co/v2/inline"]')) {
+      scriptReady.current = true; return;
+    }
+    const s = document.createElement("script");
+    s.src = "https://js.paystack.co/v2/inline.js";
+    s.async = true;
+    s.onload = () => { scriptReady.current = true; };
+    document.body.appendChild(s);
+  }, []);
+
+  // Lock body scroll while open
+  useEffect(() => {
+    document.body.style.overflow = open ? "hidden" : "";
     return () => { document.body.style.overflow = ""; };
   }, [open]);
 
+  const handlePay = () => {
+    if (!userEmail || !PK) return;
+    const PaystackPop = (window as any).PaystackPop;
+    if (!PaystackPop) { return; }
+
+    setLoading(true);
+    const planCode = plan === "monthly" ? MONTHLY_PLAN : YEARLY_PLAN;
+
+    // v2 API: new PaystackPop() instance → .newTransaction()
+    // planCode is used for subscriptions; amount is omitted (plan defines billing amount)
+    const popup = new PaystackPop();
+    popup.newTransaction({
+      key:       PK,
+      email:     userEmail,
+      planCode,                          // subscription plan — amount NOT needed
+      reference: `${plan}-sub-${userId}-${Date.now()}`,
+      currency:  "NGN",
+      channels:  ["card"],
+      onSuccess: () => { setLoading(false); onSuccess?.(); onClose(); },
+      onCancel:  () => setLoading(false),
+      onError:   () => setLoading(false),
+    });
+  };
+
   if (!open) return null;
 
-  const price = plan === "monthly" ? MONTHLY_PRICE : YEARLY_PRICE;
-  const perMonth = plan === "yearly" ? Math.round(YEARLY_PRICE / 12) : MONTHLY_PRICE;
-  const planId = plan === "monthly" ? MONTHLY_PLAN : YEARLY_PLAN;
+  const price    = plan === "monthly" ? MONTHLY_PRICE : YEARLY_PRICE;
+  const perMonth = plan === "yearly"  ? Math.round(YEARLY_PRICE / 12) : MONTHLY_PRICE;
+  const hasPlan  = plan === "monthly" ? !!MONTHLY_PLAN : !!YEARLY_PLAN;
 
   return (
     <div className="fixed inset-0 z-[400] flex items-end sm:items-center justify-center">
@@ -121,31 +133,44 @@ export function GoPremiumModal({ open, onClose, userEmail, userId, onSuccess }: 
             ))}
           </div>
 
-          {/* Price */}
+          {/* Price display */}
           <div className="bg-bt-primary/5 border border-bt-primary/15 rounded-xl px-4 py-3 flex items-center justify-between">
             <div>
               <p className="text-2xl font-bold text-bt-primary">₦{price.toLocaleString()}</p>
               <p className="text-xs text-neutral-500 mt-0.5">
-                {plan === "yearly" ? `₦${perMonth.toLocaleString()}/month · billed annually` : "per month"}
+                {plan === "yearly"
+                  ? `₦${perMonth.toLocaleString()}/month · billed annually`
+                  : "per month"}
               </p>
             </div>
             {plan === "yearly" && (
               <div className="text-right">
                 <p className="text-xs text-neutral-400 line-through">₦{(MONTHLY_PRICE * 12).toLocaleString()}</p>
-                <p className="text-xs font-semibold text-green-600">Save ₦{(MONTHLY_PRICE * 12 - YEARLY_PRICE).toLocaleString()}</p>
+                <p className="text-xs font-semibold text-green-600">
+                  Save ₦{(MONTHLY_PRICE * 12 - YEARLY_PRICE).toLocaleString()}
+                </p>
               </div>
             )}
           </div>
 
           {/* CTA */}
-          <PayButton
-            email={userEmail} userId={userId} plan={plan}
-            price={price} planId={planId}
-            onSuccess={onSuccess} onClose={onClose}
-            label={<><CreditCard className="w-4 h-4" /> Pay &amp; Upgrade Now</>}
+          <button
+            onClick={handlePay}
+            disabled={loading || !userEmail || !hasPlan}
             className="w-full flex items-center justify-center gap-2.5 py-4 rounded-xl bg-bt-primary text-white font-bold text-sm disabled:opacity-60 hover:bg-bt-primary-light active:scale-[0.98] transition-all shadow-[0_4px_14px_rgba(10,8,118,0.3)]"
-          />
-          <p className="text-center text-xs text-neutral-400 -mt-1">Secure payment via Paystack · Cancel anytime</p>
+          >
+            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CreditCard className="w-4 h-4" />}
+            {loading ? "Opening payment..." : "Pay & Upgrade Now"}
+          </button>
+
+          {!hasPlan && (
+            <p className="text-center text-xs text-amber-600">
+              Subscription plan not yet configured — contact support.
+            </p>
+          )}
+          <p className="text-center text-xs text-neutral-400 -mt-1">
+            Secure payment via Paystack · Cancel anytime
+          </p>
         </div>
       </div>
     </div>

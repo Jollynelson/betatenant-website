@@ -24,20 +24,23 @@ function AccountContent() {
   const [error, setError] = useState(false);
   const [premiumOpen, setPremiumOpen] = useState(false);
 
-  const role = user?.role ?? "user";
+  // Derive role from profile (available after load), falling back to auth store
+  const role = profile?.role ?? user?.role ?? useAuthStore.getState().user?.role ?? "user";
   const isAgentOrLandlord = role === "agent" || role === "landlord";
 
   const fetchProfile = () => {
     setLoading(true);
-    const endpoint = isAgentOrLandlord ? "/v1/landlordandagent/profile" : "/v1/user/profile";
-    api.get<any>(endpoint)
-      .then((r) => { setProfile(r.profile ?? r.userProfile ?? r.user ?? r); setError(false); })
+    // /v1/user/profile works for all roles — same collection, includes agent fields
+    api.get<any>("/v1/user/profile")
+      .then((r) => {
+        const p = r?.profile ?? r?.userProfile ?? r?.user ?? (r?.firstName !== undefined ? r : null);
+        setProfile(p); setError(false);
+      })
       .catch(() => setError(true))
       .finally(() => setLoading(false));
   };
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { fetchProfile(); }, [isAgentOrLandlord]);
+  useEffect(() => { fetchProfile(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSignOut = () => { clearAuth(); router.push("/"); };
 
