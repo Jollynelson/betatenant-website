@@ -85,7 +85,7 @@ function AccountContent() {
         {/* ── Profile Card ───────────────────────────────────────── */}
         <div className="bg-white rounded-2xl border border-neutral-100 shadow-sm overflow-hidden">
           {/* Cover */}
-          <div className="h-20 bg-gradient-to-r from-bt-primary to-bt-primary-light relative">
+          <div className="h-28 bg-gradient-to-br from-bt-primary via-[#1a1a8c] to-bt-primary-light relative">
             {isPremium && (
               <span className="absolute top-3 right-3 flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-400/90 text-amber-900 text-[11px] font-bold">
                 <Crown className="w-3 h-3" /> Premium
@@ -94,16 +94,16 @@ function AccountContent() {
           </div>
 
           <div className="px-5 pb-5">
-            {/* Avatar row */}
-            <div className="flex items-end justify-between -mt-8 mb-4">
+            {/* Avatar + edit row */}
+            <div className="flex items-end justify-between -mt-10 mb-3">
               <div className="relative">
                 {loading ? (
-                  <div className="w-16 h-16 rounded-full bg-neutral-200 animate-pulse border-4 border-white" />
+                  <div className="w-20 h-20 rounded-full bg-neutral-200 animate-pulse border-4 border-white" />
                 ) : profile?.profilePic ? (
-                  <Image src={profile.profilePic} alt="Profile" width={64} height={64}
-                    className={`w-16 h-16 rounded-full object-cover border-4 border-white shadow-md ${isPremium ? "ring-2 ring-amber-400" : ""}`} />
+                  <Image src={profile.profilePic} alt="Profile" width={80} height={80}
+                    className={`w-20 h-20 rounded-full object-cover border-4 border-white shadow-lg ${isPremium ? "ring-2 ring-amber-400" : ""}`} />
                 ) : (
-                  <div className={`w-16 h-16 rounded-full bg-bt-primary flex items-center justify-center text-white font-bold text-xl border-4 border-white shadow-md ${isPremium ? "ring-2 ring-amber-400" : ""}`}>
+                  <div className={`w-20 h-20 rounded-full bg-bt-primary flex items-center justify-center text-white font-bold text-2xl border-4 border-white shadow-lg ${isPremium ? "ring-2 ring-amber-400" : ""}`}>
                     {initials}
                   </div>
                 )}
@@ -115,7 +115,7 @@ function AccountContent() {
               </div>
               <Link
                 href="/account/edit"
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-neutral-200 text-xs font-medium text-neutral-600 hover:bg-neutral-50 transition-colors"
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-neutral-200 text-xs font-semibold text-neutral-700 hover:bg-neutral-50 transition-colors mb-1"
               >
                 <Edit3 className="w-3.5 h-3.5" /> Edit Profile
               </Link>
@@ -123,44 +123,28 @@ function AccountContent() {
 
             {/* Info */}
             {loading ? (
-              <div className="space-y-2">
-                <div className="h-5 w-40 bg-neutral-100 animate-pulse rounded" />
-                <div className="h-3.5 w-56 bg-neutral-100 animate-pulse rounded" />
+              <div className="space-y-2.5">
+                <div className="h-5 w-44 bg-neutral-100 animate-pulse rounded" />
+                <div className="h-3.5 w-32 bg-neutral-100 animate-pulse rounded" />
+                <div className="h-3.5 w-52 bg-neutral-100 animate-pulse rounded" />
                 <div className="h-3.5 w-48 bg-neutral-100 animate-pulse rounded" />
               </div>
             ) : (
               <>
+                {/* Name + verified */}
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h2 className="text-lg font-bold text-neutral-900 capitalize">
+                  <h2 className="text-[18px] font-bold text-neutral-900 capitalize leading-tight">
                     {profile?.firstName} {profile?.lastName}
                   </h2>
                   {isVerified && (
                     <span className="flex items-center gap-0.5 text-[11px] font-semibold text-bt-success">
-                      <ShieldCheck className="w-3 h-3" /> Verified
+                      <ShieldCheck className="w-3.5 h-3.5" /> Verified
                     </span>
                   )}
                 </div>
 
-                <div className="flex flex-col gap-1 mt-2">
-                  {profile?.email && (
-                    <p className="text-xs text-neutral-500 flex items-center gap-1.5">
-                      <Mail className="w-3 h-3 text-neutral-400 shrink-0" />{profile.email}
-                    </p>
-                  )}
-                  {profile?.phoneNumber && (
-                    <p className="text-xs text-neutral-500 flex items-center gap-1.5">
-                      <Phone className="w-3 h-3 text-neutral-400 shrink-0" />
-                      {String(profile.phoneNumber).replace(/^234/, "0")}
-                    </p>
-                  )}
-                  {profile?.agentBasedLocation && (
-                    <p className="text-xs text-neutral-500 flex items-center gap-1.5">
-                      <MapPin className="w-3 h-3 text-neutral-400 shrink-0" />{profile.agentBasedLocation}
-                    </p>
-                  )}
-                </div>
-
-                <div className="flex items-center gap-2 mt-3 flex-wrap">
+                {/* Role + experience badges */}
+                <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                   <span className="px-2.5 py-0.5 rounded-full bg-bt-primary/8 text-bt-primary text-[11px] font-semibold capitalize">
                     {role}
                   </span>
@@ -169,7 +153,58 @@ function AccountContent() {
                       {profile.yearsOfRentalExperience}+ yrs experience
                     </span>
                   )}
+                  {profile?.phoneNumberVerified && (
+                    <span className="flex items-center gap-0.5 px-2.5 py-0.5 rounded-full bg-green-50 text-green-700 text-[11px] font-medium">
+                      <Phone className="w-2.5 h-2.5" /> Verified
+                    </span>
+                  )}
                 </div>
+
+                {/* Contact details */}
+                <div className="flex flex-col gap-1.5 mt-3 pt-3 border-t border-neutral-50">
+                  {profile?.email && (
+                    <p className="text-xs text-neutral-500 flex items-center gap-2">
+                      <Mail className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
+                      <span className="truncate">{profile.email}</span>
+                    </p>
+                  )}
+                  {profile?.phoneNumber && (
+                    <p className="text-xs text-neutral-500 flex items-center gap-2">
+                      <Phone className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
+                      {String(profile.phoneNumber).replace(/^234/, "0")}
+                    </p>
+                  )}
+                  {profile?.agentBasedLocation && (
+                    <p className="text-xs text-neutral-500 flex items-center gap-2">
+                      <MapPin className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
+                      {profile.agentBasedLocation}
+                    </p>
+                  )}
+                </div>
+
+                {/* Agent stats row */}
+                {isAgentOrLandlord && (profile?.agentStats?.totalListings || profile?.agentStats?.totalReviews || profile?.agentStats?.averageRating) && (
+                  <div className="flex items-center gap-4 mt-3 pt-3 border-t border-neutral-50">
+                    {profile.agentStats?.totalListings > 0 && (
+                      <div className="text-center">
+                        <p className="text-sm font-bold text-neutral-900">{profile.agentStats.totalListings}</p>
+                        <p className="text-[10px] text-neutral-400">Listings</p>
+                      </div>
+                    )}
+                    {profile.agentStats?.totalReviews > 0 && (
+                      <div className="text-center">
+                        <p className="text-sm font-bold text-neutral-900">{profile.agentStats.totalReviews}</p>
+                        <p className="text-[10px] text-neutral-400">Reviews</p>
+                      </div>
+                    )}
+                    {profile.agentStats?.averageRating > 0 && (
+                      <div className="text-center">
+                        <p className="text-sm font-bold text-neutral-900">{profile.agentStats.averageRating.toFixed(1)} ★</p>
+                        <p className="text-[10px] text-neutral-400">Rating</p>
+                      </div>
+                    )}
+                  </div>
+                )}
               </>
             )}
           </div>

@@ -43,6 +43,8 @@ function EditProfileContent() {
   const isAgentOrLandlord = role === "agent" || role === "landlord";
 
   useEffect(() => {
+    // Wait for auth store to hydrate from localStorage before fetching
+    if (!user) return;
     const endpoint = isAgentOrLandlord ? "/v1/landlordandagent/profile" : "/v1/user/profile";
     api.get<any>(endpoint)
       .then((r) => {
@@ -60,7 +62,7 @@ function EditProfileContent() {
       .catch(() => toast.error("Failed to load profile"))
       .finally(() => setLoading(false));
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [user]);
 
   const handleSave = async () => {
     if (!firstName.trim() || !lastName.trim()) {
