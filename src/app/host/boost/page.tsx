@@ -3,15 +3,13 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
-  ArrowLeft, Zap, Crown, Loader2, Check, CreditCard,
-  Star, Flame, ChevronRight, Home, Eye, AlertTriangle,
+  ArrowLeft, Zap, Loader2, Check, CreditCard,
+  Home, Eye, AlertTriangle, RefreshCw, ToggleLeft, ToggleRight,
 } from "lucide-react";
 import toast from "react-hot-toast";
-import Image from "next/image";
 import Link from "next/link";
 import { AuthGuard } from "@/components/auth-guard";
 import { api } from "@/lib/api";
-import { formatPriceFullNumber } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
 const BOOST_TYPES = [
@@ -66,13 +64,25 @@ interface Property {
   photoURLs?: string[];
   propertyStatus?: string;
   totalViews?: number;
+  createdAt?: string;
+}
+
+interface Recommendation {
+  propertyId: string;
+  houseName: string;
+  propertyLGA: string;
+  propertyState: string;
+  totalViews: number;
+  daysListed: number;
+  reason: string;
 }
 
 type BoostTypeId = "boost" | "featured" | "spotlight";
+type TabId = "boost" | "auto" | "buy";
 
 function BoostContent() {
   const router = useRouter();
-  const [tab, setTab] = useState<"boost" | "buy">("boost");
+  const [tab, setTab] = useState<TabId>("boost");
 
   // Credits
   const [balance, setBalance] = useState<any>(null);
@@ -94,6 +104,18 @@ function BoostContent() {
   const [buying, setBuying] = useState(false);
   const scriptReady = useRef(false);
 
+  // Smart recommendations
+  const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
+  const [loadingRecs, setLoadingRecs] = useState(false);
+
+  // Auto-rotate
+  const [autoRotate, setAutoRotate] = useState(false);
+  const [autoStrategy, setAutoStrategy] = useState<"round_robin" | "smart">("round_robin");
+  const [autoLastRun, setAutoLastRun] = useState<string | null>(null);
+  const [activeRotationListings, setActiveRotationListings] = useState<any[]>([]);
+  const [loadingAuto, setLoadingAuto] = useState(false);
+  const [savingAuto, setSavingAuto] = useState(false);
+
   useEffect(() => {
     Promise.all([
       api.get<any>("/v1/user/boost/balance"),
@@ -104,6 +126,25 @@ function BoostContent() {
       setListings(active);
     }).catch(() => toast.error("Failed to load"))
       .finally(() => { setLoadingBalance(false); setLoadingListings(false); });
+
+    // Load recommendations
+    setLoadingRecs(true);
+    api.get<any>("/v1/user/boost/recommendations")
+      .then((r) => setRecommendations(r.recommendations ?? []))
+      .catch(() => {})
+      .finally(() => setLoadingRecs(false));
+
+    // Load auto-rotate settings
+    setLoadingAuto(true);
+    api.get<any>("/v1/user/boost/auto-rotate")
+      .then((r) => {
+        setAutoRotate(r.autoRotate ?? false);
+        setAutoStrategy(r.autoRotateStrategy ?? "round_robin");
+        setAutoLastRun(r.autoRotateLastRun ?? null);
+        setActiveRotationListings(r.activeRotationListings ?? []);
+      })
+      .catch(() => {})
+      .finally(() => setLoadingAuto(false));
 
     // Preload Paystack
     if (typeof window !== "undefined" && !scriptReady.current) {
@@ -144,8 +185,9 @@ function BoostContent() {
       });
       toast.success(`${res.boosted} listing${res.boosted !== 1 ? "s" : ""} boosted! ${res.creditsRemaining} credits left.`);
       setSelected(new Set());
-      // Refresh balance
       api.get<any>("/v1/user/boost/balance").then(setBalance).catch(() => {});
+      // Refresh recommendations
+      api.get<any>("/v1/user/boost/recommendations").then(r => setRecommendations(r.recommendations ?? [])).catch(() => {});
     } catch (err: any) {
       if (err.message?.includes("INSUFFICIENT")) {
         toast.error("Not enough credits. Buy more below.");
@@ -155,6 +197,23 @@ function BoostContent() {
       }
     } finally {
       setApplying(false);
+    }
+  };
+
+  const handleBoostRecommendation = async (propertyId: string) => {
+    const credCost = BOOST_TYPES.find(b => b.id === "boost")!.credits;
+    if (available < credCost) {
+      toast.error("Not enough credits. Buy more first.");
+      setTab("buy");
+      return;
+    }
+    try {
+      const res = await api.post<any>("/v1/user/boost/apply", { propertyIds: [propertyId], type: "boost" });
+      toast.success(`Listing boosted! ${res.creditsRemaining} credits left.`);
+      api.get<any>("/v1/user/boost/balance").then(setBalance).catch(() => {});
+      api.get<any>("/v1/user/boost/recommendations").then(r => setRecommendations(r.recommendations ?? [])).catch(() => {});
+    } catch (err: any) {
+      toast.error(err.message || "Failed to boost");
     }
   };
 
@@ -183,7 +242,29 @@ function BoostContent() {
     }
   };
 
+  const handleSaveAutoRotate = async () => {
+    setSavingAuto(true);
+    try {
+      const res = await api.post<any>("/v1/user/boost/auto-rotate", {
+        enabled: autoRotate,
+        strategy: autoStrategy,
+      });
+      setAutoLastRun(res.autoRotateLastRun ?? null);
+      toast.success(autoRotate ? "Auto-rotate enabled" : "Auto-rotate disabled");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to save");
+    } finally {
+      setSavingAuto(false);
+    }
+  };
+
   const chosenBoostType = BOOST_TYPES.find(b => b.id === boostType)!;
+
+  const TABS: { id: TabId; label: string }[] = [
+    { id: "boost", label: "🚀 Boost" },
+    { id: "auto",  label: "🔄 Auto" },
+    { id: "buy",   label: "💳 Buy" },
+  ];
 
   return (
     <div className="min-h-screen bg-neutral-50">
@@ -195,7 +276,6 @@ function BoostContent() {
             <ArrowLeft className="w-4 h-4 text-neutral-600" />
           </button>
           <h1 className="text-base font-bold text-neutral-900 flex-1">Boost Listings</h1>
-          {/* Credit balance */}
           {!loadingBalance && balance && (
             <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-bt-primary/8 text-bt-primary text-sm font-bold">
               <Zap className="w-3.5 h-3.5" />
@@ -205,13 +285,13 @@ function BoostContent() {
         </div>
         {/* Tabs */}
         <div className="max-w-2xl mx-auto px-4 flex gap-0 border-t border-neutral-50">
-          {(["boost", "buy"] as const).map((t) => (
-            <button key={t} onClick={() => setTab(t)}
+          {TABS.map((t) => (
+            <button key={t.id} onClick={() => setTab(t.id)}
               className={cn(
                 "flex-1 py-3 text-sm font-semibold transition-all border-b-2",
-                tab === t ? "border-bt-primary text-bt-primary" : "border-transparent text-neutral-400"
+                tab === t.id ? "border-bt-primary text-bt-primary" : "border-transparent text-neutral-400"
               )}>
-              {t === "boost" ? "🚀 Boost Listings" : "💳 Buy Credits"}
+              {t.label}
             </button>
           ))}
         </div>
@@ -219,8 +299,34 @@ function BoostContent() {
 
       <div className="max-w-2xl mx-auto px-4 py-5 space-y-4">
 
-        {tab === "boost" ? (
+        {/* ── Boost Tab ──────────────────────────────────────────── */}
+        {tab === "boost" && (
           <>
+            {/* Smart recommendations banner */}
+            {!loadingRecs && recommendations.length > 0 && (
+              <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-base">💡</span>
+                  <p className="text-sm font-bold text-amber-900">
+                    {recommendations.length} listing{recommendations.length > 1 ? "s" : ""} need{recommendations.length === 1 ? "s" : ""} more visibility
+                  </p>
+                </div>
+                {recommendations.map((rec) => (
+                  <div key={rec.propertyId} className="flex items-center justify-between gap-2 bg-white rounded-xl px-3 py-2.5 border border-amber-100">
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-neutral-900 truncate">{rec.houseName}</p>
+                      <p className="text-xs text-neutral-500">{rec.reason}</p>
+                    </div>
+                    <button
+                      onClick={() => handleBoostRecommendation(rec.propertyId)}
+                      className="shrink-0 px-3 py-1.5 rounded-lg bg-bt-primary text-white text-xs font-bold hover:bg-bt-primary-light transition-colors">
+                      Boost Now
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
             {/* Credit breakdown */}
             {balance && (
               <div className="grid grid-cols-3 gap-2">
@@ -348,9 +454,133 @@ function BoostContent() {
               </div>
             )}
           </>
-        ) : (
+        )}
+
+        {/* ── Auto Boost Tab ─────────────────────────────────────── */}
+        {tab === "auto" && (
           <>
-            {/* Buy credits */}
+            <div className="bg-white rounded-2xl border border-neutral-100 p-5 space-y-4">
+              <div>
+                <h2 className="text-base font-bold text-neutral-900">Auto-Rotate Boosts</h2>
+                <p className="text-xs text-neutral-500 mt-1">
+                  Automatically rotate which listings get boosted every 48 hours. Uses 1 boost credit per rotation.
+                </p>
+              </div>
+
+              {/* Toggle */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-neutral-900">Auto-rotate my boosts</p>
+                  <p className="text-xs text-neutral-500">Runs every 48 hours, deducts 1 credit</p>
+                </div>
+                <button onClick={() => setAutoRotate(!autoRotate)} className="shrink-0">
+                  {autoRotate
+                    ? <ToggleRight className="w-9 h-9 text-bt-primary" />
+                    : <ToggleLeft className="w-9 h-9 text-neutral-300" />
+                  }
+                </button>
+              </div>
+
+              {/* Strategy picker */}
+              {autoRotate && (
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold text-neutral-400 uppercase tracking-wide">Rotation strategy</p>
+                  {[
+                    {
+                      id: "round_robin" as const,
+                      label: "Round Robin",
+                      desc: "Rotate through listings in order, one at a time",
+                      icon: "🔁",
+                    },
+                    {
+                      id: "smart" as const,
+                      label: "Smart (recommended)",
+                      desc: "Prioritises listings with the fewest views relative to their age",
+                      icon: "🧠",
+                    },
+                  ].map((s) => (
+                    <button key={s.id} onClick={() => setAutoStrategy(s.id)}
+                      className={cn(
+                        "w-full flex items-start gap-3 p-3.5 rounded-xl border transition-all text-left",
+                        autoStrategy === s.id ? "border-bt-primary bg-bt-primary/5" : "bg-neutral-50 border-neutral-100 hover:border-neutral-200"
+                      )}>
+                      <span className="text-xl shrink-0 mt-0.5">{s.icon}</span>
+                      <div className="flex-1">
+                        <p className="text-sm font-bold text-neutral-900">{s.label}</p>
+                        <p className="text-xs text-neutral-500 mt-0.5">{s.desc}</p>
+                      </div>
+                      {autoStrategy === s.id && <Check className="w-4 h-4 text-bt-primary shrink-0 mt-1" />}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* Last run */}
+              {autoLastRun && (
+                <p className="text-xs text-neutral-400 flex items-center gap-1">
+                  <RefreshCw className="w-3 h-3" />
+                  Last rotated: {new Date(autoLastRun).toLocaleDateString("en-NG", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                </p>
+              )}
+
+              <button
+                onClick={handleSaveAutoRotate}
+                disabled={savingAuto || loadingAuto}
+                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-bt-primary text-white font-bold text-sm disabled:opacity-60 hover:bg-bt-primary-light transition-colors">
+                {savingAuto ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                {savingAuto ? "Saving..." : "Save preferences"}
+              </button>
+            </div>
+
+            {/* Currently in rotation */}
+            {activeRotationListings.length > 0 && (
+              <div>
+                <p className="text-xs font-semibold text-neutral-400 uppercase tracking-wide mb-2 px-1">
+                  Currently in rotation ({activeRotationListings.length})
+                </p>
+                <div className="space-y-2">
+                  {activeRotationListings.map((b: any) => {
+                    const prop = b.propertyId;
+                    const expires = new Date(b.expiresAt);
+                    const hoursLeft = Math.max(0, Math.round((expires.getTime() - Date.now()) / (1000 * 60 * 60)));
+                    return (
+                      <div key={b.boostId} className="bg-white rounded-xl border border-neutral-100 p-3.5 flex items-center gap-3">
+                        <div className="w-12 h-10 rounded-lg overflow-hidden shrink-0 bg-neutral-100">
+                          {prop?.photoURLs?.[0]
+                            ? <img src={prop.photoURLs[0]} alt="" className="w-full h-full object-cover" />
+                            : <div className="w-full h-full flex items-center justify-center"><Home className="w-4 h-4 text-neutral-300" /></div>
+                          }
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-neutral-900 truncate">
+                            {prop?.houseName ?? prop?.propertyLGA ?? "Listing"}
+                          </p>
+                          <p className="text-xs text-neutral-400">{prop?.propertyLGA}</p>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <span className="px-2 py-0.5 rounded-full bg-bt-primary/10 text-bt-primary text-[10px] font-bold capitalize">{b.package}</span>
+                          <p className="text-[10px] text-neutral-400 mt-0.5">{hoursLeft}h left</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {activeRotationListings.length === 0 && !loadingAuto && (
+              <div className="bg-white rounded-2xl border border-neutral-100 p-8 text-center">
+                <RefreshCw className="w-10 h-10 text-neutral-200 mx-auto mb-3" />
+                <p className="text-sm text-neutral-500">No listings currently in rotation.</p>
+                <p className="text-xs text-neutral-400 mt-1">Enable auto-rotate and boosts will start on the next cycle.</p>
+              </div>
+            )}
+          </>
+        )}
+
+        {/* ── Buy Credits Tab ─────────────────────────────────────── */}
+        {tab === "buy" && (
+          <>
             <p className="text-sm text-neutral-500">Credits never expire for 90 days after purchase. Monthly subscription credits reset each billing cycle.</p>
 
             <div className="space-y-2">
