@@ -13,7 +13,6 @@ import {
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/lib/auth-store";
 import { api } from "@/lib/api";
-import { GoPremiumModal } from "@/components/go-premium-modal";
 
 interface NavItem {
   href: string;
@@ -101,7 +100,6 @@ export function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [premiumOpen, setPremiumOpen] = useState(false);
   const [profile, setProfile] = useState<any>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
@@ -224,8 +222,9 @@ export function Navbar() {
                       {/* Premium CTA — agents/landlords without active subscription */}
                       {isAgentOrLandlord && profile?.userSubscriptionObject?.status !== "active" && (
                         <div className="px-3 py-2 border-b border-neutral-50">
-                          <button
-                            onClick={() => { setDropdownOpen(false); setPremiumOpen(true); }}
+                          <Link
+                            href="/account/subscription"
+                            onClick={() => setDropdownOpen(false)}
                             className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/60 hover:border-amber-300 transition-colors"
                           >
                             <div className="w-7 h-7 rounded-lg bg-amber-400 flex items-center justify-center shrink-0">
@@ -236,7 +235,7 @@ export function Navbar() {
                               <p className="text-[10px] text-neutral-500">Unlimited listings · Priority</p>
                             </div>
                             <span className="text-[10px] font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">Upgrade</span>
-                          </button>
+                          </Link>
                         </div>
                       )}
 
@@ -381,8 +380,9 @@ export function Navbar() {
 
                       {/* Mobile premium CTA */}
                       {isAgentOrLandlord && profile?.userSubscriptionObject?.status !== "active" && (
-                        <button
-                          onClick={() => { setMobileMenuOpen(false); setPremiumOpen(true); }}
+                        <Link
+                          href="/account/subscription"
+                          onClick={() => setMobileMenuOpen(false)}
                           className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 my-1"
                         >
                           <div className="w-8 h-8 rounded-lg bg-amber-400 flex items-center justify-center shrink-0">
@@ -393,7 +393,7 @@ export function Navbar() {
                             <p className="text-xs text-neutral-500">Unlimited listings · Priority placement</p>
                           </div>
                           <span className="ml-auto text-xs font-bold text-amber-700 bg-amber-100 px-2.5 py-1 rounded-full">Upgrade</span>
-                        </button>
+                        </Link>
                       )}
 
                       {menuItems.map((item) => (
@@ -430,14 +430,6 @@ export function Navbar() {
         )}
       </AnimatePresence>
 
-      {/* Premium modal — rendered outside header so it's not clipped */}
-      {user && isAgentOrLandlord && (
-        <GoPremiumModal
-          open={premiumOpen}
-          onClose={() => setPremiumOpen(false)}
-          onSuccess={() => api.get<any>("/v1/user/profile").then((r) => setProfile(r.profile ?? r.userProfile ?? r.user ?? r)).catch(() => {})}
-        />
-      )}
     </header>
   );
 }
