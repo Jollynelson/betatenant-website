@@ -39,13 +39,19 @@ function EditProfileContent() {
   const [agentBasedLocation, setAgentBasedLocation] = useState("");
   const [yearsOfRentalExperience, setYearsOfRentalExperience] = useState("");
 
-  const role = user?.role ?? "user";
-  const isAgentOrLandlord = role === "agent" || role === "landlord";
+  // Read role from getState() so we get the hydrated value even if the
+  // reactive `user` hasn't propagated yet on first render.
+  const getRole = () => {
+    const u = user ?? useAuthStore.getState().user;
+    return u?.role ?? "user";
+  };
 
   useEffect(() => {
-    // Wait for auth store to hydrate from localStorage before fetching
-    if (!user) return;
-    const endpoint = isAgentOrLandlord ? "/v1/landlordandagent/profile" : "/v1/user/profile";
+    // Hydrate store first (no-op if already done), then fetch profile
+    useAuthStore.getState().hydrate();
+    const resolvedRole = getRole();
+    const isAoL = resolvedRole === "agent" || resolvedRole === "landlord";
+    const endpoint = isAoL ? "/v1/landlordandagent/profile" : "/v1/user/profile";
     api.get<any>(endpoint)
       .then((r) => {
         const p = r.profile ?? r.user ?? r;
@@ -62,7 +68,10 @@ function EditProfileContent() {
       .catch(() => toast.error("Failed to load profile"))
       .finally(() => setLoading(false));
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
+  }, []);
+
+  const role = user?.role ?? useAuthStore.getState().user?.role ?? "user";
+  const isAgentOrLandlord = role === "agent" || role === "landlord";
 
   const handleSave = async () => {
     if (!firstName.trim() || !lastName.trim()) {
