@@ -22,7 +22,7 @@ type Section = "profile" | "phone" | "email" | "password" | "delete";
 
 function EditProfileContent() {
   const router = useRouter();
-  const { user, clearAuth } = useAuthStore();
+  const { user, clearAuth, setProfilePic: syncProfilePic } = useAuthStore();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploadingPic, setUploadingPic] = useState(false);
@@ -117,6 +117,7 @@ function EditProfileContent() {
       if (!url) throw new Error("Upload failed");
       await api.put("/v1/user/profile-picture", { profilePic: url });
       setProfilePic(url);
+      syncProfilePic(url);
       toast.success("Photo updated");
     } catch {
       toast.error("Failed to upload photo");

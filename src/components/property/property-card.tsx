@@ -196,9 +196,14 @@ export function PropertyCard({ property, variant = "default", onRemove }: Proper
             {property.address ? `${property.address}, ` : ""}{property.lga}, {property.state}
           </p>
 
-          {/* Agent name — subtle, like Zillow's brokerage line */}
-          <p className="text-[10.5px] text-neutral-400 uppercase tracking-wide font-medium mt-2 truncate">
-            {agentName}
+          {/* Agent name — gold if premium, verified check if identity verified */}
+          <p className={cn(
+            "text-[10.5px] uppercase tracking-wide font-medium mt-2 truncate flex items-center gap-1",
+            property.host?.isPremium ? "text-amber-600 font-semibold" : "text-neutral-400"
+          )}>
+            {property.host?.isPremium && <span className="shrink-0">★</span>}
+            <span className="truncate">{agentName}</span>
+            {property.host?.isVerified && <BadgeCheck className="w-2.5 h-2.5 text-blue-500 shrink-0" />}
           </p>
         </div>
       </Link>

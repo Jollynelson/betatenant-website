@@ -8,7 +8,7 @@ import PhoneInput, { isValidPhoneNumber } from "react-phone-number-input";
 import "react-phone-number-input/style.css";
 import {
   Shield, Star, Phone, MapPin, CheckCircle2, AlertTriangle,
-  ShieldCheck, Loader2, Search, ThumbsUp, ThumbsDown, UserCircle2,
+  ShieldCheck, Loader2, Search, ThumbsUp, ThumbsDown, UserCircle2, Crown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { api } from "@/lib/api";
@@ -266,16 +266,24 @@ function AgentFoundCard({ profile, phone }: { profile: any; phone: string }) {
       <div className="flex items-center gap-4">
         <div className="relative shrink-0">
           {profile.profilePic ? (
-            <div className={cn("w-16 h-16 rounded-full overflow-hidden border-2", isVerified ? "border-bt-success/30" : "border-neutral-100")}>
+            <div className={cn(
+              "w-16 h-16 rounded-full overflow-hidden border-2",
+              isPremium ? "ring-2 ring-amber-400 ring-offset-1" : "",
+              isVerified ? "border-bt-success/30" : "border-neutral-100"
+            )}>
               <Image src={profile.profilePic} alt={profile.firstName} width={64} height={64} className="object-cover w-full h-full" />
             </div>
           ) : (
-            <div className={cn("w-16 h-16 rounded-full flex items-center justify-center text-lg font-bold", isVerified ? "bg-bt-success/8 text-bt-success" : "bg-bt-primary/8 text-bt-primary")}>
+            <div className={cn(
+              "w-16 h-16 rounded-full flex items-center justify-center text-lg font-bold",
+              isPremium ? "ring-2 ring-amber-400 ring-offset-1" : "",
+              isVerified ? "bg-bt-success/8 text-bt-success" : "bg-bt-primary/8 text-bt-primary"
+            )}>
               {initials}
             </div>
           )}
           {isVerified && (
-            <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full bg-bt-success border-2 border-white flex items-center justify-center">
+            <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full bg-blue-600 border-2 border-white flex items-center justify-center">
               <ShieldCheck className="w-3 h-3 text-white" />
             </div>
           )}
@@ -283,11 +291,16 @@ function AgentFoundCard({ profile, phone }: { profile: any; phone: string }) {
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5 flex-wrap">
-            <p className="font-bold text-neutral-900 capitalize">
+            <p className={cn("font-bold capitalize", isPremium ? "text-amber-700 font-bold" : "text-neutral-900")}>
               {profile.firstName} {profile.lastName}
             </p>
             {isVerified && (
-              <ShieldCheck className="w-4 h-4 text-bt-success shrink-0" />
+              <ShieldCheck className="w-4 h-4 text-blue-600 shrink-0" />
+            )}
+            {isPremium && (
+              <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 text-[10px] font-bold">
+                <Crown className="w-2.5 h-2.5 fill-amber-600" /> Premium
+              </span>
             )}
           </div>
           <p className="text-sm text-neutral-500 capitalize mt-0.5">{profile.role}</p>
@@ -319,6 +332,22 @@ function AgentFoundCard({ profile, phone }: { profile: any; phone: string }) {
           </div>
         ))}
       </div>
+
+      {/* Verification & Premium chips */}
+      {(isVerified || isPremium) && (
+        <div className="flex items-center gap-2 flex-wrap">
+          {isVerified && (
+            <span className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-[11px] font-semibold">
+              <ShieldCheck className="w-3 h-3" /> ID Verified
+            </span>
+          )}
+          {isPremium && (
+            <span className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-[11px] font-bold">
+              <Crown className="w-3 h-3 fill-amber-600" /> Premium
+            </span>
+          )}
+        </div>
+      )}
 
       {/* Buttons */}
       <div className="flex flex-col sm:flex-row gap-2">

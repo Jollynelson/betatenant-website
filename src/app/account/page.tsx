@@ -7,7 +7,7 @@ import Image from "next/image";
 import {
   Heart, MessageCircle, Home, LayoutDashboard, Shield,
   LogOut, ChevronRight, Phone, Mail, Bell, Repeat2, Plus,
-  MapPin, ShieldCheck, Crown, Edit3, Calendar, AlertTriangle, Receipt, Zap,
+  MapPin, ShieldCheck, Crown, Edit3, Calendar, AlertTriangle, Receipt, Zap, Camera,
 } from "lucide-react";
 import { AuthGuard } from "@/components/auth-guard";
 import { cn } from "@/lib/utils";
@@ -17,7 +17,7 @@ import { PushToggle } from "@/components/push-subscribe";
 
 function AccountContent() {
   const router = useRouter();
-  const { user, clearAuth } = useAuthStore();
+  const { user, clearAuth, setProfilePic } = useAuthStore();
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -33,6 +33,8 @@ function AccountContent() {
       .then((r) => {
         const p = r?.profile ?? r?.userProfile ?? r?.user ?? (r?.firstName !== undefined ? r : null);
         setProfile(p); setError(false);
+        // Sync profilePic into auth store so navbar updates immediately
+        if (p?.profilePic) setProfilePic(p.profilePic);
       })
       .catch(() => setError(true))
       .finally(() => setLoading(false));
@@ -102,7 +104,7 @@ function AccountContent() {
           <div className="px-5 pb-5">
             {/* Avatar + edit row */}
             <div className="flex items-end justify-between -mt-10 mb-3">
-              <div className="relative">
+              <div className="relative group cursor-pointer" onClick={() => router.push("/account/edit")}>
                 {loading ? (
                   <div className="w-20 h-20 rounded-full bg-neutral-200 animate-pulse border-4 border-white" />
                 ) : profile?.profilePic ? (
@@ -111,6 +113,12 @@ function AccountContent() {
                 ) : (
                   <div className={`w-20 h-20 rounded-full bg-bt-primary flex items-center justify-center text-white font-bold text-2xl border-4 border-white shadow-lg ${isPremium ? "ring-2 ring-amber-400" : ""}`}>
                     {initials}
+                  </div>
+                )}
+                {/* Camera hover overlay */}
+                {!loading && (
+                  <div className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center border-4 border-white">
+                    <Camera className="w-5 h-5 text-white" />
                   </div>
                 )}
                 {isVerified && (

@@ -104,19 +104,25 @@ export function Navbar() {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
-  const { user, clearAuth } = useAuthStore();
+  const { user, clearAuth, setProfilePic } = useAuthStore();
   const role = user?.role ?? "user";
   const isAgentOrLandlord = role === "agent" || role === "landlord";
   const menuItems = isAgentOrLandlord ? AGENT_LANDLORD_ITEMS : TENANT_ITEMS;
 
   const { count: notifCount, items: notifItems } = useNotifications(user);
 
-  // Fetch profile for subscription status (agents/landlords only)
+  // Fetch full profile on mount to get profilePic + subscription status
   useEffect(() => {
-    if (!user || (user.role !== "agent" && user.role !== "landlord")) return;
-    const endpoint = "/v1/landlordandagent/profile";
-    api.get<any>(endpoint).then((r) => setProfile(r.profile ?? r.user ?? r)).catch(() => {});
-  }, [user]);
+    if (!user) return;
+    api.get<any>("/v1/user/profile").then((r) => {
+      const p = r?.profile ?? r?.userProfile ?? r?.user ?? r;
+      setProfile(p);
+      // Sync profilePic into auth store so it's available everywhere
+      if (p?.profilePic && p.profilePic !== user.profilePic) {
+        setProfilePic(p.profilePic);
+      }
+    }).catch(() => {});
+  }, [user?.userId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const initials = user
     ? user.fullName.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase()
@@ -184,8 +190,14 @@ export function Navbar() {
                     </div>
                   )}
 
-                  <div className="w-7 h-7 rounded-full bg-bt-primary flex items-center justify-center text-white text-xs font-bold shrink-0">
-                    {initials}
+                  <div className={cn(
+                    "w-7 h-7 rounded-full overflow-hidden shrink-0 flex items-center justify-center text-white text-xs font-bold",
+                    !user.profilePic && "bg-bt-primary"
+                  )}>
+                    {user.profilePic
+                      ? <img src={user.profilePic} alt="" className="w-full h-full object-cover" />
+                      : initials
+                    }
                   </div>
                   <span className="text-sm font-medium text-neutral-700 max-w-[110px] truncate">
                     {user.fullName.split(" ")[0]}
@@ -349,8 +361,14 @@ export function Navbar() {
                     <>
                       {/* User info */}
                       <div className="flex items-center gap-3 px-4 py-3 mb-2">
-                        <div className="w-9 h-9 rounded-full bg-bt-primary flex items-center justify-center text-white text-sm font-bold shrink-0">
-                          {initials}
+                        <div className={cn(
+                          "w-9 h-9 rounded-full overflow-hidden shrink-0 flex items-center justify-center text-white text-sm font-bold",
+                          !user.profilePic && "bg-bt-primary"
+                        )}>
+                          {user.profilePic
+                            ? <img src={user.profilePic} alt="" className="w-full h-full object-cover" />
+                            : initials
+                          }
                         </div>
                         <div className="min-w-0 flex-1">
                           <p className="text-sm font-semibold text-neutral-900 truncate">{user.fullName}</p>

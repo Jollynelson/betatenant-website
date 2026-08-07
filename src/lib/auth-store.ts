@@ -1,14 +1,23 @@
 import { create } from "zustand";
 
+interface AuthUser {
+  email: string;
+  userId: string;
+  fullName: string;
+  role: string;
+  profilePic?: string;
+}
+
 interface AuthState {
   token: string | null;
-  user: { email: string; userId: string; fullName: string; role: string } | null;
-  setAuth: (token: string, user: AuthState["user"]) => void;
+  user: AuthUser | null;
+  setAuth: (token: string, user: AuthUser) => void;
+  setProfilePic: (url: string) => void;
   clearAuth: () => void;
   hydrate: () => void;
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
+export const useAuthStore = create<AuthState>((set, get) => ({
   token: null,
   user: null,
 
@@ -18,6 +27,16 @@ export const useAuthStore = create<AuthState>((set) => ({
       localStorage.setItem("BT_USER", JSON.stringify(user));
     }
     set({ token, user });
+  },
+
+  setProfilePic: (url: string) => {
+    const current = get().user;
+    if (!current) return;
+    const updated = { ...current, profilePic: url };
+    if (typeof window !== "undefined") {
+      localStorage.setItem("BT_USER", JSON.stringify(updated));
+    }
+    set({ user: updated });
   },
 
   clearAuth: () => {
