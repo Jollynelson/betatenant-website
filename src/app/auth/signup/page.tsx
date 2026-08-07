@@ -148,7 +148,7 @@ export default function SignupPage() {
           >
             <div className="text-center mb-8">
               <Link href="/">
-                <Image src="/images/bt_logo_big.png" alt="Beta Tenant" width={140} height={36} className="h-9 w-auto mx-auto mb-6" />
+                <Image src="/images/bt_logo_big.svg" alt="Beta Tenant" width={140} height={36} className="h-9 w-auto mx-auto mb-6" />
               </Link>
               <h1 className="text-[24px] font-bold text-bt-primary">Select Preference</h1>
               <p className="text-neutral-500 mt-1">Select your preferred mode of signing up</p>
@@ -197,7 +197,7 @@ export default function SignupPage() {
           >
             <div className="text-center mb-8">
               <Link href="/">
-                <Image src="/images/bt_logo_big.png" alt="Beta Tenant" width={140} height={36} className="h-9 w-auto mx-auto mb-6" />
+                <Image src="/images/bt_logo_big.svg" alt="Beta Tenant" width={140} height={36} className="h-9 w-auto mx-auto mb-6" />
               </Link>
               <h1 className="text-[24px] font-bold text-bt-primary">
                 {role === "user" ? "Create a Tenant Account" : role === "landlord" ? "Create a Landlord Account" : "Create an Agent Account"}
@@ -324,7 +324,7 @@ export default function SignupPage() {
           >
             <div className="text-center mb-8">
               <Link href="/">
-                <Image src="/images/bt_logo_big.png" alt="Beta Tenant" width={140} height={36} className="h-9 w-auto mx-auto mb-6" />
+                <Image src="/images/bt_logo_big.svg" alt="Beta Tenant" width={140} height={36} className="h-9 w-auto mx-auto mb-6" />
               </Link>
               <h1 className="text-[24px] font-bold text-bt-primary">Verify your email address</h1>
               <p className="text-neutral-500 mt-1">

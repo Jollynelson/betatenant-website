@@ -146,7 +146,7 @@ function LoginPage() {
           >
             <div className="text-center mb-8">
               <Link href="/">
-                <Image src="/images/bt_logo_big.png" alt="Beta Tenant" width={140} height={36} className="h-9 w-auto mx-auto mb-6" />
+                <Image src="/images/bt_logo_big.svg" alt="Beta Tenant" width={140} height={36} className="h-9 w-auto mx-auto mb-6" />
               </Link>
               <h1 className="text-[24px] font-bold text-bt-primary">Welcome back</h1>
               <p className="text-neutral-500 mt-1">Enter your credentials to continue</p>
@@ -242,7 +242,7 @@ function LoginPage() {
           >
             <div className="text-center mb-8">
               <Link href="/">
-                <Image src="/images/bt_logo_big.png" alt="Beta Tenant" width={140} height={36} className="h-9 w-auto mx-auto mb-6" />
+                <Image src="/images/bt_logo_big.svg" alt="Beta Tenant" width={140} height={36} className="h-9 w-auto mx-auto mb-6" />
               </Link>
               <h1 className="text-[24px] font-bold text-bt-primary">Verify your email</h1>
               <p className="text-neutral-500 mt-1">
@@ -303,7 +303,7 @@ function LoginPage() {
           >
             <div className="text-center mb-8">
               <Link href="/">
-                <Image src="/images/bt_logo_big.png" alt="Beta Tenant" width={140} height={36} className="h-9 w-auto mx-auto mb-6" />
+                <Image src="/images/bt_logo_big.svg" alt="Beta Tenant" width={140} height={36} className="h-9 w-auto mx-auto mb-6" />
               </Link>
               <h1 className="text-[24px] font-bold text-bt-primary">Forgot password?</h1>
               <p className="text-neutral-500 mt-1">Enter your email and we'll send a reset code</p>
@@ -351,7 +351,7 @@ function LoginPage() {
           >
             <div className="text-center mb-8">
               <Link href="/">
-                <Image src="/images/bt_logo_big.png" alt="Beta Tenant" width={140} height={36} className="h-9 w-auto mx-auto mb-6" />
+                <Image src="/images/bt_logo_big.svg" alt="Beta Tenant" width={140} height={36} className="h-9 w-auto mx-auto mb-6" />
               </Link>
               <h1 className="text-[24px] font-bold text-bt-primary">Reset your password</h1>
               <p className="text-neutral-500 mt-1">Enter the code sent to {forgotEmail}</p>

@@ -242,7 +242,7 @@ function WelcomeVisual() {
         transition={{ delay: 0.1, duration: 0.5, type: "spring", bounce: 0.4 }}
         className="w-24 h-24 rounded-3xl bg-white flex items-center justify-center shadow-[0_16px_40px_rgba(0,0,0,0.25)]"
       >
-        <Image src="/images/bt_logo.png" alt="Beta Tenant" width={56} height={56} className="w-14 h-14" />
+        <Image src="/images/bt_logo.svg" alt="Beta Tenant" width={56} height={56} className="w-14 h-14" />
       </motion.div>
 
       {/* Floating stat cards */}
@@ -465,7 +465,7 @@ function GetStartedVisual() {
           className="absolute inset-0 rounded-3xl bg-white/10"
         />
         <div className="relative w-28 h-28 rounded-3xl bg-white flex items-center justify-center shadow-[0_20px_50px_rgba(0,0,0,0.3)]">
-          <Image src="/images/bt_logo.png" alt="Beta Tenant" width={64} height={64} className="w-16 h-16" />
+          <Image src="/images/bt_logo.svg" alt="Beta Tenant" width={64} height={64} className="w-16 h-16" />
         </div>
       </div>
 

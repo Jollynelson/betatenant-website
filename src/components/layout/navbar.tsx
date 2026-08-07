@@ -160,7 +160,7 @@ export function Navbar() {
 
           {/* Logo */}
           <Link href="/" className="flex items-center shrink-0">
-            <Image src="/images/bt_logo_big.png" alt="Beta Tenant" width={122} height={32} className="h-8 w-auto" priority />
+            <Image src="/images/bt_logo_big.svg" alt="Beta Tenant" width={122} height={32} className="h-8 w-auto" priority />
           </Link>
 
           {/* Desktop nav */}

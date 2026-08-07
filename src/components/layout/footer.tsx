@@ -10,7 +10,7 @@ export function Footer() {
           <div className="lg:min-w-[220px] lg:max-w-[260px]">
             <Link href="/">
               <Image
-                src="/images/bt_logo_big.png"
+                src="/images/bt_logo_big.svg"
                 alt="Beta Tenant"
                 width={122}
                 height={32}

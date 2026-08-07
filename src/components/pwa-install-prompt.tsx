@@ -112,7 +112,7 @@ export function PWAInstallPrompt() {
           /* Android: clean one-row pill — icon, text, install button */
           <div className="flex items-center gap-3 bg-neutral-900/95 backdrop-blur-md rounded-2xl px-4 py-3.5 shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
             <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shrink-0">
-              <Image src="/images/bt_logo.png" alt="Beta Tenant" width={26} height={26} />
+              <Image src="/images/bt_logo.svg" alt="Beta Tenant" width={26} height={26} />
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-white font-semibold text-sm leading-none">Install Beta Tenant</p>
@@ -139,7 +139,7 @@ export function PWAInstallPrompt() {
           /* iOS: same compact pill, instruction inline with actual Share icon */
           <div className="flex items-center gap-3 bg-neutral-900/95 backdrop-blur-md rounded-2xl px-4 py-3.5 shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
             <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shrink-0">
-              <Image src="/images/bt_logo.png" alt="Beta Tenant" width={26} height={26} />
+              <Image src="/images/bt_logo.svg" alt="Beta Tenant" width={26} height={26} />
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-white font-semibold text-sm leading-snug">
