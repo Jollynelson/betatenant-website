@@ -39,22 +39,15 @@ function EditProfileContent() {
   const [agentBasedLocation, setAgentBasedLocation] = useState("");
   const [yearsOfRentalExperience, setYearsOfRentalExperience] = useState("");
 
-  // Read role from getState() so we get the hydrated value even if the
-  // reactive `user` hasn't propagated yet on first render.
-  const getRole = () => {
-    const u = user ?? useAuthStore.getState().user;
-    return u?.role ?? "user";
-  };
-
   useEffect(() => {
-    // Hydrate store first (no-op if already done), then fetch profile
-    useAuthStore.getState().hydrate();
-    const resolvedRole = getRole();
-    const isAoL = resolvedRole === "agent" || resolvedRole === "landlord";
-    const endpoint = isAoL ? "/v1/landlordandagent/profile" : "/v1/user/profile";
-    api.get<any>(endpoint)
+    // /v1/user/profile works for ALL roles — same user collection
+    api.get<any>("/v1/user/profile")
       .then((r) => {
-        const p = r.profile ?? r.userProfile ?? r.user ?? r;
+        // Response shape: { profile: {...} } — pick first truthy nested object
+        const p = r?.profile ?? r?.userProfile ?? r?.user
+          // fallback: if the response itself looks like a user doc, use it
+          ?? (r?.firstName !== undefined ? r : null);
+        if (!p) { toast.error("Could not read profile data"); return; }
         setFirstName(p.firstName ?? "");
         setLastName(p.lastName ?? "");
         setEmail(p.email ?? "");
@@ -63,11 +56,10 @@ function EditProfileContent() {
         setPhoneVerified(!!p.phoneNumberVerified);
         setProfilePic(p.profilePic ?? "");
         setAgentBasedLocation(p.agentBasedLocation ?? "");
-        setYearsOfRentalExperience(p.yearsOfRentalExperience ?? "");
+        setYearsOfRentalExperience(p.yearsOfRentalExperience ? String(p.yearsOfRentalExperience) : "");
       })
       .catch(() => toast.error("Failed to load profile"))
       .finally(() => setLoading(false));
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const role = user?.role ?? useAuthStore.getState().user?.role ?? "user";
