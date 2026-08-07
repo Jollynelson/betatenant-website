@@ -7,7 +7,7 @@ import Image from "next/image";
 import {
   Heart, MessageCircle, Home, LayoutDashboard, Shield,
   LogOut, ChevronRight, Phone, Mail, Bell, Repeat2, Plus,
-  MapPin, ShieldCheck, Crown, Edit3, Calendar, AlertTriangle,
+  MapPin, ShieldCheck, Crown, Edit3, Calendar, AlertTriangle, Receipt,
 } from "lucide-react";
 import { AuthGuard } from "@/components/auth-guard";
 import { cn } from "@/lib/utils";
@@ -51,18 +51,20 @@ function AccountContent() {
 
   // Role-specific navigation sections
   const tenantNav = [
-    { icon: Heart,         label: "Saved Properties", href: "/saved",         desc: "Properties you saved" },
-    { icon: Bell,          label: "Listing Alerts",   href: "/alerts",        desc: "Get notified of new listings" },
-    { icon: MessageCircle, label: "Messages",         href: "/messages",      desc: "Chat with agents" },
-    { icon: Repeat2,       label: "Tenant Switch",    href: "/tenant-switch", desc: "Swap apartments" },
-    { icon: Shield,        label: "Report Agent",     href: "/agents",        desc: "Check or report an agent" },
+    { icon: Heart,         label: "Saved Properties",  href: "/saved",                       desc: "Properties you saved" },
+    { icon: Bell,          label: "Listing Alerts",    href: "/alerts",                      desc: "Get notified of new listings" },
+    { icon: MessageCircle, label: "Messages",          href: "/messages",                    desc: "Chat with agents" },
+    { icon: Receipt,       label: "Payment History",   href: "/account/subscription#history",desc: "Your transactions & receipts" },
+    { icon: Repeat2,       label: "Tenant Switch",     href: "/tenant-switch",               desc: "Swap apartments" },
+    { icon: Shield,        label: "Report Agent",      href: "/agents",                      desc: "Check or report an agent" },
   ];
 
   const agentNav = [
-    { icon: LayoutDashboard, label: "Dashboard",   href: "/host",               desc: "Stats, bookings & listings" },
-    { icon: Home,            label: "My Listings", href: "/account/properties", desc: "Manage your listings" },
-    { icon: Plus,            label: "Add Listing", href: "/host/new",           desc: "List a new property" },
-    { icon: MessageCircle,   label: "Messages",    href: "/messages",           desc: "Chat with tenants" },
+    { icon: LayoutDashboard, label: "Dashboard",       href: "/host",               desc: "Stats, bookings & listings" },
+    { icon: Home,            label: "My Listings",     href: "/account/properties", desc: "Manage your listings" },
+    { icon: Plus,            label: "Add Listing",     href: "/host/new",           desc: "List a new property" },
+    { icon: MessageCircle,   label: "Messages",        href: "/messages",           desc: "Chat with tenants" },
+    { icon: Receipt,         label: "Payment History", href: "/account/subscription#history", desc: "Your transactions & receipts" },
   ];
 
   const navItems = isAgentOrLandlord ? agentNav : tenantNav;
@@ -230,41 +232,22 @@ function AccountContent() {
           ))}
         </div>
 
-        {/* ── Subscription (agents & landlords only) ───────────── */}
-        {isAgentOrLandlord && (() => {
-          const expiresAt = profile?.userSubscriptionObject?.expiresAt;
-          const isActive = isPremium && expiresAt && new Date(expiresAt) > new Date();
-          const daysLeft = expiresAt ? Math.ceil((new Date(expiresAt).getTime() - Date.now()) / 86_400_000) : null;
-          const expiringSoon = isActive && daysLeft !== null && daysLeft <= 7;
-          return (
-            <Link href="/account/subscription"
-              className="flex items-center gap-3.5 px-5 py-4 bg-white rounded-2xl border border-neutral-100 shadow-sm hover:bg-amber-50/40 active:bg-amber-50 transition-colors">
-              <div className="w-9 h-9 rounded-xl bg-amber-50 flex items-center justify-center shrink-0">
-                <Crown className={cn("w-4 h-4", isActive ? "text-amber-500 fill-amber-500" : "text-amber-400")} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-neutral-900">
-                  {isActive ? "Premium Active" : "Go Premium"}
-                </p>
-                <p className="text-[11px] text-neutral-400 mt-0.5 truncate">
-                  {isActive
-                    ? expiringSoon
-                      ? `⚠ Expires in ${daysLeft} day${daysLeft !== 1 ? "s" : ""}`
-                      : `Expires ${new Date(expiresAt!).toLocaleDateString("en-NG", { day: "numeric", month: "short" })}`
-                    : "Unlimited listings · Priority placement · Verified badge"}
-                </p>
-              </div>
-              <span className={cn("px-2.5 py-0.5 rounded-full text-[11px] font-bold shrink-0",
-                isActive
-                  ? expiringSoon ? "bg-amber-200 text-amber-800" : "bg-amber-100 text-amber-700"
-                  : "bg-amber-400/15 text-amber-700"
-              )}>
-                {isActive ? (expiringSoon ? "Renew" : "Active") : "Upgrade"}
-              </span>
-              <ChevronRight className="w-4 h-4 text-neutral-300 shrink-0 ml-1" />
-            </Link>
-          );
-        })()}
+        {/* ── Go Premium — only shown when agent/landlord is NOT subscribed ── */}
+        {isAgentOrLandlord && !isPremium && (
+          <Link href="/account/subscription"
+            className="flex items-center gap-3.5 px-5 py-4 bg-gradient-to-r from-amber-50 to-orange-50 rounded-2xl border border-amber-200 shadow-sm hover:border-amber-300 active:scale-[0.99] transition-all">
+            <div className="w-9 h-9 rounded-xl bg-amber-100 flex items-center justify-center shrink-0">
+              <Crown className="w-4 h-4 text-amber-600" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-bold text-neutral-900">Go Premium</p>
+              <p className="text-[11px] text-neutral-500 mt-0.5">Unlimited listings · Priority placement · Verified badge</p>
+            </div>
+            <span className="px-2.5 py-0.5 rounded-full bg-amber-400 text-amber-900 text-[11px] font-bold shrink-0">
+              Upgrade
+            </span>
+          </Link>
+        )}
 
         {/* ── Push Notifications ───────────────────────────────── */}
         <div className="bg-white rounded-2xl border border-neutral-100 shadow-sm overflow-hidden">

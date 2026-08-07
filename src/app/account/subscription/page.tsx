@@ -36,7 +36,10 @@ interface SubInfo {
 
 function SubscriptionContent() {
   const router = useRouter();
-  const [view, setView] = useState<View>("home");
+  const [view, setView] = useState<View>(() => {
+    if (typeof window !== "undefined" && window.location.hash === "#history") return "history";
+    return "home";
+  });
   const [sub, setSub] = useState<SubInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [paying, setPaying] = useState(false);
