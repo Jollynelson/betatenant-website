@@ -224,7 +224,6 @@ function SubscriptionContent() {
   const renderPlans = () => {
     const tier = TIERS.find(t => t.id === selectedTier)!;
     const price = billing === "monthly" ? tier.monthlyPrice : tier.yearlyPrice;
-    const perMonth = billing === "yearly" ? Math.round(tier.yearlyPrice / 12) : tier.monthlyPrice;
 
     return (
       <div className="space-y-4">
@@ -242,61 +241,18 @@ function SubscriptionContent() {
           ))}
         </div>
 
-        {/* Tier cards */}
+        {/* Tier cards — tap to select, tap selected to expand features */}
         <div className="space-y-3">
-          {TIERS.map((t) => {
-            const p = billing === "monthly" ? t.monthlyPrice : t.yearlyPrice;
-            const pm = billing === "yearly" ? Math.round(t.yearlyPrice / 12) : t.monthlyPrice;
-            const isSelected = selectedTier === t.id;
-            const isCurrentPlan = sub?.tier === t.id && isActive;
-            return (
-              <button key={t.id} onClick={() => setSelectedTier(t.id)}
-                className={cn(
-                  "w-full rounded-2xl border p-4 text-left transition-all relative",
-                  isSelected ? `${t.color} shadow-sm` : "border-neutral-100 bg-white hover:border-neutral-200",
-                  ("highlight" in t && t.highlight) && !isSelected && "border-amber-200 bg-amber-50/30"
-                )}>
-                {("highlight" in t && t.highlight) && (
-                  <span className="absolute -top-2.5 left-4 px-2.5 py-0.5 rounded-full bg-amber-400 text-amber-900 text-[10px] font-bold">Most Popular</span>
-                )}
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <p className="text-sm font-bold text-neutral-900">{t.name}</p>
-                      {isCurrentPlan && <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-bold">Current</span>}
-                    </div>
-                    <p className="text-xl font-bold text-neutral-900">₦{p.toLocaleString()}</p>
-                    <p className="text-xs text-neutral-400 mt-0.5">
-                      {billing === "yearly" ? `₦${pm.toLocaleString()}/month` : "per month"}
-                    </p>
-                    <div className="mt-2 space-y-1">
-                      {t.features.slice(0, 3).map((f) => (
-                        <p key={f} className="text-xs text-neutral-600 flex items-center gap-1.5">
-                          <Check className="w-3 h-3 text-emerald-500 shrink-0" />{f}
-                        </p>
-                      ))}
-                    </div>
-                  </div>
-                  <div className={cn("w-5 h-5 rounded-full border-2 mt-0.5 shrink-0 flex items-center justify-center transition-all",
-                    isSelected ? "border-bt-primary bg-bt-primary" : "border-neutral-300")}>
-                    {isSelected && <Check className="w-3 h-3 text-white" />}
-                  </div>
-                </div>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Feature comparison for selected tier */}
-        <div className="bg-white rounded-2xl border border-neutral-100 p-4">
-          <p className="text-xs font-bold text-neutral-400 uppercase tracking-wide mb-3">{tier.name} includes</p>
-          <div className="space-y-2">
-            {tier.features.map((f) => (
-              <div key={f} className="flex items-center gap-2 text-sm text-neutral-700">
-                <Check className="w-4 h-4 text-emerald-500 shrink-0" />{f}
-              </div>
-            ))}
-          </div>
+          {TIERS.map((t) => (
+            <TierCard
+              key={t.id}
+              tier={t}
+              billing={billing}
+              isSelected={selectedTier === t.id}
+              isCurrentPlan={sub?.tier === t.id && isActive}
+              onSelect={() => setSelectedTier(t.id)}
+            />
+          ))}
         </div>
 
         {/* Pay CTA */}
@@ -418,6 +374,93 @@ function SubscriptionContent() {
           </>
         )}
       </div>
+    </div>
+  );
+}
+
+// ─── Tier Card (collapsible) ──────────────────────────────────────────────────
+
+function TierCard({
+  tier, billing, isSelected, isCurrentPlan, onSelect,
+}: {
+  tier: typeof TIERS[number];
+  billing: "monthly" | "yearly";
+  isSelected: boolean;
+  isCurrentPlan: boolean;
+  onSelect: () => void;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const price   = billing === "monthly" ? tier.monthlyPrice : tier.yearlyPrice;
+  const perMonth = billing === "yearly" ? Math.round(tier.yearlyPrice / 12) : tier.monthlyPrice;
+  const hasHighlight = "highlight" in tier && tier.highlight;
+
+  return (
+    <div className={cn(
+      "rounded-2xl border overflow-hidden transition-all",
+      isSelected ? `${tier.color} shadow-sm` : "border-neutral-100 bg-white",
+      hasHighlight && !isSelected ? "border-amber-200" : ""
+    )}>
+      {hasHighlight && (
+        <div className="bg-amber-400 text-amber-900 text-[10px] font-bold text-center py-1 tracking-wide uppercase">
+          Most Popular
+        </div>
+      )}
+
+      {/* Main row — tap to select */}
+      <button onClick={onSelect} className="w-full flex items-center gap-3 p-4 text-left">
+        {/* Radio */}
+        <div className={cn(
+          "w-5 h-5 rounded-full border-2 shrink-0 flex items-center justify-center transition-all",
+          isSelected ? "border-bt-primary bg-bt-primary" : "border-neutral-300"
+        )}>
+          {isSelected && <Check className="w-3 h-3 text-white" />}
+        </div>
+
+        {/* Info */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <p className="text-sm font-bold text-neutral-900">{tier.name}</p>
+            {isCurrentPlan && (
+              <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-bold">Current</span>
+            )}
+          </div>
+          <p className="text-xs text-neutral-400 mt-0.5">
+            {tier.listingLimit === 999 ? "Unlimited" : `${tier.listingLimit}`} listings · {tier.boostCredits} boost credits/mo
+          </p>
+        </div>
+
+        {/* Price */}
+        <div className="text-right shrink-0">
+          <p className="text-base font-bold text-neutral-900">₦{price.toLocaleString()}</p>
+          {billing === "yearly" && (
+            <p className="text-[10px] text-neutral-400">₦{perMonth.toLocaleString()}/mo</p>
+          )}
+        </div>
+      </button>
+
+      {/* Expand / collapse features */}
+      {isSelected && (
+        <div className="px-4 pb-1">
+          <button
+            onClick={() => setExpanded(e => !e)}
+            className="flex items-center gap-1.5 text-xs font-semibold text-bt-primary mb-2"
+          >
+            <ChevronRight className={cn("w-3.5 h-3.5 transition-transform", expanded && "rotate-90")} />
+            {expanded ? "Hide features" : "See what's included"}
+          </button>
+
+          {expanded && (
+            <div className="space-y-1.5 pb-3 border-t border-neutral-100 pt-3">
+              {tier.features.map((f) => (
+                <div key={f} className="flex items-start gap-2 text-xs text-neutral-700">
+                  <Check className="w-3.5 h-3.5 text-emerald-500 shrink-0 mt-0.5" />
+                  {f}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
