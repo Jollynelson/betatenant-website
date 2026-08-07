@@ -359,6 +359,10 @@ function CountInput({ value, onChange, min, max }: {
   );
 }
 
+export function generateStaticParams() {
+  return [{ id: "placeholder" }];
+}
+
 export default function EditListingPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   return <AuthGuard><EditListingContent id={id} /></AuthGuard>;
