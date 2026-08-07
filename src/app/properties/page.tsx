@@ -541,8 +541,24 @@ function PropertiesContent() {
           </div>
         ) : properties.length > 0 ? (
           <>
+            {/* Spotlight listings — shown first, full-width prominence */}
+            {(properties as any[]).some((p: any) => p.promotionPackage === "spotlight") && (
+              <div className="mb-2">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-[11px] font-bold text-[#FF4500] uppercase tracking-wider">🔥 Spotlight</span>
+                  <div className="flex-1 h-px bg-[#FF4500]/15" />
+                </div>
+                <div className={cn(viewMode === "grid" ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5" : "space-y-3")}>
+                  {(properties as any[]).filter((p: any) => p.promotionPackage === "spotlight").map((p) => (
+                    <PropertyCard key={`sp-${p._id}`} property={p} variant={viewMode === "list" ? "horizontal" : "default"} />
+                  ))}
+                </div>
+                <div className="h-px bg-neutral-100 mt-5 mb-5" />
+              </div>
+            )}
             <div className={cn(viewMode === "grid" ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5" : "space-y-3")}>
-              {(properties as any[]).map((p) => (
+              {/* Exclude spotlight from main grid (shown above) */}
+              {(properties as any[]).filter((p: any) => p.promotionPackage !== "spotlight").map((p) => (
                 <PropertyCard key={p._id} property={p} variant={viewMode === "list" ? "horizontal" : "default"} />
               ))}
             </div>

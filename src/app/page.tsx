@@ -11,13 +11,14 @@ import { HowItWorks } from "@/components/shared/how-it-works";
 import { CTASection } from "@/components/shared/cta-section";
 import { propertyApi } from "@/lib/api";
 import { searchLocations, type LocationItem } from "@/lib/locations";
-import { Shield, Users, Home, BadgeCheck, Search, ArrowRight, MapPin, Star } from "lucide-react";
+import { Shield, Users, Home, BadgeCheck, Search, ArrowRight, MapPin, Star, Flame, Zap } from "lucide-react";
 
 export default function HomePage() {
   return (
     <div className="flex flex-col">
       <HeroSection />
       <SocialProof />
+      <FeaturedSpotlightSection />
       <ListingsSection />
       <LocationDiscovery />
       <HowItWorks />
@@ -173,6 +174,43 @@ function ProofItem({ icon: Icon, value, label }: { icon: React.ComponentType<{ c
         <span className="text-sm text-neutral-500 ml-1.5">{label}</span>
       </div>
     </div>
+  );
+}
+
+// ── Featured & Spotlight section ─────────────────────────────────────────────
+function FeaturedSpotlightSection() {
+  const { data, isLoading } = useQuery({
+    queryKey: ["home-promoted"],
+    queryFn: () => propertyApi.search({ sortBy: undefined, page: 1, limit: 12 }),
+    staleTime: 1000 * 60 * 5,
+  });
+
+  // Filter to only promoted listings (spotlight first, then featured, then boost)
+  const promoted = (data?.properties ?? []).filter(
+    (p: any) => p.promotionPackage === "spotlight" || p.promotionPackage === "featured"
+  );
+
+  if (isLoading || promoted.length === 0) return null;
+
+  return (
+    <section className="py-10 bg-white">
+      <div className="max-w-[1360px] mx-auto px-5 lg:px-10">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-9 h-9 rounded-xl bg-[#FF4500]/10 flex items-center justify-center">
+            <Flame className="w-5 h-5 text-[#FF4500]" />
+          </div>
+          <div>
+            <h2 className="text-lg font-bold text-neutral-900">Featured & Spotlight Listings</h2>
+            <p className="text-sm text-neutral-500">Premium placements by verified agents</p>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {promoted.slice(0, 4).map((p: any) => (
+            <PropertyCard key={p._id} property={p} />
+          ))}
+        </div>
+      </div>
+    </section>
   );
 }
 
