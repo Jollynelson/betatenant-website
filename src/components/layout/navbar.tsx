@@ -8,11 +8,12 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Menu, X, ChevronDown, User, Heart, MessageCircle, LogOut,
-  Home, Bell, Repeat2, Shield, Plus, LayoutDashboard,
+  Home, Bell, Repeat2, Shield, Plus, LayoutDashboard, Crown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/lib/auth-store";
 import { api } from "@/lib/api";
+import { GoPremiumModal } from "@/components/go-premium-modal";
 
 interface NavItem {
   href: string;
@@ -100,6 +101,8 @@ export function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [premiumOpen, setPremiumOpen] = useState(false);
+  const [profile, setProfile] = useState<any>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
@@ -109,6 +112,13 @@ export function Navbar() {
   const menuItems = isAgentOrLandlord ? AGENT_LANDLORD_ITEMS : TENANT_ITEMS;
 
   const { count: notifCount, items: notifItems } = useNotifications(user);
+
+  // Fetch profile for subscription status (agents/landlords only)
+  useEffect(() => {
+    if (!user || (user.role !== "agent" && user.role !== "landlord")) return;
+    const endpoint = "/v1/landlordandagent/profile";
+    api.get<any>(endpoint).then((r) => setProfile(r.profile ?? r.user ?? r)).catch(() => {});
+  }, [user]);
 
   const initials = user
     ? user.fullName.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase()
@@ -199,10 +209,36 @@ export function Navbar() {
                       <div className="px-4 py-3 border-b border-neutral-50">
                         <p className="text-sm font-bold text-neutral-900 truncate">{user.fullName}</p>
                         <p className="text-xs text-neutral-400 truncate mt-0.5">{user.email}</p>
-                        <span className="inline-block mt-1.5 px-2 py-0.5 rounded-full bg-bt-primary/8 text-bt-primary text-[10px] font-semibold capitalize">
-                          {role}
-                        </span>
+                        <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                          <span className="px-2 py-0.5 rounded-full bg-bt-primary/8 text-bt-primary text-[10px] font-semibold capitalize">
+                            {role}
+                          </span>
+                          {isAgentOrLandlord && profile?.userSubscriptionObject?.status === "active" && (
+                            <span className="flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 text-[10px] font-bold">
+                              <Crown className="w-2.5 h-2.5 fill-amber-600" /> Premium
+                            </span>
+                          )}
+                        </div>
                       </div>
+
+                      {/* Premium CTA — agents/landlords without active subscription */}
+                      {isAgentOrLandlord && profile?.userSubscriptionObject?.status !== "active" && (
+                        <div className="px-3 py-2 border-b border-neutral-50">
+                          <button
+                            onClick={() => { setDropdownOpen(false); setPremiumOpen(true); }}
+                            className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/60 hover:border-amber-300 transition-colors"
+                          >
+                            <div className="w-7 h-7 rounded-lg bg-amber-400 flex items-center justify-center shrink-0">
+                              <Crown className="w-3.5 h-3.5 text-amber-900 fill-amber-900" />
+                            </div>
+                            <div className="text-left flex-1">
+                              <p className="text-xs font-bold text-neutral-900">Go Premium</p>
+                              <p className="text-[10px] text-neutral-500">Unlimited listings · Priority</p>
+                            </div>
+                            <span className="text-[10px] font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">Upgrade</span>
+                          </button>
+                        </div>
+                      )}
 
                       {/* Notifications section — only when there are some */}
                       {notifItems.length > 0 && (
@@ -343,6 +379,23 @@ export function Navbar() {
                         </div>
                       )}
 
+                      {/* Mobile premium CTA */}
+                      {isAgentOrLandlord && profile?.userSubscriptionObject?.status !== "active" && (
+                        <button
+                          onClick={() => { setMobileMenuOpen(false); setPremiumOpen(true); }}
+                          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 my-1"
+                        >
+                          <div className="w-8 h-8 rounded-lg bg-amber-400 flex items-center justify-center shrink-0">
+                            <Crown className="w-4 h-4 text-amber-900 fill-amber-900" />
+                          </div>
+                          <div className="text-left">
+                            <p className="text-sm font-bold text-neutral-900">Go Premium</p>
+                            <p className="text-xs text-neutral-500">Unlimited listings · Priority placement</p>
+                          </div>
+                          <span className="ml-auto text-xs font-bold text-amber-700 bg-amber-100 px-2.5 py-1 rounded-full">Upgrade</span>
+                        </button>
+                      )}
+
                       {menuItems.map((item) => (
                         <MobileNavLink key={item.href} href={item.href} onClick={() => setMobileMenuOpen(false)}>
                           <span className="flex items-center gap-3">
@@ -376,6 +429,17 @@ export function Navbar() {
           </>
         )}
       </AnimatePresence>
+
+      {/* Premium modal — rendered outside header so it's not clipped */}
+      {user && isAgentOrLandlord && (
+        <GoPremiumModal
+          open={premiumOpen}
+          onClose={() => setPremiumOpen(false)}
+          userEmail={user.email}
+          userId={user.userId}
+          onSuccess={() => api.get<any>("/v1/landlordandagent/profile").then((r) => setProfile(r.profile ?? r.user ?? r)).catch(() => {})}
+        />
+      )}
     </header>
   );
 }

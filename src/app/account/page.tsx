@@ -14,6 +14,7 @@ import { AuthGuard } from "@/components/auth-guard";
 import { useAuthStore } from "@/lib/auth-store";
 import { api } from "@/lib/api";
 import { PushToggle } from "@/components/push-subscribe";
+import { GoPremiumModal } from "@/components/go-premium-modal";
 
 function AccountContent() {
   const router = useRouter();
@@ -21,6 +22,7 @@ function AccountContent() {
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [premiumOpen, setPremiumOpen] = useState(false);
 
   const role = user?.role ?? "user";
   const isAgentOrLandlord = role === "agent" || role === "landlord";
@@ -227,6 +229,38 @@ function AccountContent() {
           ))}
         </div>
 
+        {/* ── Subscription (agents & landlords only) ───────────── */}
+        {isAgentOrLandlord && (
+          <div className="bg-white rounded-2xl border border-neutral-100 shadow-sm overflow-hidden">
+            {isPremium ? (
+              <div className="flex items-center gap-3.5 px-5 py-4">
+                <div className="w-9 h-9 rounded-xl bg-amber-50 flex items-center justify-center shrink-0">
+                  <Crown className="w-4 h-4 text-amber-500 fill-amber-500" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-neutral-900">Premium Active</p>
+                  <p className="text-[11px] text-amber-600 mt-0.5">Your subscription is active</p>
+                </div>
+                <span className="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-700 text-[11px] font-bold">Active</span>
+              </div>
+            ) : (
+              <button
+                onClick={() => setPremiumOpen(true)}
+                className="w-full flex items-center gap-3.5 px-5 py-4 hover:bg-amber-50/50 active:bg-amber-50 transition-colors group"
+              >
+                <div className="w-9 h-9 rounded-xl bg-amber-50 flex items-center justify-center shrink-0">
+                  <Crown className="w-4 h-4 text-amber-500" />
+                </div>
+                <div className="flex-1 text-left">
+                  <p className="text-sm font-semibold text-neutral-900">Go Premium</p>
+                  <p className="text-[11px] text-neutral-400 mt-0.5">Unlimited listings · Priority placement · Verified badge</p>
+                </div>
+                <span className="px-2.5 py-0.5 rounded-full bg-amber-400/15 text-amber-700 text-[11px] font-bold">Upgrade</span>
+              </button>
+            )}
+          </div>
+        )}
+
         {/* ── Push Notifications ───────────────────────────────── */}
         <div className="bg-white rounded-2xl border border-neutral-100 shadow-sm overflow-hidden">
           <p className="px-5 pt-4 pb-2 text-xs font-semibold text-neutral-400 uppercase tracking-wider">Notifications</p>
@@ -245,6 +279,15 @@ function AccountContent() {
         </div>
 
       </div>
+
+      {/* Premium modal */}
+      <GoPremiumModal
+        open={premiumOpen}
+        onClose={() => setPremiumOpen(false)}
+        userEmail={profile?.email ?? ""}
+        userId={profile?._id ?? user?.userId ?? ""}
+        onSuccess={() => fetchProfile()}
+      />
     </div>
   );
 }
