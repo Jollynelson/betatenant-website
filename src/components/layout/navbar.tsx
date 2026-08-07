@@ -223,7 +223,7 @@ export function Navbar() {
                       {isAgentOrLandlord && profile?.userSubscriptionObject?.status !== "active" && (
                         <div className="px-3 py-2 border-b border-neutral-50">
                           <Link
-                            href="/account/subscription"
+                            href="/account/subscription#plans"
                             onClick={() => setDropdownOpen(false)}
                             className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/60 hover:border-amber-300 transition-colors"
                           >
@@ -381,7 +381,7 @@ export function Navbar() {
                       {/* Mobile premium CTA */}
                       {isAgentOrLandlord && profile?.userSubscriptionObject?.status !== "active" && (
                         <Link
-                          href="/account/subscription"
+                          href="/account/subscription#plans"
                           onClick={() => setMobileMenuOpen(false)}
                           className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 my-1"
                         >

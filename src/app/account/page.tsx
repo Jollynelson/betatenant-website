@@ -234,7 +234,7 @@ function AccountContent() {
 
         {/* ── Go Premium — only shown when agent/landlord is NOT subscribed ── */}
         {isAgentOrLandlord && !isPremium && (
-          <Link href="/account/subscription"
+          <Link href="/account/subscription#plans"
             className="flex items-center gap-3.5 px-5 py-4 bg-gradient-to-r from-amber-50 to-orange-50 rounded-2xl border border-amber-200 shadow-sm hover:border-amber-300 active:scale-[0.99] transition-all">
             <div className="w-9 h-9 rounded-xl bg-amber-100 flex items-center justify-center shrink-0">
               <Crown className="w-4 h-4 text-amber-600" />

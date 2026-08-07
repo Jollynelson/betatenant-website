@@ -1445,7 +1445,7 @@ function StepPreview({ onBack }: { onBack: () => void }) {
             </p>
             <div className="space-y-2.5">
               <button
-                onClick={() => router.push("/account/subscription")}
+                onClick={() => router.push("/account/subscription#plans")}
                 className="w-full py-3.5 rounded-xl bg-bt-primary text-white font-bold text-sm flex items-center justify-center gap-2 hover:bg-bt-primary-light transition-colors shadow-[0_4px_14px_rgba(10,8,118,0.25)]">
                 <Crown className="w-4 h-4" /> Go Premium — Publish Now
               </button>
