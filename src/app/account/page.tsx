@@ -7,7 +7,7 @@ import Image from "next/image";
 import {
   Heart, MessageCircle, Home, LayoutDashboard, Shield,
   LogOut, ChevronRight, Phone, Mail, Bell, Repeat2, Plus,
-  MapPin, ShieldCheck, Crown, Edit3, Calendar, AlertTriangle, Receipt,
+  MapPin, ShieldCheck, Crown, Edit3, Calendar, AlertTriangle, Receipt, Zap,
 } from "lucide-react";
 import { AuthGuard } from "@/components/auth-guard";
 import { cn } from "@/lib/utils";
@@ -63,8 +63,9 @@ function AccountContent() {
     { icon: LayoutDashboard, label: "Dashboard",       href: "/host",               desc: "Stats, bookings & listings" },
     { icon: Home,            label: "My Listings",     href: "/account/properties", desc: "Manage your listings" },
     { icon: Plus,            label: "Add Listing",     href: "/host/new",           desc: "List a new property" },
+    { icon: Zap,             label: "Boost Listings",  href: "/host/boost",         desc: "Promote your listings" },
     { icon: MessageCircle,   label: "Messages",        href: "/messages",           desc: "Chat with tenants" },
-    { icon: Receipt,         label: "Payment History", href: "/account/payments",             desc: "Your transactions & receipts" },
+    { icon: Receipt,         label: "Payment History", href: "/account/payments",   desc: "Your transactions & receipts" },
   ];
 
   const navItems = isAgentOrLandlord ? agentNav : tenantNav;

@@ -85,6 +85,7 @@ export function mapProperty(raw: any) {
     views: raw.totalViews ?? 0,
     createdAt: raw.createdAt ?? "",
     updatedAt: raw.updatedAt ?? "",
+    promotionPackage: raw.promotionPackage ?? null,
     host: {
       _id: String(host._id ?? ""),
       firstName: host.firstName ?? "",

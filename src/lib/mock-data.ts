@@ -41,7 +41,7 @@ export const MOCK_PROPERTIES: Property[] = [
     createdAt: "2024-01-15T00:00:00Z",
     updatedAt: "2024-01-15T00:00:00Z",
     isPromoted: true,
-    promotionTier: "featured",
+    promotionPackage: "featured",
   },
   {
     _id: "2",
@@ -120,7 +120,7 @@ export const MOCK_PROPERTIES: Property[] = [
     createdAt: "2024-01-20T00:00:00Z",
     updatedAt: "2024-01-20T00:00:00Z",
     isPromoted: true,
-    promotionTier: "spotlight",
+    promotionPackage: "spotlight",
   },
   {
     _id: "4",
@@ -199,7 +199,7 @@ export const MOCK_PROPERTIES: Property[] = [
     createdAt: "2024-01-25T00:00:00Z",
     updatedAt: "2024-01-25T00:00:00Z",
     isPromoted: true,
-    promotionTier: "featured",
+    promotionPackage: "featured",
   },
   {
     _id: "6",

@@ -115,9 +115,24 @@ export function PropertyCard({ property, variant = "default", onRemove }: Proper
           />
 
           {/* Top-left badge */}
-          {(property.host?.isVerified || property.isPromoted) && (
-            <div className="absolute top-2.5 left-2.5 flex gap-1">
-              {property.isPromoted && (
+          {(property.host?.isVerified || property.promotionPackage || property.isPromoted) && (
+            <div className="absolute top-2.5 left-2.5 flex gap-1 flex-wrap">
+              {property.promotionPackage === "spotlight" && (
+                <span className="px-2 py-0.5 rounded-md bg-[#FF4500] text-white text-[10px] font-bold">
+                  🔥 Spotlight
+                </span>
+              )}
+              {property.promotionPackage === "featured" && (
+                <span className="px-2 py-0.5 rounded-md bg-[#FB6514] text-white text-[10px] font-bold">
+                  ⭐ Featured
+                </span>
+              )}
+              {property.promotionPackage === "boost" && (
+                <span className="px-2 py-0.5 rounded-md bg-bt-primary text-white text-[10px] font-bold">
+                  🚀 Boosted
+                </span>
+              )}
+              {!property.promotionPackage && property.isPromoted && (
                 <span className="px-2 py-0.5 rounded-md bg-[#FB6514] text-white text-[10px] font-bold">
                   Featured
                 </span>

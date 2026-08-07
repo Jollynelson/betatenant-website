@@ -26,7 +26,7 @@ export interface Property {
   createdAt: string;
   updatedAt: string;
   isPromoted?: boolean;
-  promotionTier?: "basic" | "featured" | "spotlight";
+  promotionPackage?: "boost" | "featured" | "spotlight" | null;
 }
 
 export interface Host {
