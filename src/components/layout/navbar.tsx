@@ -435,9 +435,7 @@ export function Navbar() {
         <GoPremiumModal
           open={premiumOpen}
           onClose={() => setPremiumOpen(false)}
-          userEmail={user.email}
-          userId={user.userId}
-          onSuccess={() => api.get<any>("/v1/landlordandagent/profile").then((r) => setProfile(r.profile ?? r.user ?? r)).catch(() => {})}
+          onSuccess={() => api.get<any>("/v1/user/profile").then((r) => setProfile(r.profile ?? r.userProfile ?? r.user ?? r)).catch(() => {})}
         />
       )}
     </header>

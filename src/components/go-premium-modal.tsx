@@ -1,32 +1,29 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { X, Crown, Check, CreditCard, Loader2, Zap, TrendingUp, Shield, BarChart2 } from "lucide-react";
+import { X, Crown, Check, CreditCard, Loader2, Zap, TrendingUp, Shield, BarChart2, Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { api } from "@/lib/api";
+import toast from "react-hot-toast";
 
-const PK = process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY ?? "";
-const MONTHLY_PLAN = process.env.NEXT_PUBLIC_PAYSTACK_MONTHLY_PLAN_ID ?? "";
-const YEARLY_PLAN  = process.env.NEXT_PUBLIC_PAYSTACK_YEARLY_PLAN_ID ?? "";
-const MONTHLY_PRICE = Number(process.env.NEXT_PUBLIC_PAYSTACK_MONTHLY_PRICE ?? 5000);
-const YEARLY_PRICE  = Math.round(MONTHLY_PRICE * 12 * 0.8); // 20% off annual
+const MONTHLY_PRICE = 5000;
+const YEARLY_PRICE  = Math.round(MONTHLY_PRICE * 12 * 0.8); // 20% off
 
 const FEATURES = [
-  { icon: Zap,         title: "Unlimited Listings",  desc: "Remove the 5-property limit and list as many homes as you manage" },
-  { icon: Crown,       title: "Premium Badge",        desc: "Stand out with a verified gold crown badge on your listings" },
-  { icon: TrendingUp,  title: "Priority Placement",   desc: "Your properties appear first in search results" },
-  { icon: Shield,      title: "Verified Status",      desc: "Build trust with tenants through verified agent status" },
-  { icon: BarChart2,   title: "Advanced Analytics",   desc: "See exactly who is viewing and saving your listings" },
+  { icon: Zap,        title: "Unlimited Listings",  desc: "Remove the 5-property limit and list as many homes as you manage" },
+  { icon: Crown,      title: "Premium Badge",        desc: "Stand out with a verified gold crown badge on your listings" },
+  { icon: TrendingUp, title: "Priority Placement",   desc: "Your properties appear first in search results" },
+  { icon: Shield,     title: "Verified Status",      desc: "Build trust with tenants through verified agent status" },
+  { icon: BarChart2,  title: "Advanced Analytics",   desc: "See exactly who is viewing and saving your listings" },
 ];
 
 interface Props {
   open: boolean;
   onClose: () => void;
-  userEmail: string;
-  userId: string;
   onSuccess?: () => void;
 }
 
-export function GoPremiumModal({ open, onClose, userEmail, userId, onSuccess }: Props) {
+export function GoPremiumModal({ open, onClose, onSuccess }: Props) {
   const [plan, setPlan]       = useState<"monthly" | "yearly">("monthly");
   const [loading, setLoading] = useState(false);
   const scriptReady = useRef(false);
@@ -44,41 +41,46 @@ export function GoPremiumModal({ open, onClose, userEmail, userId, onSuccess }: 
     document.body.appendChild(s);
   }, []);
 
-  // Lock body scroll while open
   useEffect(() => {
     document.body.style.overflow = open ? "hidden" : "";
     return () => { document.body.style.overflow = ""; };
   }, [open]);
 
-  const handlePay = () => {
-    if (!userEmail || !PK) return;
-    const PaystackPop = (window as any).PaystackPop;
-    if (!PaystackPop) { return; }
-
+  const handlePay = async () => {
     setLoading(true);
-    const planCode = plan === "monthly" ? MONTHLY_PLAN : YEARLY_PLAN;
+    try {
+      // Backend creates a Paystack transaction and returns an access code
+      const res = await api.post<any>("/v1/user/subscription/initiate", { plan });
+      const { accessCode } = res;
 
-    // v2 API: new PaystackPop() instance → .newTransaction()
-    // planCode is used for subscriptions; amount is omitted (plan defines billing amount)
-    const popup = new PaystackPop();
-    popup.newTransaction({
-      key:       PK,
-      email:     userEmail,
-      planCode,                          // subscription plan — amount NOT needed
-      reference: `${plan}-sub-${userId}-${Date.now()}`,
-      currency:  "NGN",
-      channels:  ["card"],
-      onSuccess: () => { setLoading(false); onSuccess?.(); onClose(); },
-      onCancel:  () => setLoading(false),
-      onError:   () => setLoading(false),
-    });
+      const PaystackPop = (window as any).PaystackPop;
+      if (!PaystackPop) { toast.error("Payment system not ready. Try again."); setLoading(false); return; }
+
+      // v2: open with accessCode — supports ALL payment methods (card, bank transfer, USSD, etc.)
+      const popup = new PaystackPop();
+      popup.newTransaction({
+        key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY ?? "",
+        accessCode,
+        onSuccess: () => {
+          setLoading(false);
+          toast.success("🎉 Welcome to Premium!");
+          onSuccess?.();
+          onClose();
+        },
+        onCancel: () => setLoading(false),
+        onError:  () => { setLoading(false); toast.error("Payment failed. Please try again."); },
+      });
+    } catch (err: any) {
+      toast.error(err.message || "Could not start payment");
+      setLoading(false);
+    }
   };
 
   if (!open) return null;
 
   const price    = plan === "monthly" ? MONTHLY_PRICE : YEARLY_PRICE;
   const perMonth = plan === "yearly"  ? Math.round(YEARLY_PRICE / 12) : MONTHLY_PRICE;
-  const hasPlan  = plan === "monthly" ? !!MONTHLY_PLAN : !!YEARLY_PLAN;
+  const duration = plan === "monthly" ? "30 days" : "1 year";
 
   return (
     <div className="fixed inset-0 z-[400] flex items-end sm:items-center justify-center">
@@ -137,10 +139,11 @@ export function GoPremiumModal({ open, onClose, userEmail, userId, onSuccess }: 
           <div className="bg-bt-primary/5 border border-bt-primary/15 rounded-xl px-4 py-3 flex items-center justify-between">
             <div>
               <p className="text-2xl font-bold text-bt-primary">₦{price.toLocaleString()}</p>
-              <p className="text-xs text-neutral-500 mt-0.5">
+              <p className="text-xs text-neutral-500 mt-0.5 flex items-center gap-1">
+                <Calendar className="w-3 h-3" />
                 {plan === "yearly"
-                  ? `₦${perMonth.toLocaleString()}/month · billed annually`
-                  : "per month"}
+                  ? `₦${perMonth.toLocaleString()}/month · valid for 1 year`
+                  : "valid for 30 days"}
               </p>
             </div>
             {plan === "yearly" && (
@@ -154,22 +157,13 @@ export function GoPremiumModal({ open, onClose, userEmail, userId, onSuccess }: 
           </div>
 
           {/* CTA */}
-          <button
-            onClick={handlePay}
-            disabled={loading || !userEmail || !hasPlan}
-            className="w-full flex items-center justify-center gap-2.5 py-4 rounded-xl bg-bt-primary text-white font-bold text-sm disabled:opacity-60 hover:bg-bt-primary-light active:scale-[0.98] transition-all shadow-[0_4px_14px_rgba(10,8,118,0.3)]"
-          >
+          <button onClick={handlePay} disabled={loading}
+            className="w-full flex items-center justify-center gap-2.5 py-4 rounded-xl bg-bt-primary text-white font-bold text-sm disabled:opacity-60 hover:bg-bt-primary-light active:scale-[0.98] transition-all shadow-[0_4px_14px_rgba(10,8,118,0.3)]">
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CreditCard className="w-4 h-4" />}
-            {loading ? "Opening payment..." : "Pay & Upgrade Now"}
+            {loading ? "Preparing payment..." : `Pay ₦${price.toLocaleString()} for ${duration}`}
           </button>
-
-          {!hasPlan && (
-            <p className="text-center text-xs text-amber-600">
-              Subscription plan not yet configured — contact support.
-            </p>
-          )}
           <p className="text-center text-xs text-neutral-400 -mt-1">
-            Secure payment via Paystack · Cancel anytime
+            Card · Bank Transfer · USSD · Mobile Money · Secure via Paystack
           </p>
         </div>
       </div>
