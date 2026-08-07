@@ -1,16 +1,16 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { use } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import {
   ArrowLeft, Heart, Share2, MapPin, Bed, Bath, Maximize2, Star,
   Shield, Check, ChevronLeft, ChevronRight, BadgeCheck, Eye, Clock, Phone, Mail, Lock,
-  Play, X, CircleX,
+  Play, X, CircleX, ZoomIn,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { isFavorited, toggleFavorite } from "@/lib/favorites";
@@ -60,6 +60,13 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
   const [liked, setLiked] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>("overview");
   const [videoOpen, setVideoOpen] = useState(false);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
+
+  const openLightbox = useCallback((index: number) => {
+    setLightboxIndex(index);
+    setLightboxOpen(true);
+  }, []);
 
   const requireAuth = (action: () => void) => {
     if (!isLoggedIn) {
@@ -124,13 +131,19 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
             touchStartX.current = null;
           }}
         >
-          <Image
-            src={property.photos[currentImage] || "/placeholder-property.jpg"}
-            alt={property.title}
-            fill
-            className="object-cover"
-            priority
-          />
+          <button
+            className="absolute inset-0 w-full h-full"
+            onClick={() => openLightbox(currentImage)}
+            aria-label="View full image"
+          >
+            <Image
+              src={property.photos[currentImage] || "/placeholder-property.jpg"}
+              alt={property.title}
+              fill
+              className="object-cover"
+              priority
+            />
+          </button>
 
           {/* Dark gradient at top for button legibility */}
           <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/50 to-transparent pointer-events-none" />
@@ -439,25 +452,53 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
       {/* Desktop gallery */}
       <div className="hidden md:block max-w-[1360px] mx-auto px-5 lg:px-10 pt-6">
         <div className="grid grid-cols-4 grid-rows-2 gap-2 rounded-2xl overflow-hidden h-[460px]">
-          <div className="col-span-2 row-span-2 relative group cursor-pointer">
+          <button
+            className="col-span-2 row-span-2 relative group cursor-pointer text-left"
+            onClick={() => openLightbox(0)}
+            aria-label="View photo 1"
+          >
             <Image src={property.photos[0] || "/placeholder-property.jpg"} alt={property.title} fill className="object-cover group-hover:scale-[1.02] transition-transform duration-500" sizes="(max-width: 768px) 100vw, 50vw" priority />
             {property.host?.isVerified && (
               <div className="absolute top-4 left-4 px-2.5 py-1 rounded-lg bg-bt-success text-white text-xs font-bold flex items-center gap-1.5 shadow-md">
                 <BadgeCheck className="w-3.5 h-3.5" /> Verified Listing
               </div>
             )}
-          </div>
+            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+              <ZoomIn className="w-8 h-8 text-white drop-shadow-lg" />
+            </div>
+          </button>
           {property.photos.slice(1, 5).map((photo: string, i: number) => (
-            <div key={i} className="relative group cursor-pointer overflow-hidden">
+            <button
+              key={i}
+              className="relative group cursor-pointer overflow-hidden"
+              onClick={() => openLightbox(i + 1)}
+              aria-label={`View photo ${i + 2}`}
+            >
               <Image src={photo} alt={`Photo ${i + 2}`} fill className="object-cover group-hover:scale-105 transition-transform duration-500" sizes="(max-width: 768px) 50vw, 25vw" />
-              {i === 3 && property.photos.length > 5 && (
-                <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+              {i === 3 && property.photos.length > 5 ? (
+                <div className="absolute inset-0 bg-black/50 flex items-center justify-center group-hover:bg-black/60 transition-colors">
                   <span className="text-white font-semibold text-sm">+{property.photos.length - 5} photos</span>
                 </div>
+              ) : (
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/15 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+                  <ZoomIn className="w-6 h-6 text-white drop-shadow-lg" />
+                </div>
               )}
-            </div>
+            </button>
           ))}
         </div>
+        {/* "Show all photos" button */}
+        {property.photos.length > 5 && (
+          <div className="flex justify-end mt-2">
+            <button
+              onClick={() => openLightbox(0)}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-neutral-300 text-sm font-semibold text-neutral-700 bg-white hover:bg-neutral-50 transition-colors"
+            >
+              <ZoomIn className="w-4 h-4" />
+              Show all {property.photos.length} photos
+            </button>
+          </div>
+        )}
         {/* Video button under desktop gallery */}
         {property.videos && property.videos.length > 0 && (
           <div className="mt-4 flex items-center gap-3">
@@ -471,6 +512,15 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
           </div>
         )}
       </div>
+
+      {/* Photo Lightbox */}
+      <PhotoLightbox
+        photos={property.photos}
+        open={lightboxOpen}
+        index={lightboxIndex}
+        onClose={() => setLightboxOpen(false)}
+        onIndexChange={setLightboxIndex}
+      />
 
       {/* Video Modal */}
       {videoOpen && property.videos && property.videos.length > 0 && (
@@ -813,6 +863,146 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
         )}
       </div>
 
+    </div>
+  );
+}
+
+// ─── Photo Lightbox ──────────────────────────────────────────────────────────
+
+function PhotoLightbox({
+  photos, open, index, onClose, onIndexChange,
+}: {
+  photos: string[]; open: boolean; index: number;
+  onClose: () => void; onIndexChange: (i: number) => void;
+}) {
+  const thumbsRef = useRef<HTMLDivElement>(null);
+  const touchStartX = useRef<number | null>(null);
+
+  const prev = useCallback(() => onIndexChange(index > 0 ? index - 1 : photos.length - 1), [index, photos.length, onIndexChange]);
+  const next = useCallback(() => onIndexChange(index < photos.length - 1 ? index + 1 : 0), [index, photos.length, onIndexChange]);
+
+  // Keyboard navigation
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "ArrowLeft") prev();
+      else if (e.key === "ArrowRight") next();
+      else if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, prev, next, onClose]);
+
+  // Scroll active thumbnail into view
+  useEffect(() => {
+    if (!open) return;
+    const el = thumbsRef.current?.children[index] as HTMLElement | undefined;
+    el?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+  }, [index, open]);
+
+  // Lock body scroll while open
+  useEffect(() => {
+    if (open) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => { document.body.style.overflow = ""; };
+  }, [open]);
+
+  if (!open) return null;
+
+  return (
+    <div
+      className="fixed inset-0 z-[300] bg-black flex flex-col"
+      onTouchStart={(e) => { touchStartX.current = e.touches[0].clientX; }}
+      onTouchEnd={(e) => {
+        if (touchStartX.current === null) return;
+        const dx = e.changedTouches[0].clientX - touchStartX.current;
+        if (Math.abs(dx) > 40) { dx < 0 ? next() : prev(); }
+        touchStartX.current = null;
+      }}
+    >
+      {/* Top bar */}
+      <div className="flex items-center justify-between px-4 py-3 shrink-0">
+        <button
+          onClick={onClose}
+          className="flex items-center gap-2 text-white/80 hover:text-white transition-colors text-sm font-medium"
+        >
+          <X className="w-5 h-5" />
+          <span className="hidden sm:inline">Close</span>
+        </button>
+        <span className="text-white/70 text-sm font-medium tabular-nums">
+          {index + 1} / {photos.length}
+        </span>
+        <div className="w-16" />
+      </div>
+
+      {/* Main image */}
+      <div className="flex-1 relative flex items-center justify-center min-h-0 px-2 sm:px-16">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={index}
+            initial={{ opacity: 0, scale: 0.97 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.97 }}
+            transition={{ duration: 0.18 }}
+            className="relative w-full h-full"
+          >
+            <Image
+              src={photos[index]}
+              alt={`Photo ${index + 1}`}
+              fill
+              className="object-contain"
+              sizes="100vw"
+              priority
+            />
+          </motion.div>
+        </AnimatePresence>
+
+        {/* Prev / Next */}
+        {photos.length > 1 && (
+          <>
+            <button
+              onClick={prev}
+              className="absolute left-2 sm:left-4 w-11 h-11 rounded-full bg-white/10 hover:bg-white/25 backdrop-blur-sm flex items-center justify-center transition-colors z-10"
+              aria-label="Previous photo"
+            >
+              <ChevronLeft className="w-6 h-6 text-white" />
+            </button>
+            <button
+              onClick={next}
+              className="absolute right-2 sm:right-4 w-11 h-11 rounded-full bg-white/10 hover:bg-white/25 backdrop-blur-sm flex items-center justify-center transition-colors z-10"
+              aria-label="Next photo"
+            >
+              <ChevronRight className="w-6 h-6 text-white" />
+            </button>
+          </>
+        )}
+      </div>
+
+      {/* Thumbnail strip */}
+      {photos.length > 1 && (
+        <div className="shrink-0 pb-4 pt-3">
+          <div
+            ref={thumbsRef}
+            className="flex gap-2 overflow-x-auto no-scrollbar px-4 justify-center"
+          >
+            {photos.map((photo, i) => (
+              <button
+                key={i}
+                onClick={() => onIndexChange(i)}
+                className={cn(
+                  "shrink-0 w-14 h-14 sm:w-16 sm:h-16 rounded-lg overflow-hidden border-2 transition-all",
+                  i === index ? "border-white scale-110" : "border-transparent opacity-50 hover:opacity-80"
+                )}
+              >
+                <Image src={photo} alt={`Thumb ${i + 1}`} width={64} height={64} className="w-full h-full object-cover" />
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
