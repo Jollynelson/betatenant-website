@@ -37,10 +37,15 @@ function PaymentsContent() {
   const [expanded, setExpanded] = useState<number | null>(0);
 
   useEffect(() => {
-    api.get<any>("/v1/user/subscription/status")
-      .then((r) => setPayments(r.paymentHistory ?? []))
-      .catch(() => toast.error("Failed to load payment history"))
-      .finally(() => setLoading(false));
+    // Sync Paystack history first (pulls in old transactions), then fetch
+    api.post<any>("/v1/user/subscription/sync", {})
+      .catch(() => {}) // non-fatal
+      .finally(() => {
+        api.get<any>("/v1/user/subscription/status")
+          .then((r) => setPayments((r.paymentHistory ?? []).filter((p: Payment) => !p.status || p.status === "success")))
+          .catch(() => toast.error("Failed to load payment history"))
+          .finally(() => setLoading(false));
+      });
   }, []);
 
   return (
@@ -104,29 +109,17 @@ function PaymentsContent() {
                           <p className="text-sm font-semibold text-neutral-900">Premium {p.plan === "yearly" ? "Annual" : "Monthly"}</p>
                           <p className="text-sm text-neutral-700 text-right">₦{p.amount.toLocaleString()}</p>
                           <div className="flex justify-end">
-                            {(!p.status || p.status === "success") ? (
-                              <span className="flex items-center gap-1 text-xs font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full">
-                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" /> Paid
-                              </span>
-                            ) : (
-                              <span className={cn("text-xs font-semibold px-2.5 py-0.5 rounded-full capitalize",
-                                p.status === "failed" ? "bg-red-50 text-red-600" :
-                                p.status === "pending" ? "bg-amber-50 text-amber-700" :
-                                "bg-neutral-100 text-neutral-500"
-                              )}>
-                                {p.status}
-                              </span>
-                            )}
+                            <span className="flex items-center gap-1 text-xs font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" /> Paid
+                            </span>
                           </div>
                         </div>
                       </div>
 
-                      {(!p.status || p.status === "success") && (
-                        <button onClick={() => openReceipt(p)}
-                          className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-neutral-200 text-sm font-semibold text-neutral-700 hover:bg-neutral-50 transition-colors">
-                          <Receipt className="w-4 h-4" /> Download Receipt
-                        </button>
-                      )}
+                      <button onClick={() => openReceipt(p)}
+                        className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-neutral-200 text-sm font-semibold text-neutral-700 hover:bg-neutral-50 transition-colors">
+                        <Receipt className="w-4 h-4" /> Download Receipt
+                      </button>
                     </div>
                   )}
                 </div>
