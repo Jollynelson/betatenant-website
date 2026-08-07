@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft, Crown, Check, Zap, TrendingUp, Shield, BarChart2,
@@ -291,32 +291,7 @@ function SubscriptionContent() {
   );
 
   const renderHistory = () => (
-    <div className="space-y-3">
-      {!sub?.paymentHistory.length ? (
-        <div className="bg-white rounded-2xl border border-neutral-100 p-8 text-center">
-          <Receipt className="w-10 h-10 text-neutral-200 mx-auto mb-3" />
-          <p className="text-sm text-neutral-500">No payment history yet</p>
-        </div>
-      ) : (
-        <div className="bg-white rounded-2xl border border-neutral-100 shadow-sm divide-y divide-neutral-50 overflow-hidden">
-          {sub.paymentHistory.slice().reverse().map((p, i) => (
-            <div key={i} className="flex items-center gap-3.5 px-5 py-4">
-              <div className="w-9 h-9 rounded-xl bg-emerald-50 flex items-center justify-center shrink-0">
-                <Check className="w-4 h-4 text-emerald-600" />
-              </div>
-              <div className="flex-1">
-                <p className="text-sm font-semibold text-neutral-900 capitalize">{p.plan} plan</p>
-                <p className="text-xs text-neutral-400 mt-0.5">
-                  {new Date(p.date).toLocaleDateString("en-NG", { day: "numeric", month: "short", year: "numeric" })}
-                  {p.reference && <span className="ml-2 font-mono text-[10px] text-neutral-300">{p.reference.slice(-8)}</span>}
-                </p>
-              </div>
-              <p className="text-sm font-bold text-neutral-900">₦{p.amount.toLocaleString()}</p>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
+    <HistoryView payments={sub?.paymentHistory ?? []} />
   );
 
   const renderCancel = () => (
@@ -391,6 +366,181 @@ function SubscriptionContent() {
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
+
+// ─── History View ─────────────────────────────────────────────────────────────
+
+function generateReceiptHTML(p: { date: string; plan: string; amount: number; reference: string }): string {
+  const date = new Date(p.date).toLocaleDateString("en-NG", { day: "numeric", month: "long", year: "numeric" });
+  const planLabel = `Premium ${p.plan === "yearly" ? "Annual" : "Monthly"} (${p.plan === "yearly" ? "1 year" : "1 month"})`;
+  const vatRate = 0.075;
+  const amountExVat = Math.round(p.amount / (1 + vatRate));
+  const vatAmount = p.amount - amountExVat;
+
+  return `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Receipt — Beta Tenant</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #111; background: #fff; padding: 40px; }
+    .logo { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; color: #0A0876; margin-bottom: 48px; }
+    h1 { font-size: 32px; font-weight: 700; margin-bottom: 32px; }
+    .meta { display: flex; justify-content: space-between; margin-bottom: 32px; }
+    .meta-block p:first-child { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #666; margin-bottom: 4px; }
+    .meta-block p:last-child { font-size: 14px; font-weight: 500; }
+    .card { background: #f4f4f4; border-radius: 12px; padding: 20px 24px; margin-bottom: 16px; }
+    .row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #e5e5e5; }
+    .row:last-child { border-bottom: none; }
+    .row.total { font-weight: 700; font-size: 16px; }
+    .row.total .amount { font-size: 20px; }
+    .sub-card { background: #e8e8e8; border-radius: 8px; padding: 14px 16px; margin-top: 12px; }
+    .sub-row { display: flex; justify-content: space-between; padding: 4px 0; font-size: 13px; color: #555; }
+    .footer { margin-top: 32px; font-size: 12px; color: #888; }
+    .footer a { color: #0A0876; }
+    @media print { body { padding: 20px; } }
+  </style>
+</head>
+<body>
+  <div class="logo">🏠 Beta Tenant</div>
+  <h1>Receipt</h1>
+  <div class="meta">
+    <div class="meta-block">
+      <p>INVOICE ID</p>
+      <p>${p.reference}</p>
+    </div>
+    <div class="meta-block" style="text-align:right">
+      <p>DATE</p>
+      <p>${date}</p>
+    </div>
+  </div>
+  <div class="card">
+    <div class="row">
+      <span style="font-weight:600">Items</span>
+      <span></span>
+    </div>
+    <div class="row">
+      <span>${planLabel}</span>
+      <span>₦${p.amount.toLocaleString()}</span>
+    </div>
+    <div class="row total">
+      <span>Total</span>
+      <span class="amount">₦${p.amount.toLocaleString()}</span>
+    </div>
+    <div class="sub-card">
+      <div class="sub-row"><span>VAT (7.5% × ₦${amountExVat.toLocaleString()})</span><span>₦${vatAmount.toLocaleString()}</span></div>
+      <div class="sub-row" style="margin-top:8px"><span style="font-weight:600">Payment method</span></div>
+      <div class="sub-row"><span>Paystack</span></div>
+    </div>
+  </div>
+  <p class="footer">Questions? Contact us at support@betatenant.com · <a href="https://betatenant.com/terms">Terms & Conditions</a> apply.</p>
+</body>
+</html>`;
+}
+
+function downloadReceipt(p: { date: string; plan: string; amount: number; reference: string }) {
+  const html = generateReceiptHTML(p);
+  const blob = new Blob([html], { type: "text/html" });
+  const url  = URL.createObjectURL(blob);
+  const win  = window.open(url, "_blank");
+  if (win) {
+    win.onload = () => {
+      win.print();
+      setTimeout(() => URL.revokeObjectURL(url), 2000);
+    };
+  } else {
+    // fallback: direct download
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `receipt-${p.reference.slice(-8)}.html`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+  }
+}
+
+function HistoryView({ payments }: { payments: { date: string; plan: string; amount: number; reference: string }[] }) {
+  const [expanded, setExpanded] = useState<number | null>(0);
+
+  if (!payments.length) return (
+    <div className="bg-white rounded-2xl border border-neutral-100 p-10 text-center">
+      <Receipt className="w-10 h-10 text-neutral-200 mx-auto mb-3" />
+      <p className="text-sm text-neutral-500">No payment history yet</p>
+    </div>
+  );
+
+  const sorted = [...payments].reverse();
+
+  return (
+    <div className="space-y-3">
+      {sorted.map((p, i) => {
+        const isOpen = expanded === i;
+        const date = new Date(p.date);
+        return (
+          <div key={i} className="bg-white rounded-2xl border border-neutral-100 shadow-sm overflow-hidden">
+            {/* Header row — always visible */}
+            <button
+              onClick={() => setExpanded(isOpen ? null : i)}
+              className="w-full flex items-start justify-between px-5 py-4 text-left hover:bg-neutral-50 transition-colors"
+            >
+              <div>
+                <p className="text-base font-bold text-neutral-900">
+                  {date.toLocaleDateString("en-NG", { day: "numeric", month: "short", year: "numeric" })}
+                </p>
+                <p className="text-sm text-neutral-500 mt-0.5">₦{p.amount.toLocaleString()}</p>
+              </div>
+              <ChevronRight className={cn("w-5 h-5 text-neutral-400 mt-0.5 transition-transform", isOpen && "rotate-90")} />
+            </button>
+
+            {/* Expanded detail */}
+            {isOpen && (
+              <div className="border-t border-neutral-100 px-5 pb-5 pt-4 space-y-4">
+                {/* Invoice ID */}
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-neutral-400 font-medium uppercase tracking-wide">Invoice ID</p>
+                  <button
+                    onClick={() => { navigator.clipboard.writeText(p.reference).catch(() => {}); toast.success("Copied!"); }}
+                    className="flex items-center gap-1.5 text-xs text-neutral-600 hover:text-neutral-900 font-mono bg-neutral-50 px-2.5 py-1.5 rounded-lg border border-neutral-100 hover:border-neutral-200 transition-colors"
+                  >
+                    <span className="truncate max-w-[160px]">{p.reference}</span>
+                    <CreditCard className="w-3 h-3 shrink-0 opacity-50" />
+                  </button>
+                </div>
+
+                {/* Line items table */}
+                <div className="rounded-xl border border-neutral-100 overflow-hidden">
+                  <div className="grid grid-cols-3 px-4 py-2.5 bg-neutral-50 border-b border-neutral-100">
+                    <p className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wide">Item</p>
+                    <p className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wide text-right">Amount</p>
+                    <p className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wide text-right">Status</p>
+                  </div>
+                  <div className="grid grid-cols-3 items-center px-4 py-3">
+                    <p className="text-sm font-semibold text-neutral-900">Premium {p.plan === "yearly" ? "Annual" : "Monthly"}</p>
+                    <p className="text-sm text-neutral-700 text-right">₦{p.amount.toLocaleString()}</p>
+                    <div className="flex justify-end">
+                      <span className="flex items-center gap-1 text-xs font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />
+                        Paid
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Download */}
+                <button
+                  onClick={() => downloadReceipt(p)}
+                  className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-neutral-200 text-sm font-semibold text-neutral-700 hover:bg-neutral-50 transition-colors"
+                >
+                  <Receipt className="w-4 h-4" />
+                  Download Receipt
+                </button>
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
