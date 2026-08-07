@@ -11,6 +11,7 @@ import {
   ArrowLeft, Heart, Share2, MapPin, Bed, Bath, Maximize2, Star,
   Shield, Check, ChevronLeft, ChevronRight, BadgeCheck, Eye, Clock, Phone, Mail, Lock,
   Play, X, CircleX, ZoomIn, Edit3, RefreshCw, AlertTriangle, Trash2, Loader2, Zap,
+  Crown, ShieldCheck, Briefcase, MessageSquare, Home,
 } from "lucide-react";
 import { BoostModal } from "@/components/boost-modal";
 import { cn } from "@/lib/utils";
@@ -992,6 +993,9 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
           </div>
         </div>
 
+        {/* About the Agent — only shown to non-owners */}
+        {!isOwner && <AgentExpandedCard property={property} similarProperties={similarProperties} requireAuth={requireAuth} isLoggedIn={isLoggedIn} router={router} />}
+
         {/* Similar Properties */}
         {similarProperties.length > 0 && (
           <section className="mt-16 pt-10 border-t border-neutral-100">
@@ -1006,6 +1010,248 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
       </div>
 
     </div>
+  );
+}
+
+// ─── Agent Expanded Card ─────────────────────────────────────────────────────
+
+const AGENT_WA_SVG = (
+  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+  </svg>
+);
+
+function AgentExpandedCard({
+  property,
+  similarProperties,
+  requireAuth,
+  isLoggedIn,
+  router,
+}: {
+  property: any;
+  similarProperties: any[];
+  requireAuth: (action: () => void) => void;
+  isLoggedIn: boolean;
+  router: ReturnType<typeof import("next/navigation").useRouter>;
+}) {
+  const { data: reviewsData } = useQuery({
+    queryKey: ["agent-reviews-detail", property.host._id],
+    queryFn: () => api.get<any>(`/v1/landlordandagent/review/${property.host._id}`),
+    enabled: !!property.host._id,
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const reviews: any[] = reviewsData?.reviews ?? reviewsData?.result ?? [];
+  const avgRating = reviews.length
+    ? reviews.reduce((acc: number, r: any) => acc + (r.rating ?? 0), 0) / reviews.length
+    : (property.host.rating ?? 0);
+
+  const [bioExpanded, setBioExpanded] = useState(false);
+
+  // Use shareId if available (from profile), otherwise link via host._id
+  const profileLink = property.host._id
+    ? `/agents?hostId=${property.host._id}`
+    : "/agents";
+
+  // Other listings = up to 3 from similar (same agent is not guaranteed, just use similar)
+  const otherListings = similarProperties.slice(0, 3);
+
+  const joinedDate = property.host.joinedAt
+    ? new Date(property.host.joinedAt).getFullYear()
+    : null;
+
+  return (
+    <section className="mt-12 pt-10 border-t border-neutral-100">
+      <h2 className="text-xl font-bold text-neutral-900 mb-5 tracking-[-0.02em]">About the {property.host.role}</h2>
+      <div className="rounded-2xl border border-neutral-200 shadow-[0_2px_16px_rgba(0,0,0,0.04)] bg-white p-6 space-y-6">
+
+        {/* Top identity row */}
+        <div className="flex flex-col sm:flex-row sm:items-start gap-4">
+          {/* Avatar */}
+          <div className="relative shrink-0 self-start">
+            <div className={cn(
+              "w-16 h-16 rounded-full overflow-hidden border-2 border-white shadow-md",
+              property.host.isPremium ? "ring-2 ring-amber-400 ring-offset-2" : ""
+            )}>
+              {property.host.avatar ? (
+                <Image src={property.host.avatar} alt={property.host.firstName} width={64} height={64} className="object-cover w-full h-full" />
+              ) : (
+                <div className="w-full h-full bg-bt-primary/10 flex items-center justify-center text-bt-primary font-bold text-xl">
+                  {property.host.firstName?.[0]}{property.host.lastName?.[0]}
+                </div>
+              )}
+            </div>
+            {property.host.isVerified && (
+              <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full bg-blue-600 border-2 border-white flex items-center justify-center shadow">
+                <BadgeCheck className="w-3 h-3 text-white" />
+              </div>
+            )}
+          </div>
+
+          {/* Name + meta */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap mb-1">
+              <h3 className="text-lg font-bold text-neutral-900 capitalize">
+                {property.host.firstName} {property.host.lastName}
+              </h3>
+              {property.host.isVerified && <BadgeCheck className="w-4 h-4 text-blue-600 shrink-0" />}
+              {property.host.isPremium && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 border border-amber-200 text-amber-800 text-[11px] font-bold">
+                  <Crown className="w-3 h-3 fill-amber-700" /> Premium
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-2 flex-wrap text-sm text-neutral-500 mb-2">
+              <span className="capitalize">{property.host.role}</span>
+              {joinedDate && (
+                <>
+                  <span className="text-neutral-300">·</span>
+                  <span className="flex items-center gap-1">
+                    <Clock className="w-3.5 h-3.5" /> Joined {joinedDate}
+                  </span>
+                </>
+              )}
+              {avgRating > 0 && (
+                <>
+                  <span className="text-neutral-300">·</span>
+                  <span className="flex items-center gap-1">
+                    <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                    <span className="font-semibold text-neutral-700">{Number(avgRating).toFixed(1)}</span>
+                    <span className="text-neutral-400">({reviews.length} reviews)</span>
+                  </span>
+                </>
+              )}
+            </div>
+
+            {/* Stat chips */}
+            <div className="flex flex-wrap gap-2">
+              {!!property.host.listingCount && (
+                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-bt-primary/8 text-bt-primary text-xs font-medium">
+                  <Home className="w-3 h-3" /> {property.host.listingCount} listings
+                </span>
+              )}
+              {!!property.host.rating && (
+                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-amber-50 text-amber-700 text-xs font-medium border border-amber-100">
+                  <Eye className="w-3 h-3" /> {property.host.reviewCount} reviews
+                </span>
+              )}
+              {property.host.isVerified && (
+                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-medium border border-blue-100">
+                  <ShieldCheck className="w-3 h-3" /> ID Verified
+                </span>
+              )}
+              {property.host.isPremium && (
+                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-amber-50 text-amber-700 text-xs font-medium border border-amber-200">
+                  <Crown className="w-3 h-3" /> Premium Agent
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Bio (if any) */}
+        {property.host.about && (
+          <div>
+            <p className={cn("text-sm text-neutral-600 leading-relaxed", !bioExpanded && "line-clamp-2")}>
+              {property.host.about}
+            </p>
+            <button onClick={() => setBioExpanded((v) => !v)} className="text-xs font-semibold text-bt-primary mt-1 hover:underline">
+              {bioExpanded ? "Show less" : "Read more"}
+            </button>
+          </div>
+        )}
+
+        {/* Top 2 reviews preview */}
+        {reviews.length > 0 && (
+          <div className="space-y-3">
+            <h4 className="text-sm font-bold text-neutral-700">Recent Reviews</h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {reviews.slice(0, 2).map((r: any) => (
+                <div key={r._id} className="p-3.5 rounded-xl bg-neutral-50 border border-neutral-100 space-y-1.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm font-semibold text-neutral-800 capitalize truncate">
+                      {r.reviewer?.firstName ?? "Anonymous"} {r.reviewer?.lastName ?? ""}
+                    </p>
+                    <div className="flex gap-0.5 shrink-0">
+                      {[1, 2, 3, 4, 5].map((s) => (
+                        <Star key={s} className={cn("w-3 h-3", s <= r.rating ? "fill-amber-400 text-amber-400" : "text-neutral-200")} />
+                      ))}
+                    </div>
+                  </div>
+                  {r.comment && (
+                    <p className="text-xs text-neutral-500 leading-relaxed line-clamp-2">{r.comment}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Other listings by this agent */}
+        {otherListings.length > 0 && (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h4 className="text-sm font-bold text-neutral-700">Other Listings</h4>
+              <Link href={profileLink} className="text-xs font-semibold text-bt-primary hover:underline">
+                View all by this {property.host.role}
+              </Link>
+            </div>
+            <div className="flex gap-3 overflow-x-auto no-scrollbar pb-1">
+              {otherListings.map((p: any) => (
+                <div key={p._id} className="w-[180px] shrink-0">
+                  <PropertyCard property={p} />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Action buttons */}
+        <div className="flex flex-wrap gap-2 pt-2 border-t border-neutral-100">
+          {property.host.phone && (
+            isLoggedIn ? (
+              <a href={`tel:${property.host.phone}`}
+                className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-full border border-neutral-200 text-neutral-700 text-sm font-semibold hover:bg-neutral-50 transition-colors">
+                <Phone className="w-4 h-4" /> Call {property.host.role}
+              </a>
+            ) : (
+              <button onClick={() => requireAuth(() => {})}
+                className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-full border border-neutral-200 text-neutral-700 text-sm font-semibold hover:bg-neutral-50 transition-colors">
+                <Phone className="w-4 h-4" /> Call {property.host.role}
+              </button>
+            )
+          )}
+          {property.host.phone && (
+            isLoggedIn ? (
+              <a
+                href={`https://wa.me/${property.host.phone.replace(/\D/g, "")}?text=${encodeURIComponent(`Hi, I'm interested in the property listed on Beta Tenant: ${property.title}. Please share more details.`)}`}
+                target="_blank" rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-full bg-[#25D366] text-white text-sm font-semibold hover:bg-[#1eb858] transition-colors"
+              >
+                {AGENT_WA_SVG} WhatsApp
+              </a>
+            ) : (
+              <button onClick={() => requireAuth(() => {})}
+                className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-full bg-[#25D366] text-white text-sm font-semibold hover:bg-[#1eb858] transition-colors">
+                {AGENT_WA_SVG} WhatsApp
+              </button>
+            )
+          )}
+          {property.host.email && !property.host.email.endsWith("@imported.betatenant.local") && (
+            <button
+              onClick={() => requireAuth(() => router.push("/messages"))}
+              className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-full bg-bt-primary text-white text-sm font-semibold hover:bg-bt-primary-light transition-colors"
+            >
+              <MessageSquare className="w-4 h-4" /> Message
+            </button>
+          )}
+          <Link href={profileLink}
+            className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-full border border-bt-primary/30 bg-bt-primary/5 text-bt-primary text-sm font-semibold hover:bg-bt-primary/10 transition-colors">
+            <Briefcase className="w-4 h-4" /> View Profile
+          </Link>
+        </div>
+      </div>
+    </section>
   );
 }
 
