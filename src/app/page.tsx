@@ -12,6 +12,7 @@ import { CTASection } from "@/components/shared/cta-section";
 import { propertyApi } from "@/lib/api";
 import { searchLocations, type LocationItem } from "@/lib/locations";
 import { Shield, Users, Home, BadgeCheck, Search, ArrowRight, MapPin, Star, Flame, Zap } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export default function HomePage() {
   return (
@@ -215,7 +216,7 @@ function FeaturedSpotlightSection() {
 }
 
 function ListingsSection() {
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isFetching } = useQuery({
     queryKey: ["home-listings"],
     queryFn: () => propertyApi.list(1, 8),
     staleTime: 1000 * 60 * 5,
@@ -234,14 +235,14 @@ function ListingsSection() {
           </Link>
         </div>
 
-        {isLoading ? (
+        {isLoading && !data ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
             {Array.from({ length: 8 }).map((_, i) => (
               <div key={i} className="rounded-xl bg-neutral-100 animate-pulse h-[320px]" />
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+          <div className={cn("grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5", isFetching && "opacity-95")}>
             {(data?.properties ?? []).map((property) => (
               <PropertyCard key={property._id} property={property} />
             ))}

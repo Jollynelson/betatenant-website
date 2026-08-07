@@ -13,6 +13,7 @@ import {
   ChevronDown, Check, ArrowDownUp, ArrowLeft,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useScrollRestore } from "@/hooks/useScrollRestore";
 
 type FilterPanel = "location" | "type" | "budget" | "filters" | "sort" | null;
 type SortOption = "newest" | "price_asc" | "price_desc";
@@ -33,6 +34,7 @@ function PropertiesContent() {
   const [page, setPage] = useState(() => Number(searchParams.get("page") || 1));
   const [sort, setSort] = useState<SortOption>((searchParams.get("sort") as SortOption) || "newest");
   const panelRef = useRef<HTMLDivElement>(null);
+  useScrollRestore("/properties");
 
   const [filters, setFilters] = useState({
     state: searchParams.get("state") || "",
@@ -139,7 +141,9 @@ function PropertiesContent() {
       useSearch
         ? propertyApi.search(searchBody)
         : propertyApi.list(page, 12),
-    staleTime: 1000 * 60 * 2,
+    staleTime: 1000 * 60 * 5,
+    // Show previous results while new page loads (no blank screen between pages)
+    placeholderData: (prev) => prev,
   });
 
   const properties = data?.properties ?? [];
@@ -526,14 +530,19 @@ function PropertiesContent() {
         )}
 
         <div className="flex items-center justify-between mb-4">
-          <p className="text-sm text-neutral-500">
-            {isLoading ? "Loading..." : isError ? "Error loading results" : (
+          <p className="text-sm text-neutral-500 flex items-center gap-2">
+            {isLoading && !data ? "Loading..." : isError ? "Error loading results" : (
               <><span className="font-semibold text-neutral-900">{(data?.totalResults ?? data?.totalDocs ?? properties.length).toLocaleString()}</span> properties{filters.state && <span className="text-neutral-400"> in {filters.lga || filters.state}</span>}</>
+            )}
+            {/* Subtle background-fetch indicator — doesn't block the UI */}
+            {isFetching && data && (
+              <span className="inline-block w-3.5 h-3.5 rounded-full border-2 border-bt-primary/30 border-t-bt-primary animate-spin" />
             )}
           </p>
         </div>
 
-        {isLoading ? (
+        {/* Only show skeleton on TRUE first load (no cached data) */}
+        {isLoading && !data ? (
           <div className={cn(viewMode === "grid" ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5" : "space-y-3")}>
             {Array.from({ length: 8 }).map((_, i) => (
               <div key={i} className="rounded-2xl bg-neutral-100 animate-pulse h-[320px]" />
