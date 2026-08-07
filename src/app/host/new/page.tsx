@@ -7,7 +7,7 @@ import { api } from "@/lib/api";
 import { locationData } from "@/lib/locations";
 import {
   Bath, Bed, Tv, Upload, X, Loader2, Check, ChevronRight,
-  Video, Play, AlertCircle, RefreshCw,
+  Video, Play, AlertCircle, RefreshCw, Crown,
 } from "lucide-react";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -1225,6 +1225,7 @@ function StepPreview({ onBack }: { onBack: () => void }) {
   const [isPublishing, setPublishing] = useState(false);
   const [activeTab, setActiveTab] = useState<"overview" | "pricing" | "rules">("overview");
   const [error, setError] = useState("");
+  const [subPrompt, setSubPrompt] = useState(false); // subscription required modal
 
   useEffect(() => {
     const raw = sessionStorage.getItem("propertyToEdit");
@@ -1247,12 +1248,18 @@ function StepPreview({ onBack }: { onBack: () => void }) {
     setError("");
     try {
       const token = localStorage.getItem("BT_TOKEN");
-      const res = await fetch(`/api/bt/v1/landlordandagent/publish/${house._id}`, {
+      const apiBase = window.location.hostname === "localhost" ? "/api/bt" : "https://api.betatenant.com";
+      const res = await fetch(`${apiBase}/v1/landlordandagent/publish/${house._id}`, {
         method: "POST",
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
+      const d = await res.json();
       if (!res.ok) {
-        const d = await res.json();
+        if (d.errorCode === "SUBSCRIPTION_REQUIRED") {
+          // Listing saved as draft — prompt user to subscribe
+          setSubPrompt(true);
+          return;
+        }
         throw new Error(d.message || "Failed to publish.");
       }
       sessionStorage.removeItem("propertyToEdit");
@@ -1412,24 +1419,44 @@ function StepPreview({ onBack }: { onBack: () => void }) {
       {error && <p className="text-red-500 text-sm bg-red-50 rounded-xl px-4 py-3 mt-4">{error}</p>}
 
       <div className="flex flex-col-reverse sm:flex-row justify-between gap-3 mt-8 pt-6 border-t border-neutral-200">
-        <button
-          type="button"
-          onClick={onBack}
-          className="px-6 py-3 rounded-xl border border-neutral-200 text-sm font-medium text-neutral-700 hover:bg-neutral-50 transition-colors"
-        >
+        <button type="button" onClick={onBack}
+          className="px-6 py-3 rounded-xl border border-neutral-200 text-sm font-medium text-neutral-700 hover:bg-neutral-50 transition-colors">
           Edit Listing Details
         </button>
-        <button
-          type="button"
-          onClick={publish}
-          disabled={isPublishing}
-          className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-bt-primary text-white font-medium text-sm hover:bg-bt-primary-light transition-colors disabled:opacity-60"
-        >
+        <button type="button" onClick={publish} disabled={isPublishing}
+          className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-bt-primary text-white font-medium text-sm hover:bg-bt-primary-light transition-colors disabled:opacity-60">
           {isPublishing ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
           {isPublishing ? "Publishing..." : "Confirm & Publish"}
           {!isPublishing && <ChevronRight className="w-4 h-4" />}
         </button>
       </div>
+
+      {/* Subscription required prompt */}
+      {subPrompt && (
+        <div className="fixed inset-0 z-[300] flex items-end sm:items-center justify-center">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setSubPrompt(false)} />
+          <div className="relative w-full sm:max-w-sm bg-white rounded-t-3xl sm:rounded-2xl shadow-2xl p-6">
+            <div className="w-14 h-14 rounded-2xl bg-amber-100 flex items-center justify-center mx-auto mb-4">
+              <Crown className="w-7 h-7 text-amber-600 fill-amber-500" />
+            </div>
+            <h2 className="text-lg font-bold text-neutral-900 text-center mb-1">Upgrade to Publish</h2>
+            <p className="text-sm text-neutral-500 text-center mb-5">
+              You&apos;ve reached the free limit of 3 active listings. Your listing has been <span className="font-semibold text-neutral-700">saved as a draft</span> — subscribe to go live instantly.
+            </p>
+            <div className="space-y-2.5">
+              <button
+                onClick={() => router.push("/account/subscription")}
+                className="w-full py-3.5 rounded-xl bg-bt-primary text-white font-bold text-sm flex items-center justify-center gap-2 hover:bg-bt-primary-light transition-colors shadow-[0_4px_14px_rgba(10,8,118,0.25)]">
+                <Crown className="w-4 h-4" /> Go Premium — Publish Now
+              </button>
+              <button onClick={() => { setSubPrompt(false); router.push("/account/properties"); }}
+                className="w-full py-3 text-sm font-medium text-neutral-500 hover:text-neutral-700">
+                Save as draft and decide later
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

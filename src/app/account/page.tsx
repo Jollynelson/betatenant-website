@@ -54,7 +54,7 @@ function AccountContent() {
     { icon: Heart,         label: "Saved Properties",  href: "/saved",                       desc: "Properties you saved" },
     { icon: Bell,          label: "Listing Alerts",    href: "/alerts",                      desc: "Get notified of new listings" },
     { icon: MessageCircle, label: "Messages",          href: "/messages",                    desc: "Chat with agents" },
-    { icon: Receipt,       label: "Payment History",   href: "/account/subscription#history",desc: "Your transactions & receipts" },
+    { icon: Receipt,       label: "Payment History",   href: "/account/payments",            desc: "Your transactions & receipts" },
     { icon: Repeat2,       label: "Tenant Switch",     href: "/tenant-switch",               desc: "Swap apartments" },
     { icon: Shield,        label: "Report Agent",      href: "/agents",                      desc: "Check or report an agent" },
   ];
@@ -64,7 +64,7 @@ function AccountContent() {
     { icon: Home,            label: "My Listings",     href: "/account/properties", desc: "Manage your listings" },
     { icon: Plus,            label: "Add Listing",     href: "/host/new",           desc: "List a new property" },
     { icon: MessageCircle,   label: "Messages",        href: "/messages",           desc: "Chat with tenants" },
-    { icon: Receipt,         label: "Payment History", href: "/account/subscription#history", desc: "Your transactions & receipts" },
+    { icon: Receipt,         label: "Payment History", href: "/account/payments",             desc: "Your transactions & receipts" },
   ];
 
   const navItems = isAgentOrLandlord ? agentNav : tenantNav;

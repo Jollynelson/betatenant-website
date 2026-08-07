@@ -24,20 +24,19 @@ const FEATURES = [
 ];
 
 type SubStatus = "active" | "expired" | "cancelled" | "none";
-type View = "home" | "plans" | "manage" | "history" | "cancel";
+type View = "home" | "plans" | "manage" | "cancel";
 
 interface SubInfo {
   status: SubStatus;
   plan: "monthly" | "yearly" | null;
   expiresAt: string | null;
   activatedAt: string | null;
-  paymentHistory: { date: string; plan: string; amount: number; reference: string }[];
 }
 
 function SubscriptionContent() {
   const router = useRouter();
   const [view, setView] = useState<View>(() => {
-    if (typeof window !== "undefined" && window.location.hash === "#history") return "history";
+    if (typeof window !== "undefined" && window.location.hash === "#plans") return "plans";
     return "home";
   });
   const [sub, setSub] = useState<SubInfo | null>(null);
@@ -49,8 +48,8 @@ function SubscriptionContent() {
 
   useEffect(() => {
     api.get<any>("/v1/user/subscription/status")
-      .then((r) => setSub({ status: r.status ?? "none", plan: r.plan, expiresAt: r.expiresAt, activatedAt: r.activatedAt, paymentHistory: r.paymentHistory ?? [] }))
-      .catch(() => setSub({ status: "none", plan: null, expiresAt: null, activatedAt: null, paymentHistory: [] }))
+      .then((r) => setSub({ status: r.status ?? "none", plan: r.plan, expiresAt: r.expiresAt, activatedAt: r.activatedAt }))
+      .catch(() => setSub({ status: "none", plan: null, expiresAt: null, activatedAt: null }))
       .finally(() => setLoading(false));
 
     // Preload Paystack
@@ -80,7 +79,7 @@ function SubscriptionContent() {
           toast.success("🎉 Premium activated!");
           // Refresh sub status
           api.get<any>("/v1/user/subscription/status").then((r) =>
-            setSub({ status: r.status ?? "none", plan: r.plan, expiresAt: r.expiresAt, activatedAt: r.activatedAt, paymentHistory: r.paymentHistory ?? [] })
+            setSub({ status: r.status ?? "none", plan: r.plan, expiresAt: r.expiresAt, activatedAt: r.activatedAt })
           ).catch(() => {});
           setView("manage");
         },
@@ -173,10 +172,6 @@ function SubscriptionContent() {
         )}
       </Section>
 
-      {/* Payment section */}
-      <Section title="Payment">
-        <MenuRow icon={Receipt} label="Payment history" desc="Past subscription payments" onClick={() => setView("history")} />
-      </Section>
     </div>
   );
 
@@ -293,9 +288,6 @@ function SubscriptionContent() {
     </div>
   );
 
-  const renderHistory = () => (
-    <HistoryView payments={sub?.paymentHistory ?? []} />
-  );
 
   const renderCancel = () => (
     <div className="space-y-4">
@@ -323,11 +315,10 @@ function SubscriptionContent() {
   );
 
   const TITLES: Record<View, string> = {
-    home:    "Subscription",
-    plans:   "Available Plans",
-    manage:  "Manage Subscription",
-    history: "Payment History",
-    cancel:  "Cancel Subscription",
+    home:   "Subscription",
+    plans:  "Available Plans",
+    manage: "Manage Subscription",
+    cancel: "Cancel Subscription",
   };
 
   return (
@@ -359,7 +350,6 @@ function SubscriptionContent() {
             {view === "home"    && renderHome()}
             {view === "plans"   && renderPlans()}
             {view === "manage"  && renderManage()}
-            {view === "history" && renderHistory()}
             {view === "cancel"  && renderCancel()}
           </>
         )}
