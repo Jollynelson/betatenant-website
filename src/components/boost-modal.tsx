@@ -141,7 +141,14 @@ export function BoostModal({ open, onClose, propertyId, propertyName, onSuccess 
   const handleBuyCredits = async () => {
     setBuying(true);
     try {
-      const res = await api.post<any>("/v1/user/boost/buy", { pack: selectedPack });
+      const returnTo = typeof window !== "undefined" ? window.location.pathname : "";
+      const res = await api.post<any>("/v1/user/boost/buy", {
+        pack: selectedPack,
+        returnTo,
+        // Tell backend which listing to auto-boost after successful payment
+        pendingBoostPropertyId: pendingBoostType ? propertyId : undefined,
+        pendingBoostType:       pendingBoostType ?? undefined,
+      });
       if (res.provider === "bachs" || (!res.accessCode && res.checkoutUrl)) {
         window.location.href = res.checkoutUrl;
         return;

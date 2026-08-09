@@ -117,23 +117,49 @@ function SubscriptionContent() {
   useEffect(() => {
     loadSub().finally(() => setLoading(false));
 
-    if (typeof window !== "undefined" && !scriptReady.current) {
-      if (!document.querySelector('script[src*="paystack.co/v2/inline"]')) {
-        const s = document.createElement("script");
-        s.src = "https://js.paystack.co/v2/inline.js";
-        s.async = true;
-        s.onload = () => { scriptReady.current = true; };
-        document.body.appendChild(s);
-      } else scriptReady.current = true;
+    // Handle return from payment gateway
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("success") === "1") {
+        toast.success("🎉 Subscription activated!");
+        loadSub();
+        // If there's a returnTo, navigate there after a short delay
+        const returnTo = params.get("returnTo");
+        if (returnTo) {
+          setTimeout(() => router.replace(decodeURIComponent(returnTo)), 1500);
+        } else {
+          setView("manage");
+        }
+        // Clean URL
+        window.history.replaceState({}, "", "/account/subscription");
+      }
+
+      if (!scriptReady.current) {
+        if (!document.querySelector('script[src*="paystack.co/v2/inline"]')) {
+          const s = document.createElement("script");
+          s.src = "https://js.paystack.co/v2/inline.js";
+          s.async = true;
+          s.onload = () => { scriptReady.current = true; };
+          document.body.appendChild(s);
+        } else scriptReady.current = true;
+      }
     }
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handlePay = async () => {
     setPaying(true);
     try {
-      const res = await api.post<any>("/v1/user/subscription/initiate", { tier: selectedTier, billing });
+      // Pass current page as returnTo so we come back here after redirect-based payment
+      const returnTo = typeof window !== "undefined" ? window.location.pathname + window.location.search : "";
+      const res = await api.post<any>("/v1/user/subscription/initiate", { tier: selectedTier, billing, returnTo });
+
+      if (res.provider === "bachs" || (!res.accessCode && res.checkoutUrl)) {
+        window.location.href = res.checkoutUrl;
+        return;
+      }
+
       const PaystackPop = (window as any).PaystackPop;
-      if (!PaystackPop) { toast.error("Payment system not ready. Refresh and try."); setPaying(false); return; }
+      if (!PaystackPop) { window.location.href = res.checkoutUrl ?? res.authorizationUrl; return; }
       const popup = new PaystackPop();
       popup.newTransaction({
         key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY ?? "",

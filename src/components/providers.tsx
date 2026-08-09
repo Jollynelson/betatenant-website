@@ -12,6 +12,7 @@ import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { BackgroundSync } from "@/components/background-sync";
+import { PaymentReturn } from "@/components/payment-return";
 import { propertyApi, api } from "@/lib/api";
 
 // ── QueryClient — aggressive caching for PWA-like experience ─────────────────
@@ -201,6 +202,7 @@ function AppShell({ children }: { children: React.ReactNode }) {
         <MobileNav />
       </div>
       <BackgroundSync />
+      <PaymentReturn />
       <PWAInstallPrompt />
       <PushPermissionBanner />
     </div>
