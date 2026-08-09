@@ -44,8 +44,11 @@ function LoginPage() {
       if (res.successful) {
         setAuth(res.token, res.userDetails);
         toast.success("Login successful!");
-        const from = searchParams.get("from") || "/";
-        setTimeout(() => router.push(from), 300);
+        const from = searchParams.get("from");
+        const role = res.userDetails?.role;
+        // Role-based default: agents/landlords → listings, tenants → property search
+        const defaultPath = (role === "agent" || role === "landlord") ? "/account/properties" : "/properties";
+        setTimeout(() => router.push(from || defaultPath), 300);
       }
     } catch (err: any) {
       const msg = err.message || "";
@@ -207,6 +210,11 @@ function LoginPage() {
               <button
                 type="button"
                 onClick={() => {
+                  // Save the intended destination before leaving the page
+                  const from = searchParams.get("from");
+                  if (from) {
+                    try { sessionStorage.setItem("BT_LOGIN_FROM", from); } catch {}
+                  }
                   const apiBase = window.location.hostname === "localhost" ? "/api/bt" : "https://api.betatenant.com";
                   window.location.href = `${apiBase}/v1/auth/login/federated/google`;
                 }}

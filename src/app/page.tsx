@@ -18,7 +18,6 @@ export default function HomePage() {
   return (
     <div className="flex flex-col">
       <HeroSection />
-      <SocialProof />
       <FeaturedSpotlightSection />
       <ListingsSection />
       <LocationDiscovery />
@@ -65,7 +64,7 @@ function HeroSection() {
   };
 
   return (
-    <section className="relative overflow-hidden h-[520px] sm:h-[640px] lg:h-[680px]">
+    <section className="relative overflow-hidden h-[380px] sm:h-[560px] lg:h-[640px]">
       <div className="absolute inset-0">
         <Image src="/images/hero-bg-desktop.png" alt="" fill className="object-cover hidden sm:block" priority />
         <Image src="/images/hero-bg-mobile.svg" alt="" fill className="object-cover sm:hidden" priority />

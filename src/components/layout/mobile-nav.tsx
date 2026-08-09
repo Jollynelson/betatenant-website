@@ -99,8 +99,18 @@ export function MobileNav() {
     protected?: boolean;
   };
 
+  // Build browse URL with last search restored
+  const browseHref = (() => {
+    if (typeof window === "undefined") return "/properties";
+    try {
+      const lastSearch = localStorage.getItem("BT_LAST_SEARCH") ?? sessionStorage.getItem("BT_LAST_SEARCH");
+      if (lastSearch) return `/properties${lastSearch}`;
+    } catch {}
+    return "/properties";
+  })();
+
   const tenantItems: NavItem[] = [
-    { href: "/properties",  icon: Search,        label: "Browse" },
+    { href: browseHref,     icon: Search,        label: "Browse" },
     { href: "/saved",       icon: Heart,         label: "Saved",    protected: true },
     { href: "/messages",    icon: MessageCircle, label: "Messages", protected: true },
     { href: "/account",     icon: User,          label: "Profile",  protected: true },

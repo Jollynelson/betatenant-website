@@ -75,7 +75,18 @@ function PropertiesContent() {
     if (newFilters.maxPrice)     params.set("maxPrice", newFilters.maxPrice);
     if (newSort !== "newest")    params.set("sort", newSort);
     if (newPage > 1)             params.set("page", String(newPage));
-    urlRouter.replace(`/properties${params.toString() ? `?${params.toString()}` : ""}`, { scroll: false });
+    const qs = params.toString() ? `?${params.toString()}` : "";
+    urlRouter.replace(`/properties${qs}`, { scroll: false });
+    // Persist last search so mobile nav Browse tab restores it
+    try {
+      if (qs) {
+        localStorage.setItem("BT_LAST_SEARCH", qs);
+        sessionStorage.setItem("BT_LAST_SEARCH", qs);
+      } else {
+        localStorage.removeItem("BT_LAST_SEARCH");
+        sessionStorage.removeItem("BT_LAST_SEARCH");
+      }
+    } catch {}
   }, [urlRouter]);
 
   const setFiltersAndSync = useCallback((newFilters: typeof filters) => {

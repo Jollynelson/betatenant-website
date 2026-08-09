@@ -153,15 +153,7 @@ function AppShell({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     hydrate();
 
-    // Redirect to onboarding only on mobile, only first visit
-    if (!ONBOARDING_PATHS.some((p) => pathname.startsWith(p))) {
-      const onboarded = localStorage.getItem("BT_ONBOARDED");
-      const isMobile = window.innerWidth < 768;
-      if (!onboarded && isMobile) {
-        router.replace("/onboarding");
-        return;
-      }
-    }
+    // Onboarding splash removed — no more forced redirect
 
     setReady(true);
 
