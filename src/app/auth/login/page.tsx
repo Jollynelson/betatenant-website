@@ -46,9 +46,8 @@ function LoginPage() {
         toast.success("Login successful!");
         const from = searchParams.get("from");
         const role = res.userDetails?.role;
-        // Role-based default: agents/landlords → listings, tenants → property search
         const defaultPath = (role === "agent" || role === "landlord") ? "/account/properties" : "/properties";
-        setTimeout(() => router.push(from || defaultPath), 300);
+        router.push(from || defaultPath);
       }
     } catch (err: any) {
       const msg = err.message || "";

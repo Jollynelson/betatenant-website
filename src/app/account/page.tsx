@@ -162,7 +162,7 @@ function AccountContent() {
                   <span className="px-2.5 py-0.5 rounded-full bg-bt-primary/8 text-bt-primary text-[11px] font-semibold capitalize">
                     {role}
                   </span>
-                  {profile?.yearsOfRentalExperience && (
+                  {!!profile?.yearsOfRentalExperience && Number(profile.yearsOfRentalExperience) > 0 && (
                     <span className="px-2.5 py-0.5 rounded-full bg-neutral-100 text-neutral-500 text-[11px]">
                       {profile.yearsOfRentalExperience}+ yrs experience
                     </span>
