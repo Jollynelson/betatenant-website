@@ -142,8 +142,16 @@ export function BoostModal({ open, onClose, propertyId, propertyName, onSuccess 
     setBuying(true);
     try {
       const res = await api.post<any>("/v1/user/boost/buy", { pack: selectedPack });
+      if (res.provider === "bachs" || (!res.accessCode && res.checkoutUrl)) {
+        window.location.href = res.checkoutUrl;
+        return;
+      }
+
       const PaystackPop = (window as any).PaystackPop;
-      if (!PaystackPop) { toast.error("Payment not ready. Refresh and try."); setBuying(false); return; }
+      if (!PaystackPop) {
+        window.location.href = res.checkoutUrl ?? "";
+        return;
+      }
 
       const popup = new PaystackPop();
       popup.newTransaction({

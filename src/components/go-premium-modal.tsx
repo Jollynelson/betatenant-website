@@ -49,18 +49,25 @@ export function GoPremiumModal({ open, onClose, onSuccess }: Props) {
   const handlePay = async () => {
     setLoading(true);
     try {
-      // Backend creates a Paystack transaction and returns an access code
       const res = await api.post<any>("/v1/user/subscription/initiate", { plan });
-      const { accessCode } = res;
 
+      if (res.provider === "bachs" || (!res.accessCode && res.checkoutUrl)) {
+        // Bachs: redirect to hosted checkout page
+        window.location.href = res.checkoutUrl;
+        return;
+      }
+
+      // Paystack inline popup
       const PaystackPop = (window as any).PaystackPop;
-      if (!PaystackPop) { toast.error("Payment system not ready. Try again."); setLoading(false); return; }
-
-      // v2: open with accessCode — supports ALL payment methods (card, bank transfer, USSD, etc.)
+      if (!PaystackPop) {
+        // Fallback: redirect if popup not loaded
+        window.location.href = res.checkoutUrl ?? res.authorizationUrl;
+        return;
+      }
       const popup = new PaystackPop();
       popup.newTransaction({
         key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY ?? "",
-        accessCode,
+        accessCode: res.accessCode,
         onSuccess: () => {
           setLoading(false);
           toast.success("🎉 Welcome to Premium!");
