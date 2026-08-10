@@ -2,19 +2,41 @@
 // In development: calls go through the Next.js rewrite (/api/bt → https://api.betatenant.com)
 // In production (Cloudflare Workers): calls go directly to the API (rewrites don't work in Workers)
 
+const SITE = "https://new.betatenant.com";
+
 /**
- * Inject Cloudinary auto-quality + auto-format + width transform into a URL.
- * Converts: .../upload/v1/...  →  .../upload/q_auto,f_auto,w_800/v1/...
- * No-ops on non-Cloudinary or already-transformed URLs.
- * This cuts image payload from ~3MB to ~80-200KB on mobile.
+ * Route images through Cloudflare Image Transformations.
+ *
+ * Images are stored on AWS S3 (betatenant bucket, eu-north-1).
+ * We serve them via /cdn-cgi/image/ on new.betatenant.com so Cloudflare
+ * resizes, compresses to WebP/AVIF, and caches at edge.
+ *
+ * Also handles legacy Cloudinary URLs (some imported listings).
+ * No-ops on placeholder / relative / already-transformed URLs.
  */
 export function cdnImg(url: string, width = 800): string {
-  if (!url || !url.includes("res.cloudinary.com")) return url;
-  if (url.includes("/upload/q_auto") || url.includes("/upload/f_auto")) return url;
-  return url.replace("/upload/", `/upload/q_auto,f_auto,w_${width}/`);
+  if (!url || url.startsWith("/") || url.startsWith("data:")) return url;
+
+  // Already transformed — don't double-wrap
+  if (url.includes("/cdn-cgi/image/")) return url;
+
+  // Legacy Cloudinary URLs — inject Cloudinary's own transform params
+  if (url.includes("res.cloudinary.com")) {
+    if (url.includes("/upload/q_auto") || url.includes("/upload/f_auto")) return url;
+    return url.replace("/upload/", `/upload/q_auto,f_auto,w_${width}/`);
+  }
+
+  // S3 URLs — route through Cloudflare Image Transformations
+  // Requires: Cloudflare Transformations enabled + betatenant.s3.eu-north-1.amazonaws.com
+  // added to the allowed origins list in Cloudflare dashboard.
+  if (url.includes("amazonaws.com") || url.includes("imagedelivery.net")) {
+    return `${SITE}/cdn-cgi/image/width=${width},quality=85,format=auto/${url}`;
+  }
+
+  return url;
 }
 
-/** Smaller thumbnail — for property cards (400px) */
+/** Smaller thumbnail — for property cards (400px wide) */
 export function cdnThumb(url: string): string {
   return cdnImg(url, 400);
 }
