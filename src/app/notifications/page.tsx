@@ -126,13 +126,25 @@ function NotificationsContent() {
     const isAgent = user.role === "agent" || user.role === "landlord";
 
     Promise.all([
+      // Chats — both roles
       api.get<any>(isAgent ? "/v1/landlordandagent/chats" : "/v1/user/chats").catch(() => ({})),
-      // Reviews ON the agent (reviews they received)
+      // Reviews received by this agent (they need to see new reviews)
       isAgent ? api.get<any>(`/v1/landlordandagent/review/${user.userId}`).catch(() => ({})) : Promise.resolve({}),
+      // Reviews the user wrote on OTHER agents — to catch agent reply notifications
+      // We fetch by reviewer: iterate own profile id via the share endpoint isn't available,
+      // so we store replied-review IDs in localStorage when a reply push arrives.
+      // For now we surface reply notifications via the push notification itself.
+      // The in-app notification for replies is built from cached review data in localStorage.
+      Promise.resolve({}),
     ]).then(([chatRes, reviewRes]) => {
       const chats = chatRes?.chats ?? chatRes ?? [];
       const reviews = reviewRes?.reviews ?? reviewRes?.result ?? [];
-      setNotifs(buildNotifications(chats, reviews, [], user.userId));
+      // Load cached review-reply notifications written by sw.js / push handler
+      let myReviews: any[] = [];
+      try {
+        myReviews = JSON.parse(localStorage.getItem("BT_REVIEW_REPLIES") ?? "[]");
+      } catch {}
+      setNotifs(buildNotifications(chats, reviews, myReviews, user.userId));
     }).finally(() => setLoading(false));
 
     // Load previously read IDs from localStorage

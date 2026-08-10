@@ -83,8 +83,11 @@ function useNotifications(user: AuthUser) {
         }, 0);
         setCount(notifications.length);
         setItems(notifications);
-        // Persist count so mobile nav bell can read it
-        try { localStorage.setItem("BT_NOTIF_COUNT", String(notifications.length)); } catch {}
+        // Persist count so mobile nav Profile dot can read it
+        try {
+          localStorage.setItem("BT_NOTIF_COUNT", String(notifications.length));
+          window.dispatchEvent(new Event("bt-badge-update"));
+        } catch {}
         // Update OS app badge (home screen icon badge)
         setAppBadge(total);
       }

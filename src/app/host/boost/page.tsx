@@ -221,6 +221,14 @@ function BoostContent() {
     setBuying(true);
     try {
       const res = await api.post<any>("/v1/user/boost/buy", { pack: selectedPack });
+
+      // Bachs.io — redirect to hosted checkout page
+      if (res.checkoutUrl) {
+        window.location.href = res.checkoutUrl;
+        return;
+      }
+
+      // Paystack inline popup
       const PaystackPop = (window as any).PaystackPop;
       if (!PaystackPop) { toast.error("Payment not ready. Refresh and try."); setBuying(false); return; }
       const popup = new PaystackPop();

@@ -77,15 +77,18 @@ export function MobileNav() {
   const isAgentOrLandlord = role === "agent" || role === "landlord";
 
   useEffect(() => {
-    const updateUnread = () => setUnread(Number(localStorage.getItem("BT_UNREAD_COUNT") || 0));
-    const updateNotif = () => setNotifCount(Number(localStorage.getItem("BT_NOTIF_COUNT") || 0));
-    updateUnread(); updateNotif();
-    window.addEventListener("storage", updateUnread);
-    window.addEventListener("storage", updateNotif);
-    const interval = setInterval(() => { updateUnread(); updateNotif(); }, 30_000);
+    const update = () => {
+      setUnread(Number(localStorage.getItem("BT_UNREAD_COUNT") || 0));
+      setNotifCount(Number(localStorage.getItem("BT_NOTIF_COUNT") || 0));
+    };
+    update();
+    // storage event fires across tabs; custom event fires within same tab
+    window.addEventListener("storage", update);
+    window.addEventListener("bt-badge-update", update);
+    const interval = setInterval(update, 30_000);
     return () => {
-      window.removeEventListener("storage", updateUnread);
-      window.removeEventListener("storage", updateNotif);
+      window.removeEventListener("storage", update);
+      window.removeEventListener("bt-badge-update", update);
       clearInterval(interval);
     };
   }, []);

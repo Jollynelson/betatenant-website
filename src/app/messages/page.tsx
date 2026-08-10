@@ -45,7 +45,10 @@ function MessagesContent() {
         setChats(list);
         // Update unread badge
         const unread = list.reduce((s: number, c: any) => s + (c.numberOfUnreadMessage ?? c.unreadCount ?? 0), 0);
-        try { localStorage.setItem("BT_UNREAD_COUNT", String(unread)); } catch {}
+        try {
+          localStorage.setItem("BT_UNREAD_COUNT", String(unread));
+          window.dispatchEvent(new Event("bt-badge-update"));
+        } catch {}
       })
       .catch(() => setChats([]))
       .finally(() => setLoading(false));
@@ -64,8 +67,13 @@ function MessagesContent() {
     try {
       const r = await api.get<any>(`/v1/user/messages/${otherId}`);
       setMessages(r.messages ?? r ?? []);
-      // Mark as read locally
-      setChats(prev => prev.map(c => c._id === chat._id ? { ...c, numberOfUnreadMessage: 0, unreadCount: 0 } : c));
+      // Mark as read locally and update badge
+      setChats(prev => {
+        const updated = prev.map(c => c._id === chat._id ? { ...c, numberOfUnreadMessage: 0, unreadCount: 0 } : c);
+        const remaining = updated.reduce((s, c) => s + (c.numberOfUnreadMessage ?? c.unreadCount ?? 0), 0);
+        try { localStorage.setItem("BT_UNREAD_COUNT", String(remaining)); window.dispatchEvent(new Event("bt-badge-update")); } catch {}
+        return updated;
+      });
     } catch {
       setMessages([]);
     } finally {
