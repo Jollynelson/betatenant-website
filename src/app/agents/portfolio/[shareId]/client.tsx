@@ -13,7 +13,7 @@ import {
   CornerDownRight, Pencil, Trash2,
   Award, Timer, CheckCircle2, Users,
 } from "lucide-react";
-import { api, mapProperty } from "@/lib/api";
+import { api, mapProperty, cdnImg, cdnThumb } from "@/lib/api";
 import { useAuthStore } from "@/lib/auth-store";
 import { PropertyCard } from "@/components/property/property-card";
 import { cn } from "@/lib/utils";
@@ -217,7 +217,7 @@ export default function AgentPortfolioPage({ params }: { params: Promise<{ share
                 isPremium ? "border-amber-400 shadow-[0_0_0_2px_rgba(251,191,36,0.3)]" : "border-neutral-200"
               )}>
                 {profile.profilePic
-                  ? <Image src={profile.profilePic} alt="" width={96} height={96} className="object-cover w-full h-full" />
+                  ? <Image src={cdnImg(profile.profilePic, 200)} alt="" width={96} height={96} className="object-cover w-full h-full" />
                   : <div className="w-full h-full bg-neutral-200 flex items-center justify-center text-neutral-400 text-2xl font-bold">{profile.firstName?.[0]}{profile.lastName?.[0]}</div>
                 }
               </div>
@@ -502,7 +502,7 @@ export default function AgentPortfolioPage({ params }: { params: Promise<{ share
                     <div className="flex items-start gap-3">
                       <div className="w-9 h-9 rounded-full bg-bt-primary/10 flex items-center justify-center text-bt-primary font-bold text-xs shrink-0 overflow-hidden">
                         {r.profilePic
-                          ? <Image src={r.profilePic} alt="" width={36} height={36} className="object-cover w-full h-full" />
+                          ? <Image src={cdnThumb(r.profilePic)} alt="" width={36} height={36} className="object-cover w-full h-full" />
                           : <span>{(r.firstName?.[0] ?? "?").toUpperCase()}</span>
                         }
                       </div>
