@@ -44,8 +44,16 @@ function LoginPage() {
       if (res.successful) {
         setAuth(res.token, res.userDetails);
         toast.success("Login successful!");
-        const from = searchParams.get("from");
+
+        // Apply pending agency name set during signup (agent/landlord)
+        const pendingAgency = localStorage.getItem("BT_PENDING_AGENCY");
         const role = res.userDetails?.role;
+        if (pendingAgency && (role === "agent" || role === "landlord")) {
+          localStorage.removeItem("BT_PENDING_AGENCY");
+          api.put("/v1/user/profile", { agencyName: pendingAgency }).catch(() => {});
+        }
+
+        const from = searchParams.get("from");
         const defaultPath = (role === "agent" || role === "landlord") ? "/account/properties" : "/properties";
         router.push(from || defaultPath);
       }

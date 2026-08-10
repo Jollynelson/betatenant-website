@@ -82,6 +82,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     if (typeof window !== "undefined") {
       safeRemove("BT_TOKEN");
       safeRemove("BT_USER");
+      // Clear signup role so returning users always see role selection
+      try { localStorage.removeItem("usrLoginType"); } catch {}
     }
     set({ token: null, user: null });
   },
