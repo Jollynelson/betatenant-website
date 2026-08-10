@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   Search, Heart, MessageCircle, User,
-  Building2, Plus, Bell,
+  Building2, Plus,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/lib/auth-store";
@@ -117,19 +117,17 @@ export function MobileNav() {
   })();
 
   const tenantItems: NavItem[] = [
-    { href: browseHref,          icon: Search,        label: "Browse" },
-    { href: "/saved",            icon: Heart,         label: "Saved",         protected: true },
-    { href: "/notifications",    icon: Bell,          label: "Notifications", protected: true },
-    { href: "/messages",         icon: MessageCircle, label: "Messages",      protected: true },
-    { href: "/account",          icon: User,          label: "Profile",       protected: true },
+    { href: browseHref,  icon: Search,        label: "Browse" },
+    { href: "/saved",    icon: Heart,         label: "Saved",    protected: true },
+    { href: "/messages", icon: MessageCircle, label: "Messages", protected: true },
+    { href: "/account",  icon: User,          label: "Profile",  protected: true },
   ];
 
   const agentItems: NavItem[] = [
-    { href: "/account/properties", icon: Building2,     label: "Listings",      protected: true },
-    { href: "/host/new",           icon: Plus,          label: "Add",           protected: true },
-    { href: "/notifications",      icon: Bell,          label: "Notifications", protected: true },
-    { href: "/messages",           icon: MessageCircle, label: "Messages",      protected: true },
-    { href: "/account",            icon: User,          label: "Profile",       protected: true },
+    { href: "/account/properties", icon: Building2,     label: "Listings", protected: true },
+    { href: "/host/new",           icon: Plus,          label: "Add",      protected: true },
+    { href: "/messages",           icon: MessageCircle, label: "Messages", protected: true },
+    { href: "/account",            icon: User,          label: "Profile",  protected: true },
   ];
 
   const navItems = isAgentOrLandlord ? agentItems : tenantItems;
@@ -146,7 +144,7 @@ export function MobileNav() {
             (item.href !== "/" && pathname.startsWith(item.href));
           const isAdd      = item.href === "/host/new";
           const isMessages = item.href === "/messages";
-          const isBell     = item.href === "/notifications";
+          const isProfile  = item.href === "/account";
 
           const itemCls = cn(
             "relative flex flex-col items-center gap-[3px] min-w-[64px] min-h-[44px] justify-center transition-all duration-150",
@@ -167,10 +165,8 @@ export function MobileNav() {
                 {isMessages && unread > 0 && (
                   <span className="absolute -top-0.5 -right-1 w-[7px] h-[7px] rounded-full bg-bt-secondary border-[1.5px] border-white" />
                 )}
-                {isBell && notifCount > 0 && (
-                  <span className="absolute -top-1 -right-1.5 min-w-[14px] h-[14px] px-0.5 rounded-full bg-bt-secondary text-white text-[8px] font-bold flex items-center justify-center border-[1.5px] border-white leading-none">
-                    {notifCount > 9 ? "9+" : notifCount}
-                  </span>
+                {isProfile && notifCount > 0 && (
+                  <span className="absolute -top-0.5 -right-1 w-[7px] h-[7px] rounded-full bg-bt-secondary border-[1.5px] border-white" />
                 )}
                 {isActive && (
                   <span className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-bt-primary" />
