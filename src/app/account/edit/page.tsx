@@ -819,8 +819,9 @@ function PortfolioLinkSection({
   const [availMsg, setAvailMsg] = useState("");
   const [saving, setSaving] = useState(false);
 
+  const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "https://api.betatenant.com";
   const portfolioUrl = currentSlug
-    ? `https://betatenant.com/in/${currentSlug}`
+    ? `${API_BASE}/in/${currentSlug}`
     : currentShareId
       ? `https://new.betatenant.com/agents/portfolio/${currentShareId}`
       : null;
