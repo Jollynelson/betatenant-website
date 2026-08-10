@@ -185,10 +185,13 @@ function FeaturedSpotlightSection() {
     staleTime: 1000 * 60 * 5,
   });
 
-  // Filter to only promoted listings (spotlight first, then featured, then boost)
-  const promoted = (data?.properties ?? []).filter(
-    (p: any) => p.promotionPackage === "spotlight" || p.promotionPackage === "featured"
-  );
+  // Filter to promoted listings — spotlight > featured > boost
+  const promoted = (data?.properties ?? [])
+    .filter((p: any) => p.promotionPackage === "spotlight" || p.promotionPackage === "featured" || p.promotionPackage === "boost" || p.isPromoted)
+    .sort((a: any, b: any) => {
+      const rank: Record<string, number> = { spotlight: 3, featured: 2, boost: 1 };
+      return (rank[b.promotionPackage] ?? 0) - (rank[a.promotionPackage] ?? 0);
+    });
 
   if (isLoading || promoted.length === 0) return null;
 

@@ -6,7 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft, Heart, Share2, MapPin, BedDouble, Bath, Star,
   Shield, Check, ChevronLeft, ChevronRight, BadgeCheck, Eye, Clock, Phone, Mail, Lock,
@@ -68,6 +68,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
     ? window.location.pathname.split("/property/")[1]?.split("/")[0] || paramId
     : paramId;
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { token, user } = useAuthStore();
   const isLoggedIn = !!token;
   const touchStartX = useRef<number | null>(null);
@@ -296,6 +297,18 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
           <div className="px-5 pt-3">
             {/* Badges */}
             <div className="flex flex-wrap items-center gap-2 mb-3">
+              {property.promotionPackage === "spotlight" && (
+                <span className="px-2.5 py-1 rounded-full bg-[#FF4500] text-white text-xs font-bold">🔥 Spotlight</span>
+              )}
+              {property.promotionPackage === "featured" && (
+                <span className="px-2.5 py-1 rounded-full bg-[#FB6514] text-white text-xs font-bold">⭐ Featured</span>
+              )}
+              {property.promotionPackage === "boost" && (
+                <span className="px-2.5 py-1 rounded-full bg-bt-primary text-white text-xs font-bold">🚀 Boosted</span>
+              )}
+              {!property.promotionPackage && property.isPromoted && (
+                <span className="px-2.5 py-1 rounded-full bg-[#FB6514] text-white text-xs font-bold">⭐ Featured</span>
+              )}
               <span className="px-2.5 py-1 rounded-full bg-bt-primary/8 text-bt-primary text-xs font-semibold">For Rent</span>
               <span className="px-2.5 py-1 rounded-full bg-neutral-100 text-neutral-600 text-xs font-medium">{apartmentLabel}</span>
               {property.host?.isVerified && (
@@ -637,7 +650,9 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
           propertyName={property.title}
           onSuccess={(type) => {
             setBoostOpen(false);
-            // Reflect boost badge visually if possible
+            // Refetch property so promotion badge updates immediately
+            queryClient.invalidateQueries({ queryKey: ["property", id] });
+            toast.success(`Listing ${type === "spotlight" ? "spotlighted" : type === "featured" ? "featured" : "boosted"} successfully!`);
           }}
         />
       )}
@@ -687,9 +702,20 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
             {/* Title */}
             <div className="mb-6">
               <div className="flex flex-wrap items-center gap-2 mb-3">
+                {property.promotionPackage === "spotlight" && (
+                  <span className="px-2.5 py-1 rounded-full bg-[#FF4500] text-white text-xs font-bold">🔥 Spotlight</span>
+                )}
+                {property.promotionPackage === "featured" && (
+                  <span className="px-2.5 py-1 rounded-full bg-[#FB6514] text-white text-xs font-bold">⭐ Featured</span>
+                )}
+                {property.promotionPackage === "boost" && (
+                  <span className="px-2.5 py-1 rounded-full bg-bt-primary text-white text-xs font-bold">🚀 Boosted</span>
+                )}
+                {!property.promotionPackage && property.isPromoted && (
+                  <span className="px-2.5 py-1 rounded-full bg-[#FB6514] text-white text-xs font-bold">⭐ Featured</span>
+                )}
                 <span className="px-2.5 py-1 rounded-full bg-bt-primary/8 text-bt-primary text-xs font-semibold">For Rent</span>
                 <span className="px-2.5 py-1 rounded-full bg-neutral-100 text-neutral-600 text-xs font-medium">{apartmentLabel}</span>
-                {property.isPromoted && <span className="px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 text-xs font-medium">Featured</span>}
               </div>
               <h1 className="text-2xl md:text-[28px] font-bold text-neutral-900 tracking-[-0.02em] leading-snug">{property.title}</h1>
               <p className="text-[15px] text-neutral-500 mt-2 flex items-center gap-1.5">

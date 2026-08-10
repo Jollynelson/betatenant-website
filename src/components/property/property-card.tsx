@@ -63,6 +63,19 @@ export function PropertyCard({ property, variant = "default", onRemove }: Proper
             sizes="120px"
             loading="lazy"
           />
+          {/* Promotion badge on horizontal card */}
+          {(property.promotionPackage || property.isPromoted) && (
+            <span className={cn(
+              "absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded text-white text-[9px] font-bold",
+              property.promotionPackage === "spotlight" ? "bg-[#FF4500]" :
+              property.promotionPackage === "featured"  ? "bg-[#FB6514]" :
+              "bg-bt-primary"
+            )}>
+              {property.promotionPackage === "spotlight" ? "🔥 Spotlight" :
+               property.promotionPackage === "featured"  ? "⭐ Featured" :
+               property.promotionPackage === "boost"     ? "🚀 Boosted" : "Featured"}
+            </span>
+          )}
         </div>
         <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
           <div>
