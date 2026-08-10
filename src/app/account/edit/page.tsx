@@ -6,7 +6,7 @@ import Image from "next/image";
 import {
   ArrowLeft, Camera, Loader2, Check, User, Mail, Phone, MapPin, Briefcase,
   MessageCircle, ExternalLink, CheckCircle2, Clock, Lock, Trash2,
-  ChevronRight, Eye, EyeOff, Shield, AlertTriangle,
+  ChevronRight, Eye, EyeOff, Shield, AlertTriangle, Link2, Copy,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { AuthGuard } from "@/components/auth-guard";
@@ -16,7 +16,7 @@ import { cn } from "@/lib/utils";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type Section = "profile" | "phone" | "email" | "password" | "delete";
+type Section = "profile" | "phone" | "email" | "password" | "portfolio-link" | "delete";
 
 // ─── Main Content ─────────────────────────────────────────────────────────────
 
@@ -42,6 +42,8 @@ function EditProfileContent() {
   const [profilePic, setProfilePic] = useState("");
   const [agentBasedLocation, setAgentBasedLocation] = useState("");
   const [yearsOfRentalExperience, setYearsOfRentalExperience] = useState("");
+  const [currentSlug, setCurrentSlug] = useState<string | null>(null);
+  const [currentShareId, setCurrentShareId] = useState<string | null>(null);
 
   useEffect(() => {
     // /v1/user/profile works for ALL roles — same user collection
@@ -68,6 +70,11 @@ function EditProfileContent() {
       })
       .catch(() => toast.error("Failed to load profile"))
       .finally(() => setLoading(false));
+
+    // Load slug for agents/landlords
+    api.get<any>("/v1/landlordandagent/share/myslug")
+      .then((r) => { setCurrentSlug(r?.slug ?? null); setCurrentShareId(r?.shareId ?? null); })
+      .catch(() => {});
   }, []);
 
   const role = user?.role ?? useAuthStore.getState().user?.role ?? "user";
@@ -321,6 +328,22 @@ function EditProfileContent() {
           >
             <PasswordSection onDone={() => setActiveSection(null)} />
           </SectionCard>
+
+          {/* ── Portfolio Link — agents/landlords only ─────────────────────── */}
+          {isAgentOrLandlord && (
+            <SectionCard
+              title="Portfolio Link"
+              subtitle={currentSlug ? `betatenant.com/in/${currentSlug}` : "Set your custom link"}
+              open={activeSection === "portfolio-link"}
+              onToggle={() => setActiveSection(activeSection === "portfolio-link" ? null : "portfolio-link")}
+            >
+              <PortfolioLinkSection
+                currentSlug={currentSlug}
+                currentShareId={currentShareId}
+                onSaved={(slug, shareId) => { setCurrentSlug(slug); setCurrentShareId(shareId); }}
+              />
+            </SectionCard>
+          )}
 
           {/* ── Delete Account ─────────────────────────────────────────────── */}
           <SectionCard
@@ -777,6 +800,116 @@ function DeleteSection({ onDeleted }: { onDeleted: () => void }) {
           </div>
         </>
       )}
+    </div>
+  );
+}
+
+// ─── Portfolio Link Section ───────────────────────────────────────────────────
+
+function PortfolioLinkSection({
+  currentSlug, currentShareId, onSaved,
+}: {
+  currentSlug: string | null;
+  currentShareId: string | null;
+  onSaved: (slug: string, shareId: string) => void;
+}) {
+  const [slug, setSlug] = useState(currentSlug ?? "");
+  const [checking, setChecking] = useState(false);
+  const [available, setAvailable] = useState<boolean | null>(null);
+  const [availMsg, setAvailMsg] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const portfolioUrl = currentSlug
+    ? `https://betatenant.com/in/${currentSlug}`
+    : currentShareId
+      ? `https://new.betatenant.com/agents/portfolio/${currentShareId}`
+      : null;
+
+  const checkAvailability = async (val: string) => {
+    const cleaned = val.toLowerCase().replace(/[^a-z0-9-]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
+    setSlug(cleaned);
+    if (cleaned.length < 3) { setAvailable(null); setAvailMsg(""); return; }
+    setChecking(true);
+    try {
+      const r = await api.get<any>(`/v1/landlordandagent/share/slug/check/${encodeURIComponent(cleaned)}`);
+      setAvailable(r.available);
+      setAvailMsg(r.available ? "✓ Available!" : r.reason ?? "Already taken");
+    } catch { setAvailable(null); }
+    setChecking(false);
+  };
+
+  const handleClaim = async () => {
+    if (!slug || slug.length < 3) { toast.error("Slug must be at least 3 characters"); return; }
+    setSaving(true);
+    try {
+      const r = await api.put<any>("/v1/landlordandagent/share/slug", { slug });
+      if (r.successful) {
+        toast.success("Portfolio link saved!");
+        onSaved(r.slug, r.shareId);
+        setAvailable(null);
+      } else {
+        toast.error(r.message ?? "Failed to save");
+      }
+    } catch (err: any) {
+      toast.error(err.message ?? "Failed to save");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const copyLink = () => {
+    if (!portfolioUrl) return;
+    navigator.clipboard.writeText(portfolioUrl).then(() => toast.success("Link copied!")).catch(() => {});
+  };
+
+  return (
+    <div className="space-y-4 pt-1">
+      <p className="text-xs text-neutral-500 leading-relaxed">
+        Your custom portfolio link lets clients find all your listings in one place. Choose a short, memorable name.
+      </p>
+
+      {/* Current link display */}
+      {portfolioUrl && (
+        <div className="flex items-center gap-2 bg-neutral-50 border border-neutral-100 rounded-xl px-3.5 py-2.5">
+          <Link2 className="w-4 h-4 text-bt-primary shrink-0" />
+          <span className="flex-1 text-sm text-neutral-700 truncate">{portfolioUrl}</span>
+          <button onClick={copyLink} className="text-neutral-400 hover:text-bt-primary transition-colors shrink-0">
+            <Copy className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
+      {/* Slug input */}
+      <div>
+        <p className="text-[11px] text-neutral-400 font-medium uppercase tracking-wide mb-1">Custom Link</p>
+        <div className="bg-neutral-50 rounded-xl border border-neutral-100 px-3.5 py-2.5 flex items-center gap-2">
+          <span className="text-xs text-neutral-400 shrink-0 hidden sm:inline">betatenant.com/in/</span>
+          <input
+            type="text"
+            value={slug}
+            onChange={(e) => checkAvailability(e.target.value)}
+            placeholder="your-name"
+            maxLength={30}
+            className="flex-1 text-[16px] text-neutral-900 bg-transparent focus:outline-none placeholder:text-neutral-300 min-w-0"
+          />
+          {checking && <Loader2 className="w-4 h-4 animate-spin text-neutral-400 shrink-0" />}
+          {!checking && available === true && <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />}
+          {!checking && available === false && <AlertTriangle className="w-4 h-4 text-red-400 shrink-0" />}
+        </div>
+        {availMsg && (
+          <p className={cn("text-xs mt-1.5", available ? "text-emerald-600" : "text-red-500")}>{availMsg}</p>
+        )}
+        <p className="text-[11px] text-neutral-400 mt-1">Lowercase letters, numbers, and hyphens only. 3-30 characters.</p>
+      </div>
+
+      <button
+        onClick={handleClaim}
+        disabled={saving || !slug || slug.length < 3 || available === false}
+        className="w-full py-3 rounded-xl bg-bt-primary text-white text-sm font-semibold flex items-center justify-center gap-2 disabled:opacity-50 hover:bg-bt-primary-light transition-colors"
+      >
+        {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+        {currentSlug ? "Update Link" : "Claim Link"}
+      </button>
     </div>
   );
 }
