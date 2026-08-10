@@ -8,10 +8,11 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import {
-  ArrowLeft, Heart, Share2, MapPin, Bed, Bath, Maximize2, Star,
+  ArrowLeft, Heart, Share2, MapPin, BedDouble, Bath, Star,
   Shield, Check, ChevronLeft, ChevronRight, BadgeCheck, Eye, Clock, Phone, Mail, Lock,
   Play, X, CircleX, ZoomIn, Edit3, RefreshCw, AlertTriangle, Trash2, Loader2, Zap,
-  Crown, ShieldCheck, Briefcase, MessageSquare, Home,
+  Crown, ShieldCheck, Briefcase, MessageSquare, Home, Flag, Sparkles,
+  PawPrint, Cigarette, PartyPopper, Music, UserX, Baby,
 } from "lucide-react";
 import { BoostModal } from "@/components/boost-modal";
 import { cn } from "@/lib/utils";
@@ -46,6 +47,18 @@ const TABS = [
 ] as const;
 
 type Tab = (typeof TABS)[number]["key"];
+
+// ─── House rule icon helper ───────────────────────────────────────────────────
+function getRuleIcon(rule: string): React.ComponentType<{ className?: string }> {
+  const r = rule.toLowerCase();
+  if (r.includes("pet")) return PawPrint;
+  if (r.includes("smok")) return Cigarette;
+  if (r.includes("party") || r.includes("parties") || r.includes("event")) return PartyPopper;
+  if (r.includes("music") || r.includes("noise") || r.includes("loud")) return Music;
+  if (r.includes("visitor") || r.includes("guest")) return UserX;
+  if (r.includes("child") || r.includes("children") || r.includes("kid")) return Baby;
+  return Check;
+}
 
 export default function PropertyDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: paramId } = use(params);
@@ -292,7 +305,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
             {/* Stats row */}
             <div className="flex items-center gap-4 mt-4 pt-4 border-t border-neutral-100">
               <div className="flex items-center gap-1.5 text-sm text-neutral-700">
-                <Bed className="w-4 h-4 text-neutral-400" />
+                <BedDouble className="w-4 h-4 text-neutral-400" />
                 <span className="font-semibold">{property.bedrooms}</span>
                 <span className="text-neutral-400">{property.bedrooms === 1 ? "bed" : "beds"}</span>
               </div>
@@ -367,7 +380,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
                       const iconSrc = AMENITY_ICONS[directKey] || Object.entries(AMENITY_ICONS).find(([k]) => amenity.toLowerCase().replace(/\s/g, "").includes(k.toLowerCase()))?.[1];
                       return (
                         <div key={amenity} className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-neutral-50 border border-neutral-100">
-                          {iconSrc ? <Image src={iconSrc} alt="" width={16} height={16} className="w-4 h-4 shrink-0" /> : <Check className="w-3.5 h-3.5 text-bt-success shrink-0" />}
+                          {iconSrc ? <Image src={iconSrc} alt="" width={16} height={16} className="w-4 h-4 shrink-0" /> : <Sparkles className="w-3.5 h-3.5 text-neutral-400 shrink-0" />}
                           <span className="text-sm text-neutral-700">{amenity}</span>
                         </div>
                       );
@@ -402,13 +415,16 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
             {property.houseRules.length > 0 && (
               <div id="tab-rules" className="pt-2 border-t border-neutral-100">
                 <h3 className="text-sm font-bold text-neutral-900 mb-3">House Rules</h3>
-                <div className="space-y-2">
-                  {property.houseRules.map((rule: string) => (
-                    <div key={rule} className="flex items-start gap-2.5 text-sm text-neutral-600">
-                      <Check className="w-3.5 h-3.5 text-bt-success mt-0.5 shrink-0" />
-                      {rule}
-                    </div>
-                  ))}
+                <div className="flex flex-wrap gap-2">
+                  {property.houseRules.map((rule: string) => {
+                    const RuleIcon = getRuleIcon(rule);
+                    return (
+                      <div key={rule} className="flex items-center gap-2 px-3 py-2 rounded-full border border-neutral-200 bg-neutral-50 text-sm text-neutral-700">
+                        <RuleIcon className="w-4 h-4 text-neutral-500 shrink-0" />
+                        {rule}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -476,16 +492,18 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
             isLoggedIn ? (
               <a
                 href={`tel:${property.host.phone}`}
-                className="w-12 h-12 rounded-full border border-neutral-200 flex items-center justify-center shrink-0"
+                className="flex-1 py-3.5 rounded-full border border-neutral-200 flex items-center justify-center gap-2 text-neutral-700 font-bold text-sm"
               >
-                <Phone className="w-5 h-5 text-neutral-700" />
+                <Phone className="w-5 h-5" />
+                Call
               </a>
             ) : (
               <button
                 onClick={() => requireAuth(() => {})}
-                className="w-12 h-12 rounded-full border border-neutral-200 flex items-center justify-center shrink-0"
+                className="flex-1 py-3.5 rounded-full border border-neutral-200 flex items-center justify-center gap-2 text-neutral-700 font-bold text-sm"
               >
-                <Phone className="w-5 h-5 text-neutral-700" />
+                <Phone className="w-5 h-5" />
+                Call
               </button>
             )
           )}
@@ -509,18 +527,47 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
               </button>
             )
           )}
-          {/* Message button — only for non-imported listings */}
-          {property.host.email && !property.host.email.endsWith("@imported.betatenant.local") && (
-            <button
-              onClick={() => requireAuth(() => router.push("/messages"))}
-              className="flex-1 py-3.5 rounded-full bg-bt-primary text-white font-bold text-sm flex items-center justify-center gap-2"
-            >
-              <Mail className="w-5 h-5" />
-              Message
-            </button>
-          )}
+          {/* Save / Share / Report icon buttons */}
+          <button
+            onClick={() => setLiked(toggleFavorite(property._id))}
+            className="w-10 h-10 rounded-full border border-neutral-200 flex items-center justify-center shrink-0"
+            aria-label={liked ? "Remove from saved" : "Save listing"}
+          >
+            <Heart className={cn("w-4 h-4", liked ? "fill-red-500 text-red-500" : "text-neutral-600")} />
+          </button>
+          <button
+            onClick={async () => {
+              try {
+                await navigator.share({ title: property.title, url: window.location.href });
+              } catch {
+                await navigator.clipboard.writeText(window.location.href).catch(() => {});
+              }
+            }}
+            className="w-10 h-10 rounded-full border border-neutral-200 flex items-center justify-center shrink-0"
+            aria-label="Share"
+          >
+            <Share2 className="w-4 h-4 text-neutral-600" />
+          </button>
+          <button
+            onClick={() => router.push(`/property/report?id=${id}`)}
+            className="w-10 h-10 rounded-full border border-neutral-200 flex items-center justify-center shrink-0"
+            aria-label="Report listing"
+          >
+            <Flag className="w-4 h-4 text-neutral-600" />
+          </button>
           </>)}
         </div>
+      </div>
+
+      {/* Desktop back button bar */}
+      <div className="hidden md:block max-w-[1360px] mx-auto px-5 lg:px-10 pt-4 pb-0">
+        <Link
+          href="/properties"
+          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-neutral-200 bg-white text-sm font-medium text-neutral-600 hover:bg-neutral-50 hover:border-neutral-300 transition-all shadow-sm"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to results
+        </Link>
       </div>
 
       {/* Desktop gallery */}
@@ -663,7 +710,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
 
             {/* Quick stats — backend only has bathroomCount, no toiletCount */}
             <div className="flex flex-wrap items-center gap-4 sm:gap-6 p-4 sm:p-5 rounded-2xl bg-bt-surface border border-neutral-100 mb-6">
-              <StatBlock icon={Bed} value={String(property.bedrooms)} label={property.bedrooms === 1 ? "Bedroom" : "Bedrooms"} />
+              <StatBlock icon={BedDouble} value={String(property.bedrooms)} label={property.bedrooms === 1 ? "Bedroom" : "Bedrooms"} />
               <div className="hidden sm:block w-px h-9 bg-neutral-200" />
               <StatBlock icon={Bath} value={String(property.bathrooms)} label={property.bathrooms === 1 ? "Bathroom" : "Bathrooms"} />
               {!!property.rating && (
@@ -713,7 +760,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
                           const iconSrc = AMENITY_ICONS[directKey] || Object.entries(AMENITY_ICONS).find(([k]) => amenity.toLowerCase().replace(/\s/g, "").includes(k.toLowerCase()))?.[1];
                           return (
                             <div key={amenity} className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-neutral-50 border border-neutral-100">
-                              {iconSrc ? <Image src={iconSrc} alt="" width={18} height={18} className="w-[18px] h-[18px] object-contain shrink-0" /> : <Check className="w-3.5 h-3.5 text-bt-success shrink-0" />}
+                              {iconSrc ? <Image src={iconSrc} alt="" width={18} height={18} className="w-[18px] h-[18px] object-contain shrink-0" /> : <Sparkles className="w-3.5 h-3.5 text-neutral-400 shrink-0" />}
                               <span className="text-sm text-neutral-700">{amenity}</span>
                             </div>
                           );
@@ -754,16 +801,17 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
                 <div id="tab-rules" className="p-6">
                   <h2 className="text-base font-bold text-neutral-900 mb-4">House Rules</h2>
                   {property.houseRules.length > 0 ? (
-                    <ul className="space-y-3">
-                      {property.houseRules.map((rule: string) => (
-                        <li key={rule} className="flex items-start gap-3 text-sm text-neutral-600">
-                          <div className="w-5 h-5 rounded-full bg-neutral-100 flex items-center justify-center mt-0.5 shrink-0">
-                            <div className="w-1.5 h-1.5 rounded-full bg-neutral-400" />
+                    <div className="flex flex-wrap gap-2">
+                      {property.houseRules.map((rule: string) => {
+                        const RuleIcon = getRuleIcon(rule);
+                        return (
+                          <div key={rule} className="flex items-center gap-2 px-3 py-2 rounded-full border border-neutral-200 bg-neutral-50 text-sm text-neutral-700">
+                            <RuleIcon className="w-4 h-4 text-neutral-500 shrink-0" />
+                            {rule}
                           </div>
-                          {rule}
-                        </li>
-                      ))}
-                    </ul>
+                        );
+                      })}
+                    </div>
                   ) : (
                     <p className="text-sm text-neutral-500">No specific house rules listed.</p>
                   )}
@@ -978,6 +1026,42 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
                     )
                   )}
                 </div>
+
+                {/* Save / Share / Report — small pill row */}
+                {!isOwner && (
+                  <div className="flex items-center gap-2 pt-3 mt-1 border-t border-neutral-100">
+                    <button
+                      onClick={() => setLiked(toggleFavorite(property._id))}
+                      className="flex-1 flex items-center justify-center gap-1.5 border border-neutral-200 rounded-full px-3 py-2 text-xs text-neutral-600 hover:bg-neutral-50 transition-colors"
+                      aria-label="Save listing"
+                    >
+                      <Heart className={cn("w-3.5 h-3.5", liked ? "fill-red-500 text-red-500" : "")} />
+                      Save
+                    </button>
+                    <button
+                      onClick={async () => {
+                        try {
+                          await navigator.share({ title: property.title, url: window.location.href });
+                        } catch {
+                          await navigator.clipboard.writeText(window.location.href).catch(() => {});
+                        }
+                      }}
+                      className="flex-1 flex items-center justify-center gap-1.5 border border-neutral-200 rounded-full px-3 py-2 text-xs text-neutral-600 hover:bg-neutral-50 transition-colors"
+                      aria-label="Share"
+                    >
+                      <Share2 className="w-3.5 h-3.5" />
+                      Share
+                    </button>
+                    <button
+                      onClick={() => router.push(`/property/report?id=${id}`)}
+                      className="flex-1 flex items-center justify-center gap-1.5 border border-neutral-200 rounded-full px-3 py-2 text-xs text-neutral-600 hover:bg-neutral-50 transition-colors"
+                      aria-label="Report listing"
+                    >
+                      <Flag className="w-3.5 h-3.5" />
+                      Report
+                    </button>
+                  </div>
+                )}
               </motion.div>
 
               <div className="p-4 rounded-xl bg-bt-success/5 border border-bt-success/15 flex items-start gap-3">

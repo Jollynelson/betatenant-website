@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { Heart, MapPin, Bed, Bath, BadgeCheck } from "lucide-react";
+import { Heart, MapPin, BedDouble, Bath, BadgeCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { isFavorited, toggleFavorite } from "@/lib/favorites";
 import type { Property } from "@/types";
@@ -68,9 +68,11 @@ export function PropertyCard({ property, variant = "default", onRemove }: Proper
               &#8358;{property.price.toLocaleString()}
               <span className="text-xs font-normal text-neutral-400 ml-1">/yr</span>
             </p>
-            <p className="text-[12px] text-neutral-500 mt-0.5">
-              {property.bedrooms} bd · {property.bathrooms} ba · {typeLabel}
-            </p>
+            <div className="flex items-center gap-2 mt-0.5 text-[12px] text-neutral-500 flex-wrap">
+              <span className="flex items-center gap-1"><BedDouble className="w-3 h-3 text-neutral-400" />{property.bedrooms} beds</span>
+              {property.bathrooms > 0 && <span className="flex items-center gap-1"><Bath className="w-3 h-3 text-neutral-400" />{property.bathrooms} baths</span>}
+              <span>{typeLabel}</span>
+            </div>
             <p className="text-[12px] text-neutral-400 truncate mt-0.5">
               {property.address ? `${property.address}, ` : ""}{property.lga}, {property.state}
             </p>
@@ -183,13 +185,17 @@ export function PropertyCard({ property, variant = "default", onRemove }: Proper
           </p>
 
           {/* Beds · Baths · Type — compact inline row */}
-          <p className="text-[12.5px] text-neutral-600 mt-1.5 font-medium">
-            {property.bedrooms} bds
-            <span className="text-neutral-300 mx-1.5">|</span>
-            {property.bathrooms} ba
-            <span className="text-neutral-300 mx-1.5">|</span>
-            {typeLabel}
-          </p>
+          <div className="flex items-center gap-3 mt-1.5 flex-wrap">
+            <span className="flex items-center gap-1 text-[12.5px] text-neutral-600 font-medium">
+              <BedDouble className="w-3.5 h-3.5 text-neutral-400" />{property.bedrooms} beds
+            </span>
+            {property.bathrooms > 0 && (
+              <span className="flex items-center gap-1 text-[12.5px] text-neutral-600 font-medium">
+                <Bath className="w-3.5 h-3.5 text-neutral-400" />{property.bathrooms} baths
+              </span>
+            )}
+            <span className="text-[12.5px] text-neutral-600 font-medium">{typeLabel}</span>
+          </div>
 
           {/* Address */}
           <p className="text-[12px] text-neutral-500 mt-1 truncate">
