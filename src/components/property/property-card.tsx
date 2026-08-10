@@ -6,7 +6,8 @@ import Image from "next/image";
 import { Heart, BedDouble, Bath, BadgeCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { isFavorited, toggleFavorite } from "@/lib/favorites";
-import { cdnThumb } from "@/lib/api";
+import { cdnThumb, propertyApi } from "@/lib/api";
+import { queryClient } from "@/components/providers";
 import type { Property } from "@/types";
 
 const APPT_LABELS: Record<string, string> = {
@@ -47,11 +48,22 @@ export function PropertyCard({ property, variant = "default", onRemove }: Proper
   const agentName = `${property.host.firstName} ${property.host.lastName}`.trim();
   const photos    = property.photos.length > 0 ? property.photos : ["/placeholder-property.jpg"];
 
+  // Prefetch property detail on hover/touch so it loads instantly when tapped
+  const prefetchProperty = () => {
+    queryClient.prefetchQuery({
+      queryKey: ["property", property._id],
+      queryFn: () => propertyApi.get(property._id),
+      staleTime: 1000 * 60 * 5,
+    });
+  };
+
   // ── Horizontal variant ────────────────────────────────────────────────────
   if (variant === "horizontal") {
     return (
       <Link
         href={`/property/${property._id}`}
+        onMouseEnter={prefetchProperty}
+        onTouchStart={prefetchProperty}
         className="flex gap-4 p-3.5 rounded-2xl bg-white border border-neutral-100 hover:border-neutral-200 hover:shadow-sm transition-all group"
       >
         <div className="relative w-[120px] h-[90px] rounded-xl overflow-hidden shrink-0 bg-neutral-100">
@@ -103,6 +115,8 @@ export function PropertyCard({ property, variant = "default", onRemove }: Proper
     <div className="w-full">
       <Link
         href={`/property/${property._id}`}
+        onMouseEnter={prefetchProperty}
+        onTouchStart={prefetchProperty}
         className="block rounded-2xl overflow-hidden bg-white border border-neutral-100 hover:border-neutral-200 hover:shadow-[0_4px_24px_rgba(0,0,0,0.08)] transition-all duration-200"
       >
         {/* ── Image area ── */}

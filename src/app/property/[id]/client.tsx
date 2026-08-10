@@ -98,7 +98,8 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
   const { data, isLoading } = useQuery({
     queryKey: ["property", id],
     queryFn: () => propertyApi.get(id),
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 60 * 10,  // 10min — back-navigation shows instantly from cache
+    gcTime:    1000 * 60 * 60,  // keep in cache 1hr
   });
 
   const property = data?.property;
@@ -220,12 +221,15 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
             className="absolute left-0 right-0 flex items-center justify-between px-4 z-10"
             style={{ top: "calc(env(safe-area-inset-top) + 0.75rem)" }}
           >
-            <Link
-              href="/properties"
+            <button
+              onClick={() => {
+                const last = sessionStorage.getItem("BT_LAST_SEARCH") || localStorage.getItem("BT_LAST_SEARCH");
+                if (last) { router.push(`/properties${last}`); } else { router.back(); }
+              }}
               className="w-10 h-10 rounded-full bg-black/30 backdrop-blur-md flex items-center justify-center"
             >
               <ArrowLeft className="w-5 h-5 text-white" />
-            </Link>
+            </button>
             <div className="flex items-center gap-2">
               <button
                 onClick={async () => {
@@ -568,13 +572,16 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
 
       {/* Desktop back button bar */}
       <div className="hidden md:block max-w-[1360px] mx-auto px-5 lg:px-10 pt-4 pb-0">
-        <Link
-          href="/properties"
+        <button
+          onClick={() => {
+            const last = sessionStorage.getItem("BT_LAST_SEARCH") || localStorage.getItem("BT_LAST_SEARCH");
+            if (last) { router.push(`/properties${last}`); } else { router.back(); }
+          }}
           className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-neutral-200 bg-white text-sm font-medium text-neutral-600 hover:bg-neutral-50 hover:border-neutral-300 transition-all shadow-sm"
         >
           <ArrowLeft className="w-4 h-4" />
           Back to results
-        </Link>
+        </button>
       </div>
 
       {/* Desktop gallery */}
@@ -847,7 +854,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
 
               {/* Owner management card */}
               {isOwner && (
-                <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+                <div
                   className="p-5 rounded-2xl bg-white border border-neutral-200 shadow-[0_2px_16px_rgba(0,0,0,0.05)] space-y-2.5">
                   <div className="flex items-center justify-between mb-1">
                     <p className="text-xs font-semibold text-neutral-400 uppercase tracking-widest">Your Listing</p>
@@ -887,12 +894,10 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
                     {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
                     Delete Listing
                   </button>
-                </motion.div>
+                </div>
               )}
 
-              <motion.div
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
+              <div
                 className="p-6 rounded-2xl bg-white border border-neutral-200 shadow-[0_2px_16px_rgba(0,0,0,0.05)]"
               >
                 <p className="text-xs font-semibold text-neutral-400 uppercase tracking-widest mb-4">
@@ -1082,7 +1087,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
                     </button>
                   </div>
                 )}
-              </motion.div>
+              </div>
 
               <div className="p-4 rounded-xl bg-bt-success/5 border border-bt-success/15 flex items-start gap-3">
                 <Shield className="w-5 h-5 text-bt-success shrink-0 mt-0.5" />
