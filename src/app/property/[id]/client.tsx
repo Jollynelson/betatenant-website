@@ -18,7 +18,7 @@ import { BoostModal } from "@/components/boost-modal";
 import { cn } from "@/lib/utils";
 import { isFavorited, toggleFavorite } from "@/lib/favorites";
 import { formatPriceFullNumber, AMENITY_ICONS, amenitySlugToKey } from "@/lib/constants";
-import { propertyApi, api } from "@/lib/api";
+import { propertyApi, api, cdnImg } from "@/lib/api";
 import { useAuthStore } from "@/lib/auth-store";
 import toast from "react-hot-toast";
 import { PropertyCard } from "@/components/property/property-card";
@@ -174,30 +174,40 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
         <div
           className="relative w-full bg-neutral-900"
           style={{ height: "62vh", minHeight: 320 }}
-          onTouchStart={(e) => { touchStartX.current = e.touches[0].clientX; }}
+          onTouchStart={(e) => {
+            touchStartX.current = e.touches[0].clientX;
+          }}
           onTouchEnd={(e) => {
             if (touchStartX.current === null) return;
             const dx = e.changedTouches[0].clientX - touchStartX.current;
-            if (Math.abs(dx) > 40) {
-              if (dx < 0) setCurrentImage((i) => (i < property.photos.length - 1 ? i + 1 : 0));
-              else setCurrentImage((i) => (i > 0 ? i - 1 : property.photos.length - 1));
-            }
             touchStartX.current = null;
+            if (Math.abs(dx) > 40) {
+              setCurrentImage(i =>
+                dx < 0
+                  ? (i < property.photos.length - 1 ? i + 1 : 0)
+                  : (i > 0 ? i - 1 : property.photos.length - 1)
+              );
+            }
           }}
         >
+          {/* Stack all photos — show active via opacity, avoids image re-fetch on swipe */}
+          {property.photos.slice(0, 8).map((src: string, i: number) => (
+            <Image
+              key={src}
+              src={cdnImg(src, 1080)}
+              alt={property.title}
+              fill
+              className={cn("object-cover transition-opacity duration-150",
+                i === currentImage ? "opacity-100" : "opacity-0")}
+              priority={i === 0}
+              loading={i === 0 ? "eager" : "lazy"}
+            />
+          ))}
           <button
             className="absolute inset-0 w-full h-full"
             onClick={() => openLightbox(currentImage)}
             aria-label="View full image"
-          >
-            <Image
-              src={property.photos[currentImage] || "/placeholder-property.jpg"}
-              alt={property.title}
-              fill
-              className="object-cover"
-              priority
-            />
-          </button>
+          />
 
           {/* Dark gradient at top for button legibility */}
           <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/50 to-transparent pointer-events-none" />
@@ -562,7 +572,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
             onClick={() => openLightbox(0)}
             aria-label="View photo 1"
           >
-            <Image src={property.photos[0] || "/placeholder-property.jpg"} alt={property.title} fill className="object-cover group-hover:scale-[1.02] transition-transform duration-500" sizes="(max-width: 768px) 100vw, 50vw" priority />
+            <Image src={cdnImg(property.photos[0] || "/placeholder-property.jpg", 1200)} alt={property.title} fill className="object-cover group-hover:scale-[1.02] transition-transform duration-500" sizes="(max-width: 768px) 100vw, 50vw" priority />
             {property.host?.isVerified && (
               <div className="absolute top-4 left-4 px-2.5 py-1 rounded-lg bg-bt-success text-white text-xs font-bold flex items-center gap-1.5 shadow-md">
                 <BadgeCheck className="w-3.5 h-3.5" /> Verified Listing
@@ -579,7 +589,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
               onClick={() => openLightbox(i + 1)}
               aria-label={`View photo ${i + 2}`}
             >
-              <Image src={photo} alt={`Photo ${i + 2}`} fill className="object-cover group-hover:scale-105 transition-transform duration-500" sizes="(max-width: 768px) 50vw, 25vw" />
+              <Image src={cdnImg(photo, 600)} alt={`Photo ${i + 2}`} fill className="object-cover group-hover:scale-105 transition-transform duration-500" sizes="(max-width: 768px) 50vw, 25vw" />
               {i === 3 && property.photos.length > 5 ? (
                 <div className="absolute inset-0 bg-black/50 flex items-center justify-center group-hover:bg-black/60 transition-colors">
                   <span className="text-white font-semibold text-sm">+{property.photos.length - 5} photos</span>

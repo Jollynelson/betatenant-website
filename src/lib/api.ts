@@ -2,6 +2,23 @@
 // In development: calls go through the Next.js rewrite (/api/bt → https://api.betatenant.com)
 // In production (Cloudflare Workers): calls go directly to the API (rewrites don't work in Workers)
 
+/**
+ * Inject Cloudinary auto-quality + auto-format + width transform into a URL.
+ * Converts: .../upload/v1/...  →  .../upload/q_auto,f_auto,w_800/v1/...
+ * No-ops on non-Cloudinary or already-transformed URLs.
+ * This cuts image payload from ~3MB to ~80-200KB on mobile.
+ */
+export function cdnImg(url: string, width = 800): string {
+  if (!url || !url.includes("res.cloudinary.com")) return url;
+  if (url.includes("/upload/q_auto") || url.includes("/upload/f_auto")) return url;
+  return url.replace("/upload/", `/upload/q_auto,f_auto,w_${width}/`);
+}
+
+/** Smaller thumbnail — for property cards (400px) */
+export function cdnThumb(url: string): string {
+  return cdnImg(url, 400);
+}
+
 const BASE =
   typeof window !== "undefined" && window.location.hostname !== "localhost"
     ? "https://api.betatenant.com"
@@ -66,7 +83,7 @@ export function mapProperty(raw: any) {
     price: raw.listingFee ?? 0,
     cautionFee: raw.cautionFee ?? 0,
     photos: Array.isArray(raw.photoURLs) && raw.photoURLs.length > 0
-      ? raw.photoURLs
+      ? raw.photoURLs.map((u: string, i: number) => i === 0 ? cdnImg(u, 900) : cdnImg(u, 800))
       : ["/placeholder-property.jpg"],
     videos: raw.videoURLs ?? [],
     amenities: Array.isArray(raw.amenities)

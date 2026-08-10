@@ -3,10 +3,10 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
-import { Heart, MapPin, BedDouble, Bath, BadgeCheck } from "lucide-react";
+import { Heart, BedDouble, Bath, BadgeCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { isFavorited, toggleFavorite } from "@/lib/favorites";
+import { cdnThumb } from "@/lib/api";
 import type { Property } from "@/types";
 
 const APPT_LABELS: Record<string, string> = {
@@ -26,10 +26,10 @@ interface PropertyCardProps {
 }
 
 export function PropertyCard({ property, variant = "default", onRemove }: PropertyCardProps) {
-  const [liked, setLiked] = useState(false);
+  const [liked, setLiked]   = useState(false);
   const [imgIdx, setImgIdx] = useState(0);
-  const router = useRouter();
-  const touchStartX = useRef<number | null>(null);
+  const touchStartX         = useRef<number | null>(null);
+  const touchStartY         = useRef<number | null>(null);
 
   useEffect(() => {
     setLiked(isFavorited(property._id));
@@ -43,16 +43,11 @@ export function PropertyCard({ property, variant = "default", onRemove }: Proper
     if (!nowLiked && onRemove) onRemove(property._id);
   };
 
-  const handleNavigate = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    if (!("startViewTransition" in document)) return;
-    e.preventDefault();
-    (document as any).startViewTransition(() => router.push(`/property/${property._id}`));
-  };
-
   const typeLabel = APPT_LABELS[property.apartmentType] || property.apartmentType;
   const agentName = `${property.host.firstName} ${property.host.lastName}`.trim();
+  const photos    = property.photos.length > 0 ? property.photos : ["/placeholder-property.jpg"];
 
-  // ── Horizontal variant (list view) ──────────────────────────────────────────
+  // ── Horizontal variant ────────────────────────────────────────────────────
   if (variant === "horizontal") {
     return (
       <Link
@@ -60,7 +55,14 @@ export function PropertyCard({ property, variant = "default", onRemove }: Proper
         className="flex gap-4 p-3.5 rounded-2xl bg-white border border-neutral-100 hover:border-neutral-200 hover:shadow-sm transition-all group"
       >
         <div className="relative w-[120px] h-[90px] rounded-xl overflow-hidden shrink-0 bg-neutral-100">
-          <Image src={property.photos[0] || "/placeholder-property.jpg"} alt={property.title} fill className="object-cover group-hover:scale-105 transition-transform duration-500" />
+          <Image
+            src={cdnThumb(photos[0])}
+            alt={property.title}
+            fill
+            className="object-cover"
+            sizes="120px"
+            loading="lazy"
+          />
         </div>
         <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
           <div>
@@ -83,69 +85,74 @@ export function PropertyCard({ property, variant = "default", onRemove }: Proper
     );
   }
 
-  // ── Default grid card ────────────────────────────────────────────────────────
+  // ── Default grid card ─────────────────────────────────────────────────────
   return (
     <div className="w-full">
       <Link
         href={`/property/${property._id}`}
-        onClick={handleNavigate}
         className="block rounded-2xl overflow-hidden bg-white border border-neutral-100 hover:border-neutral-200 hover:shadow-[0_4px_24px_rgba(0,0,0,0.08)] transition-all duration-200"
-        style={{ viewTransitionName: `card-${property._id}` } as React.CSSProperties}
       >
-        {/* ── Image ── */}
+        {/* ── Image area ── */}
         <div
           className="relative w-full aspect-[4/3] overflow-hidden bg-neutral-100"
-          onTouchStart={(e) => { touchStartX.current = e.touches[0].clientX; }}
+          onTouchStart={(e) => {
+            touchStartX.current = e.touches[0].clientX;
+            touchStartY.current = e.touches[0].clientY;
+          }}
           onTouchEnd={(e) => {
             if (touchStartX.current === null) return;
             const dx = e.changedTouches[0].clientX - touchStartX.current;
-            if (Math.abs(dx) > 40) {
-              e.preventDefault();
-              if (dx < 0) setImgIdx((i) => (i < property.photos.length - 1 ? i + 1 : 0));
-              else setImgIdx((i) => (i > 0 ? i - 1 : property.photos.length - 1));
-            }
+            const dy = e.changedTouches[0].clientY - (touchStartY.current ?? 0);
             touchStartX.current = null;
+            touchStartY.current = null;
+            // Only swipe if horizontal gesture (not a scroll)
+            if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+              e.preventDefault();
+              setImgIdx(i =>
+                dx < 0
+                  ? (i < photos.length - 1 ? i + 1 : 0)
+                  : (i > 0 ? i - 1 : photos.length - 1)
+              );
+            }
           }}
         >
-          <Image
-            src={property.photos[imgIdx] || "/placeholder-property.jpg"}
-            alt={property.title}
-            fill
-            className="object-cover"
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-            style={{ viewTransitionName: `card-img-${property._id}` } as React.CSSProperties}
-          />
+          {/* Render all images stacked; only show current via opacity — avoids re-fetch */}
+          {photos.slice(0, 5).map((src, i) => (
+            <Image
+              key={src}
+              src={cdnThumb(src)}
+              alt={property.title}
+              fill
+              className={cn(
+                "object-cover transition-opacity duration-150",
+                i === imgIdx ? "opacity-100" : "opacity-0 pointer-events-none"
+              )}
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+              loading={i === 0 ? "eager" : "lazy"}
+              fetchPriority={i === 0 ? "high" : "low"}
+            />
+          ))}
 
-          {/* Top-left badge */}
+          {/* Badges */}
           {(property.host?.isVerified || property.promotionPackage || property.isPromoted) && (
             <div className="absolute top-2.5 left-2.5 flex gap-1 flex-wrap">
               {property.promotionPackage === "spotlight" && (
-                <span className="px-2 py-0.5 rounded-md bg-[#FF4500] text-white text-[10px] font-bold">
-                  🔥 Spotlight
-                </span>
+                <span className="px-2 py-0.5 rounded-md bg-[#FF4500] text-white text-[10px] font-bold">🔥 Spotlight</span>
               )}
               {property.promotionPackage === "featured" && (
-                <span className="px-2 py-0.5 rounded-md bg-[#FB6514] text-white text-[10px] font-bold">
-                  ⭐ Featured
-                </span>
+                <span className="px-2 py-0.5 rounded-md bg-[#FB6514] text-white text-[10px] font-bold">⭐ Featured</span>
               )}
               {property.promotionPackage === "boost" && (
-                <span className="px-2 py-0.5 rounded-md bg-bt-primary text-white text-[10px] font-bold">
-                  🚀 Boosted
-                </span>
+                <span className="px-2 py-0.5 rounded-md bg-bt-primary text-white text-[10px] font-bold">🚀 Boosted</span>
               )}
               {!property.promotionPackage && property.isPromoted && (
-                <span className="px-2 py-0.5 rounded-md bg-[#FB6514] text-white text-[10px] font-bold">
-                  Featured
-                </span>
+                <span className="px-2 py-0.5 rounded-md bg-[#FB6514] text-white text-[10px] font-bold">Featured</span>
               )}
-              {/* Identity verified — blue checkmark (separate from premium) */}
               {property.host?.isVerified && (
                 <span className="px-2 py-0.5 rounded-md bg-blue-600 text-white text-[10px] font-bold flex items-center gap-1">
                   <BadgeCheck className="w-2.5 h-2.5" /> ID Verified
                 </span>
               )}
-              {/* Premium subscriber — gold badge */}
               {property.host?.isPremium && !property.host?.isVerified && (
                 <span className="px-2 py-0.5 rounded-md bg-amber-500 text-white text-[10px] font-bold flex items-center gap-1">
                   ★ Premium
@@ -154,7 +161,7 @@ export function PropertyCard({ property, variant = "default", onRemove }: Proper
             </div>
           )}
 
-          {/* Heart — top right */}
+          {/* Heart */}
           <button
             onClick={handleHeart}
             className="absolute top-2.5 right-2.5 w-8 h-8 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center shadow-sm active:scale-90 transition-transform"
@@ -163,14 +170,12 @@ export function PropertyCard({ property, variant = "default", onRemove }: Proper
             <Heart className={cn("w-[15px] h-[15px]", liked ? "fill-red-500 text-red-500" : "text-neutral-500")} />
           </button>
 
-          {/* Dot indicators — only when multiple photos */}
-          {property.photos.length > 1 && (
+          {/* Dot indicators */}
+          {photos.length > 1 && (
             <div className="absolute bottom-2.5 left-1/2 -translate-x-1/2 flex gap-1">
-              {property.photos.slice(0, 5).map((_, i) => (
-                <span
-                  key={i}
-                  className={cn("rounded-full transition-all duration-200", i === imgIdx ? "bg-white w-4 h-1.5" : "bg-white/50 w-1.5 h-1.5")}
-                />
+              {photos.slice(0, 5).map((_, i) => (
+                <span key={i} className={cn("rounded-full transition-all duration-150",
+                  i === imgIdx ? "bg-white w-4 h-1.5" : "bg-white/50 w-1.5 h-1.5")} />
               ))}
             </div>
           )}
@@ -178,13 +183,11 @@ export function PropertyCard({ property, variant = "default", onRemove }: Proper
 
         {/* ── Content ── */}
         <div className="p-3.5">
-          {/* Price — large and bold, primary action */}
           <p className="text-[18px] font-bold text-neutral-900 leading-none">
             &#8358;{property.price.toLocaleString()}
             <span className="text-[12px] font-normal text-neutral-400 ml-1">/yr</span>
           </p>
 
-          {/* Beds · Baths · Type — compact inline row */}
           <div className="flex items-center gap-3 mt-1.5 flex-wrap">
             <span className="flex items-center gap-1 text-[12.5px] text-neutral-600 font-medium">
               <BedDouble className="w-3.5 h-3.5 text-neutral-400" />{property.bedrooms} beds
@@ -197,12 +200,10 @@ export function PropertyCard({ property, variant = "default", onRemove }: Proper
             <span className="text-[12.5px] text-neutral-600 font-medium">{typeLabel}</span>
           </div>
 
-          {/* Address */}
           <p className="text-[12px] text-neutral-500 mt-1 truncate">
             {property.address ? `${property.address}, ` : ""}{property.lga}, {property.state}
           </p>
 
-          {/* Agent name — gold if premium, verified check if identity verified */}
           <p className={cn(
             "text-[10.5px] uppercase tracking-wide font-medium mt-2 truncate flex items-center gap-1",
             property.host?.isPremium ? "text-amber-600 font-semibold" : "text-neutral-400"
