@@ -429,7 +429,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
               </div>
             )}
 
-            {/* Agent card */}
+            {/* Agent card — mobile */}
             <div className="border-t border-neutral-100 pt-5 pb-2">
               <div className="flex items-center gap-3">
                 {property.host.avatar ? (
@@ -439,15 +439,27 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
                     {property.host.firstName?.[0]}{property.host.lastName?.[0]}
                   </div>
                 )}
-                <div>
+                <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-neutral-900 capitalize">{property.host.firstName} {property.host.lastName}</p>
                   <p className="text-xs text-neutral-500 capitalize">{property.host.role}</p>
                 </div>
                 {property.host.isVerified && (
-                  <BadgeCheck className="w-4 h-4 text-bt-success ml-auto shrink-0" />
+                  <BadgeCheck className="w-4 h-4 text-bt-success shrink-0" />
                 )}
               </div>
             </div>
+
+            {/* Similar listings — mobile */}
+            {similarProperties.length > 0 && (
+              <div className="border-t border-neutral-100 pt-5 pb-4">
+                <h3 className="text-sm font-bold text-neutral-900 mb-3">Similar Properties</h3>
+                <div className="space-y-3">
+                  {similarProperties.slice(0, 3).map((p: any) => (
+                    <PropertyCard key={p._id} property={p} variant="horizontal" />
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -527,34 +539,6 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
               </button>
             )
           )}
-          {/* Save / Share / Report icon buttons */}
-          <button
-            onClick={() => setLiked(toggleFavorite(property._id))}
-            className="w-10 h-10 rounded-full border border-neutral-200 flex items-center justify-center shrink-0"
-            aria-label={liked ? "Remove from saved" : "Save listing"}
-          >
-            <Heart className={cn("w-4 h-4", liked ? "fill-red-500 text-red-500" : "text-neutral-600")} />
-          </button>
-          <button
-            onClick={async () => {
-              try {
-                await navigator.share({ title: property.title, url: window.location.href });
-              } catch {
-                await navigator.clipboard.writeText(window.location.href).catch(() => {});
-              }
-            }}
-            className="w-10 h-10 rounded-full border border-neutral-200 flex items-center justify-center shrink-0"
-            aria-label="Share"
-          >
-            <Share2 className="w-4 h-4 text-neutral-600" />
-          </button>
-          <button
-            onClick={() => router.push(`/property/report?id=${id}`)}
-            className="w-10 h-10 rounded-full border border-neutral-200 flex items-center justify-center shrink-0"
-            aria-label="Report listing"
-          >
-            <Flag className="w-4 h-4 text-neutral-600" />
-          </button>
           </>)}
         </div>
       </div>
