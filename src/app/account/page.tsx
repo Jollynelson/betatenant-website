@@ -55,6 +55,7 @@ function AccountContent() {
   const tenantNav = [
     { icon: Heart,         label: "Saved Properties",  href: "/saved",                       desc: "Properties you saved" },
     { icon: Bell,          label: "Listing Alerts",    href: "/alerts",                      desc: "Get notified of new listings" },
+    { icon: Bell,          label: "Notifications",     href: "/notifications",               desc: "Reviews, messages & updates" },
     { icon: MessageCircle, label: "Messages",          href: "/messages",                    desc: "Chat with agents" },
     { icon: Receipt,       label: "Payment History",   href: "/account/payments",            desc: "Your transactions & receipts" },
     { icon: Repeat2,       label: "Tenant Switch",     href: "/tenant-switch",               desc: "Swap apartments" },
@@ -66,6 +67,7 @@ function AccountContent() {
     { icon: Home,            label: "My Listings",     href: "/account/properties", desc: "Manage your listings" },
     { icon: Plus,            label: "Add Listing",     href: "/host/new",           desc: "List a new property" },
     { icon: Zap,             label: "Boost Listings",  href: "/host/boost",         desc: "Promote your listings" },
+    { icon: Bell,            label: "Notifications",   href: "/notifications",      desc: "Reviews, messages & updates" },
     { icon: MessageCircle,   label: "Messages",        href: "/messages",           desc: "Chat with tenants" },
     { icon: Receipt,         label: "Payment History", href: "/account/payments",   desc: "Your transactions & receipts" },
   ];

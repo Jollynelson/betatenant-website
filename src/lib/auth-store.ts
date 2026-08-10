@@ -43,9 +43,22 @@ function safeRemove(key: string) {
   try { sessionStorage.removeItem(key); } catch {}
 }
 
+// Read from storage synchronously at module load — before any component renders.
+// This guarantees AuthGuard always sees the correct token on hard refresh.
+function readStoredAuth(): { token: string | null; user: AuthUser | null } {
+  if (typeof window === "undefined") return { token: null, user: null };
+  const token   = safeGet("BT_TOKEN");
+  const userRaw = safeGet("BT_USER");
+  if (!token || !userRaw) return { token: null, user: null };
+  try { return { token, user: JSON.parse(userRaw) }; }
+  catch { safeRemove("BT_TOKEN"); safeRemove("BT_USER"); return { token: null, user: null }; }
+}
+
+const initial = readStoredAuth();
+
 export const useAuthStore = create<AuthState>((set, get) => ({
-  token: null,
-  user: null,
+  token: initial.token,
+  user:  initial.user,
 
   setAuth: (token, user) => {
     if (typeof window !== "undefined") {
@@ -74,17 +87,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   hydrate: () => {
-    if (typeof window === "undefined") return;
-    const token   = safeGet("BT_TOKEN");
-    const userRaw = safeGet("BT_USER");
-    if (token && userRaw) {
-      try {
-        set({ token, user: JSON.parse(userRaw) });
-      } catch {
-        // malformed — clear it
-        safeRemove("BT_TOKEN");
-        safeRemove("BT_USER");
-      }
-    }
+    // Already hydrated synchronously at module load — this is a no-op kept for
+    // backwards compatibility with any callers that still invoke it.
+    if (get().token) return;
+    const { token, user } = readStoredAuth();
+    if (token) set({ token, user });
   },
 }));

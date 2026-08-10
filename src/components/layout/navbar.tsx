@@ -22,11 +22,12 @@ interface NavItem {
 }
 
 const TENANT_ITEMS: NavItem[] = [
-  { href: "/account",       icon: User,          label: "My Profile" },
-  { href: "/saved",         icon: Heart,         label: "Saved Properties" },
-  { href: "/tenant-switch", icon: Repeat2,       label: "Tenant Switch" },
-  { href: "/messages",      icon: MessageCircle, label: "Messages" },
-  { href: "/agents",        icon: Shield,        label: "Report Agent" },
+  { href: "/account",        icon: User,          label: "My Profile" },
+  { href: "/saved",          icon: Heart,         label: "Saved Properties" },
+  { href: "/tenant-switch",  icon: Repeat2,       label: "Tenant Switch" },
+  { href: "/notifications",  icon: Bell,          label: "Notifications" },
+  { href: "/messages",       icon: MessageCircle, label: "Messages" },
+  { href: "/agents",         icon: Shield,        label: "Report Agent" },
 ];
 
 const AGENT_LANDLORD_ITEMS: NavItem[] = [
@@ -34,6 +35,7 @@ const AGENT_LANDLORD_ITEMS: NavItem[] = [
   { href: "/account/properties", icon: Home,            label: "My Listings" },
   { href: "/host/new",           icon: Plus,            label: "Add Listing", highlight: true },
   { href: "/host",               icon: LayoutDashboard, label: "Dashboard" },
+  { href: "/notifications",      icon: Bell,            label: "Notifications" },
   { href: "/messages",           icon: MessageCircle,   label: "Messages" },
 ];
 
@@ -81,6 +83,8 @@ function useNotifications(user: AuthUser) {
         }, 0);
         setCount(notifications.length);
         setItems(notifications);
+        // Persist count so mobile nav bell can read it
+        try { localStorage.setItem("BT_NOTIF_COUNT", String(notifications.length)); } catch {}
         // Update OS app badge (home screen icon badge)
         setAppBadge(total);
       }
@@ -278,6 +282,7 @@ export function Navbar() {
                             href={item.href}
                             icon={item.icon}
                             highlight={item.highlight}
+                            badge={item.href === "/notifications" && notifCount > 0 ? notifCount : undefined}
                             onClick={() => setDropdownOpen(false)}
                           >
                             {item.label}
@@ -311,18 +316,30 @@ export function Navbar() {
             )}
           </div>
 
-          {/* Mobile toggle */}
-          <button
-            className="lg:hidden w-10 h-10 flex items-center justify-center rounded-xl hover:bg-neutral-50 transition-colors relative"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            aria-label="Menu"
-          >
-            {mobileMenuOpen ? <X className="w-5 h-5 text-neutral-700" /> : <Menu className="w-5 h-5 text-neutral-700" />}
-            {/* Mobile bell dot */}
-            {user && notifCount > 0 && !mobileMenuOpen && (
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-bt-secondary border-2 border-white" />
+          {/* Mobile: bell icon (only when logged in) + hamburger */}
+          <div className="lg:hidden flex items-center gap-1">
+            {user && (
+              <Link
+                href="/notifications"
+                className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-neutral-50 transition-colors relative"
+                aria-label="Notifications"
+              >
+                <Bell className="w-5 h-5 text-neutral-700" />
+                {notifCount > 0 && (
+                  <span className="absolute top-1.5 right-1.5 min-w-[16px] h-4 px-0.5 rounded-full bg-bt-secondary text-white text-[9px] font-bold flex items-center justify-center border-2 border-white leading-none">
+                    {notifCount > 9 ? "9+" : notifCount}
+                  </span>
+                )}
+              </Link>
             )}
-          </button>
+            <button
+              className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-neutral-50 transition-colors"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-label="Menu"
+            >
+              {mobileMenuOpen ? <X className="w-5 h-5 text-neutral-700" /> : <Menu className="w-5 h-5 text-neutral-700" />}
+            </button>
+          </div>
         </div>
       </nav>
 
@@ -452,12 +469,13 @@ export function Navbar() {
   );
 }
 
-function DropdownItem({ href, icon: Icon, onClick, children, highlight }: {
+function DropdownItem({ href, icon: Icon, onClick, children, highlight, badge }: {
   href: string;
   icon: React.ComponentType<{ className?: string }>;
   onClick: () => void;
   children: React.ReactNode;
   highlight?: boolean;
+  badge?: number;
 }) {
   return (
     <Link
@@ -469,7 +487,12 @@ function DropdownItem({ href, icon: Icon, onClick, children, highlight }: {
       )}
     >
       <Icon className={cn("w-4 h-4", highlight ? "text-bt-primary" : "text-neutral-400")} />
-      {children}
+      <span className="flex-1">{children}</span>
+      {badge != null && badge > 0 && (
+        <span className="min-w-[18px] h-[18px] px-1 rounded-full bg-bt-secondary text-white text-[10px] font-bold flex items-center justify-center">
+          {badge > 9 ? "9+" : badge}
+        </span>
+      )}
     </Link>
   );
 }
