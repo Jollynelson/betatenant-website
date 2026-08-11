@@ -1,0 +1,38 @@
+User-agent: *
+Allow: /
+
+# Block private/auth routes
+Disallow: /account/
+Disallow: /messages/
+Disallow: /host/
+Disallow: /auth/
+Disallow: /notifications/
+Disallow: /saved/
+Disallow: /alerts/
+Disallow: /payment/
+Disallow: /payment-success/
+Disallow: /onboarding/
+
+# Allow important public pages
+Allow: /properties
+Allow: /property/
+Allow: /agents/
+Allow: /about
+Allow: /how-it-works
+Allow: /renting-guide
+Allow: /in/
+
+Sitemap: https://betatenant.com/sitemap.xml
+
+# Welcome AI crawlers (GEO)
+User-agent: GPTBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Googlebot
+Allow: /

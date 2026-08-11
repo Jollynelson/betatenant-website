@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import Script from "next/script";
 import "./globals.css";
 import { Providers } from "@/components/providers";
 import { SWRegister } from "@/components/sw-register";
@@ -16,10 +17,20 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "Beta Tenant — Find Your Perfect Rental Home in Nigeria",
+  title: {
+    default: "BetaTenant — Find Verified Rental Homes in Nigeria",
+    template: "%s | BetaTenant",
+  },
   description:
-    "Nigeria's most trusted property rental marketplace. Find verified rental apartments with transparent pricing and vetted agents.",
-  keywords: ["rent apartment Nigeria", "Lagos rental", "apartment hunting", "verified agents", "Beta Tenant"],
+    "Find verified rental apartments, flats, and houses across Nigeria. Browse self-contains, 1–4 bedroom flats for rent in Lagos, Abuja, Port Harcourt, Uyo and more. Verified agents, real reviews.",
+  keywords: [
+    "rent apartment Nigeria", "flats for rent Lagos", "houses to let Abuja",
+    "self contain for rent", "apartment hunting Nigeria", "verified rental agents Nigeria",
+    "2 bedroom flat Lagos", "house for rent Port Harcourt", "flat to let Uyo",
+    "BetaTenant", "rental marketplace Nigeria", "verified property agents",
+  ],
+  metadataBase: new URL("https://betatenant.com"),
+  alternates: { canonical: "https://betatenant.com" },
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
@@ -35,10 +46,24 @@ export const metadata: Metadata = {
     shortcut: "/icons/icon-192.png",
   },
   openGraph: {
-    title: "Beta Tenant — Find Your Perfect Rental Home in Nigeria",
-    description: "Nigeria's most trusted property rental marketplace.",
+    title: "BetaTenant — Find Verified Rental Homes in Nigeria",
+    description: "Find verified rental apartments, flats and houses across Nigeria. Real reviews, verified agents, transparent pricing.",
     type: "website",
     locale: "en_NG",
+    url: "https://betatenant.com",
+    siteName: "BetaTenant",
+    images: [{ url: "https://betatenant.com/icons/icon-512.png", width: 512, height: 512, alt: "BetaTenant" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "BetaTenant — Find Verified Rental Homes in Nigeria",
+    description: "Find verified rental apartments and houses across Nigeria. Vetted agents, real reviews.",
+    images: ["https://betatenant.com/icons/icon-512.png"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true, "max-image-preview": "large", "max-snippet": -1 },
   },
   other: {
     "mobile-web-app-capable": "yes",
@@ -68,6 +93,59 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
       </head>
       <body className="min-h-full flex flex-col">
+        <Script
+          id="schema-org"
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@graph": [
+              {
+                "@type": ["Organization", "LocalBusiness"],
+                "@id": "https://betatenant.com/#organization",
+                "name": "BetaTenant",
+                "alternateName": "Beta Tenant",
+                "url": "https://betatenant.com",
+                "logo": "https://betatenant.com/icons/icon-512.png",
+                "description": "Nigeria's trusted rental marketplace connecting tenants with verified agents and landlords across Lagos, Abuja, Port Harcourt, Uyo and all 36 states.",
+                "foundingDate": "2023",
+                "areaServed": ["Nigeria", "Lagos", "Abuja", "Port Harcourt", "Uyo", "Ibadan", "Enugu", "Benin City", "Warri"],
+                "contactPoint": {
+                  "@type": "ContactPoint",
+                  "telephone": "+2348101026653",
+                  "contactType": "customer support",
+                  "availableLanguage": ["English", "Yoruba", "Igbo", "Hausa"],
+                  "areaServed": "NG",
+                },
+                "sameAs": [
+                  "https://wa.me/2348101026653",
+                ],
+                "knowsAbout": [
+                  "Property rental Nigeria",
+                  "Apartment listings Lagos",
+                  "Verified real estate agents Nigeria",
+                  "Self contain for rent Nigeria",
+                  "House to let Nigeria",
+                ],
+              },
+              {
+                "@type": "WebSite",
+                "@id": "https://betatenant.com/#website",
+                "url": "https://betatenant.com",
+                "name": "BetaTenant",
+                "description": "Find verified rental homes in Nigeria",
+                "publisher": { "@id": "https://betatenant.com/#organization" },
+                "potentialAction": {
+                  "@type": "SearchAction",
+                  "target": {
+                    "@type": "EntryPoint",
+                    "urlTemplate": "https://betatenant.com/properties?state={search_term_string}",
+                  },
+                  "query-input": "required name=search_term_string",
+                },
+              },
+            ],
+          })}}
+        />
         <Providers>
           {children}
         </Providers>
