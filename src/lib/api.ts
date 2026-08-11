@@ -2,40 +2,31 @@
 // In development: calls go through the Next.js rewrite (/api/bt → https://api.betatenant.com)
 // In production (Cloudflare Workers): calls go directly to the API (rewrites don't work in Workers)
 
-// Use the production domain for Cloudflare Image Transform proxying.
-// /cdn-cgi/image/ is served by Cloudflare on any proxied domain.
-const CF_SITE =
-  typeof window !== "undefined" && window.location.hostname !== "localhost"
-    ? `https://${window.location.hostname}`   // works on betatenant.com and new.betatenant.com
-    : "https://betatenant.com";
-
 /**
  * Route images through Cloudflare Image Transformations.
  *
- * Images are on AWS S3 (betatenant, eu-north-1) — now publicly readable.
+ * Images on AWS S3 (betatenant, eu-north-1) are routed through:
+ *   https://betatenant.com/cdn-cgi/image/width=N,quality=85,format=auto/{s3-url}
+ *
  * Cloudflare fetches the S3 original once, converts to WebP/AVIF, resizes,
- * caches at 300+ edge locations, and serves that to users.
+ * caches at edge. Activated: betatenant.com zone, S3 origin added.
  *
- * REQUIRED one-time setup in Cloudflare dashboard:
- *   Images → Transformations → Enable
- *   Add betatenant.s3.eu-north-1.amazonaws.com to allowed origins
- *
- * Also handles legacy Cloudinary URLs from imported listings.
- * No-ops on placeholders / relative paths / already-transformed URLs.
+ * Uses a hardcoded production domain — NOT window.location — so it works
+ * correctly during static generation (SSG), SSR, and client rendering.
  */
 export function cdnImg(url: string, width = 800): string {
   if (!url || url.startsWith("/") || url.startsWith("data:")) return url;
   if (url.includes("/cdn-cgi/image/")) return url;  // already transformed
 
-  // Legacy Cloudinary URLs — use Cloudinary's own transforms
+  // Legacy Cloudinary URLs — Cloudinary's own transforms
   if (url.includes("res.cloudinary.com")) {
     if (url.includes("/upload/q_auto") || url.includes("/upload/f_auto")) return url;
     return url.replace("/upload/", `/upload/q_auto,f_auto,w_${width}/`);
   }
 
-  // S3 + Cloudflare imagedelivery.net → Cloudflare Image Transformations
+  // S3 + imagedelivery.net → Cloudflare Image Transformations
   if (url.includes("amazonaws.com") || url.includes("imagedelivery.net")) {
-    return `${CF_SITE}/cdn-cgi/image/width=${width},quality=85,format=auto/${url}`;
+    return `https://betatenant.com/cdn-cgi/image/width=${width},quality=85,format=auto/${url}`;
   }
 
   return url;
