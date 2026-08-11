@@ -18,7 +18,7 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   title: {
-    default: "Beta Tenant — Find Verified Rental Homes in Nigeria",
+    default: "Beta Tenant — Rental Homes in Nigeria",
     template: "%s | Beta Tenant",
   },
   description:
@@ -46,7 +46,7 @@ export const metadata: Metadata = {
     shortcut: "/icons/icon-192.png",
   },
   openGraph: {
-    title: "Beta Tenant — Find Verified Rental Homes in Nigeria",
+    title: "Beta Tenant — Rental Homes in Nigeria",
     description: "Find verified rental apartments, flats and houses across Nigeria. Real reviews, verified agents, transparent pricing.",
     type: "website",
     locale: "en_NG",
@@ -56,7 +56,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Beta Tenant — Find Verified Rental Homes in Nigeria",
+    title: "Beta Tenant — Rental Homes in Nigeria",
     description: "Find verified rental apartments and houses across Nigeria. Vetted agents, real reviews.",
     images: ["https://betatenant.com/icons/icon-512.png"],
   },
