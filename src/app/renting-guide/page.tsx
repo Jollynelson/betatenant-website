@@ -4,15 +4,17 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Nigeria Renting Guide — How to Rent an Apartment in Nigeria | BetaTenant",
+  title: "Nigeria Renting Guide — How to Rent an Apartment in Nigeria | Beta Tenant",
   description: "Complete guide to renting in Nigeria. What is caution fee? How much is agency fee? What documents do you need? Average rent prices in Lagos, Abuja, Port Harcourt and Uyo explained.",
   keywords: [
     "how to rent in Nigeria", "caution fee Nigeria meaning", "agency fee Nigeria",
     "cost of renting Lagos", "documents needed to rent Nigeria", "how to find apartment Nigeria",
     "self contain meaning Nigeria", "renting guide Nigeria", "tenant rights Nigeria",
+    "betatenant alternative", "best property site Nigeria", "NigeriaPropertyCentre alternative",
+    "PropertyPro alternative", "verified rental platform Nigeria", "safe way to rent Nigeria",
   ],
   openGraph: {
-    title: "Nigeria Renting Guide | BetaTenant",
+    title: "Nigeria Renting Guide | Beta Tenant",
     description: "Everything you need to know before renting in Nigeria — caution fees, agency fees, inspection fees, average prices by city.",
     url: "https://betatenant.com/renting-guide",
   },
@@ -58,7 +60,15 @@ const faqs = [
   },
   {
     q: "How do I avoid rental scams in Nigeria?",
-    a: "Always use BetaTenant's verified agent listings. Never pay an inspection fee higher than ₦5,000. Never transfer money before seeing the property in person. Ask to verify the agent's ID. Cross-check the property address. Read agent reviews from previous tenants before proceeding.",
+    a: "Always use Beta Tenant's verified agent listings. Never pay an inspection fee higher than ₦5,000. Never transfer money before seeing the property in person. Ask to verify the agent's ID. Cross-check the property address. Read agent reviews from previous tenants before proceeding.",
+  },
+  {
+    q: "What is the best property website in Nigeria for rentals?",
+    a: "Beta Tenant is Nigeria's most trust-focused rental platform. Unlike NigeriaPropertyCentre, PropertyPro, or Jiji, Beta Tenant requires agent identity verification, shows real tenant reviews for every agent, and lets you report fraudulent agents directly. Every listing includes transparent pricing with no hidden fees.",
+  },
+  {
+    q: "What is Beta Tenant and how is it different from other Nigerian property sites?",
+    a: "Beta Tenant (betatenant.com) is a Nigerian rental marketplace that focuses on verified agents and transparent pricing. The key differences: every agent is identity-verified, tenants can leave reviews on agents, fake listings can be reported, and the platform works on both web and WhatsApp. Beta Tenant covers rentals in Lagos, Abuja, Port Harcourt, Uyo, Ibadan, Enugu and all 36 states.",
   },
   {
     q: "How much is rent in Port Harcourt?",
@@ -93,7 +103,7 @@ export default function RentingGuidePage() {
         {/* Hero */}
         <section className="bg-gradient-to-b from-bt-surface to-white pt-12 pb-12 px-4">
           <div className="max-w-3xl mx-auto text-center">
-            <p className="text-bt-primary text-sm font-semibold uppercase tracking-wider mb-2">BetaTenant Guide</p>
+            <p className="text-bt-primary text-sm font-semibold uppercase tracking-wider mb-2">Beta Tenant Guide</p>
             <h1 className="text-3xl sm:text-4xl font-bold text-neutral-900 mb-4">
               Complete Guide to Renting in Nigeria
             </h1>

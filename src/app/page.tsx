@@ -256,34 +256,61 @@ function ListingsSection() {
 }
 
 function LocationDiscovery() {
-  const locations = [
-    { name: "Lagos", state: "Lagos", areas: "Lekki, VI, Ikeja, Yaba", count: "1,200+", image: "https://images.unsplash.com/photo-1572688648036-e6a0facf6524?w=400&q=80" },
-    { name: "Abuja", state: "FCT - Abuja", areas: "Wuse, Maitama, Gwarinpa", count: "400+", image: "https://images.unsplash.com/photo-1590736969955-71cc94901144?w=400&q=80" },
-    { name: "Rivers", state: "Rivers", areas: "Port Harcourt, Obio-Akpor", count: "180+", image: "https://images.unsplash.com/photo-1580587771525-78b9dba3b914?w=400&q=80" },
-    { name: "Oyo", state: "Oyo", areas: "Ibadan, Ogbomoso", count: "120+", image: "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=400&q=80" },
+  const cities = [
+    { name: "Lagos", slug: "lagos", areas: "Lekki, VI, Ikeja, Yaba, Surulere", count: "1,200+", image: "https://images.unsplash.com/photo-1572688648036-e6a0facf6524?w=400&q=80" },
+    { name: "Abuja", slug: "abuja", areas: "Maitama, Wuse 2, Gwarinpa, Jabi", count: "400+", image: "https://images.unsplash.com/photo-1590736969955-71cc94901144?w=400&q=80" },
+    { name: "Port Harcourt", slug: "port-harcourt", areas: "GRA, Rumuola, Woji, Ada George", count: "180+", image: "https://images.unsplash.com/photo-1580587771525-78b9dba3b914?w=400&q=80" },
+    { name: "Uyo", slug: "uyo", areas: "Uyo, Eket, Akwa Ibom State", count: "120+", image: "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=400&q=80" },
+  ];
+
+  const popularAreas = [
+    { name: "Lekki", slug: "lagos/lekki" },
+    { name: "Yaba", slug: "lagos/yaba" },
+    { name: "Surulere", slug: "lagos/surulere" },
+    { name: "Gwarinpa", slug: "abuja/gwarinpa" },
+    { name: "Wuse 2", slug: "abuja/wuse-2" },
+    { name: "Ibadan", slug: "ibadan" },
+    { name: "Enugu", slug: "enugu" },
+    { name: "Warri", slug: "warri" },
   ];
 
   return (
     <section className="py-12 md:py-20">
       <div className="max-w-[1360px] mx-auto px-5 lg:px-10">
         <div className="mb-8 md:mb-10">
-          <h2 className="text-xl sm:text-2xl lg:text-[28px] font-bold text-neutral-900 tracking-[-0.02em]">Explore by Location</h2>
-          <p className="text-sm text-neutral-500 mt-1">Find rentals in Nigeria&apos;s top cities</p>
+          <h2 className="text-xl sm:text-2xl lg:text-[28px] font-bold text-neutral-900 tracking-[-0.02em]">Find Flats to Rent by Location</h2>
+          <p className="text-sm text-neutral-500 mt-1">Browse verified rentals in Nigeria&apos;s top cities</p>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {locations.map((loc, i) => (
+
+        {/* City cards — links to SEO location pages */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          {cities.map((loc, i) => (
             <motion.div key={loc.name} initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.08 }}>
-              <Link href={`/properties?state=${encodeURIComponent(loc.state)}`} className="group block relative h-[200px] rounded-2xl overflow-hidden">
-                <Image src={loc.image} alt={loc.name} fill className="object-cover group-hover:scale-105 transition-transform duration-700" sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw" />
+              <Link href={`/properties/${loc.slug}`} className="group block relative h-[200px] rounded-2xl overflow-hidden">
+                <Image src={loc.image} alt={`Flats and houses for rent in ${loc.name}`} fill className="object-cover group-hover:scale-105 transition-transform duration-700" sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
                 <div className="absolute bottom-0 left-0 right-0 p-5">
-                  <h3 className="text-lg font-bold text-white">{loc.name}</h3>
+                  <h3 className="text-lg font-bold text-white">Houses to Let in {loc.name}</h3>
                   <p className="text-sm text-white/70 mt-0.5">{loc.areas}</p>
                   <p className="text-xs text-white/50 mt-1">{loc.count} listings</p>
                 </div>
               </Link>
             </motion.div>
           ))}
+        </div>
+
+        {/* Popular area quick-links — SEO internal links */}
+        <div className="flex flex-wrap gap-2">
+          <span className="text-xs text-neutral-400 font-medium py-1.5 mr-1">Popular areas:</span>
+          {popularAreas.map((area) => (
+            <Link key={area.slug} href={`/properties/${area.slug}`}
+              className="px-3 py-1.5 rounded-full border border-neutral-200 text-xs text-neutral-600 hover:border-bt-primary/40 hover:text-bt-primary hover:bg-bt-primary/5 transition-colors">
+              Self contain {area.name}
+            </Link>
+          ))}
+          <Link href="/renting-guide" className="px-3 py-1.5 rounded-full border border-neutral-200 text-xs text-neutral-500 hover:border-neutral-300 transition-colors">
+            Renting guide →
+          </Link>
         </div>
       </div>
     </section>

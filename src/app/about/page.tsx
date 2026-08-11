@@ -90,15 +90,17 @@ export default function AboutPage() {
                   and tenants have zero recourse when they get scammed.
                 </p>
                 <p>
-                  Beta Tenant was created to bring order to the chaos. By
-                  building a trust-based marketplace where agents are rated,
-                  listings are verified, and payments are secure, we&apos;re making
-                  it possible for anyone to find a home without fear.
+                  Beta Tenant was created to bring order to the chaos. Unlike
+                  other Nigerian property platforms, we built agent verification,
+                  real tenant reviews, and direct reporting into the core of the
+                  product — not as an afterthought. Every agent on Beta Tenant
+                  can be reviewed, reported, and rated by real tenants.
                 </p>
                 <p>
-                  Our WhatsApp-first approach meets Nigerians where they are,
-                  while our web platform provides the full experience for those
-                  who want it.
+                  Our WhatsApp-first approach meets Nigerians where they already
+                  are, while our web platform provides the full experience. We
+                  cover rentals across all 36 states — from Lagos and Abuja to
+                  Port Harcourt, Uyo, Ibadan, Enugu and beyond.
                 </p>
               </div>
             </motion.div>

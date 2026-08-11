@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 
@@ -156,7 +157,23 @@ export default async function LocationPage({ params }: { params: Promise<{ locat
 
   const searchUrl = `/properties?state=${encodeURIComponent(loc.state)}${loc.lga ? `&lga=${encodeURIComponent(loc.lga)}` : ""}`;
 
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://betatenant.com" },
+      { "@type": "ListItem", "position": 2, "name": "Properties", "item": "https://betatenant.com/properties" },
+      ...(segments.length > 1
+        ? [{ "@type": "ListItem", "position": 3, "name": segments[0].charAt(0).toUpperCase() + segments[0].slice(1).replace(/-/g," "), "item": `https://betatenant.com/properties/${segments[0]}` },
+           { "@type": "ListItem", "position": 4, "name": loc.name, "item": `https://betatenant.com/properties/${slug}` }]
+        : [{ "@type": "ListItem", "position": 3, "name": loc.name, "item": `https://betatenant.com/properties/${slug}` }]
+      ),
+    ],
+  };
+
   return (
+    <>
+    <Script id={`breadcrumb-${slug}`} type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
     <div className="min-h-screen bg-white">
       <section className="bg-gradient-to-b from-bt-primary to-[#12127a] text-white py-14 px-4">
         <div className="max-w-3xl mx-auto text-center">
@@ -234,6 +251,7 @@ export default async function LocationPage({ params }: { params: Promise<{ locat
         </div>
       </section>
     </div>
+    </>
   );
 }
 
