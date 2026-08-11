@@ -1,16 +1,42 @@
 "use client";
 
-import { useState, useEffect, use } from "react";
+import { useState, useEffect, use, useRef } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { AuthGuard } from "@/components/auth-guard";
 import { api } from "@/lib/api";
 import { locationData } from "@/lib/locations";
 import {
   ArrowLeft, Loader2, Check, Bed, Bath, MapPin, Home,
   DollarSign, FileText, Sparkles, Image as ImageIcon,
+  X, Plus, Video, Trash2,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { cn } from "@/lib/utils";
+
+const API_BASE = typeof window !== "undefined" && window.location.hostname !== "localhost"
+  ? "https://api.betatenant.com" : "/api/bt";
+
+async function uploadFile(file: File, onProgress: (p: number) => void): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const formData = new FormData();
+    formData.append("files", file);
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", `${API_BASE}/v1/user/aws-upload`);
+    const token = localStorage.getItem("BT_TOKEN");
+    if (token) xhr.setRequestHeader("Authorization", `Bearer ${token}`);
+    xhr.upload.onprogress = (e) => { if (e.lengthComputable) onProgress(Math.round(e.loaded / e.total * 100)); };
+    xhr.onload = () => {
+      try {
+        const data = JSON.parse(xhr.responseText);
+        if (xhr.status >= 200 && xhr.status < 300 && data.data?.[0]) resolve(data.data[0]);
+        else reject(new Error(data.message || `Upload failed (${xhr.status})`));
+      } catch { reject(new Error("Upload failed")); }
+    };
+    xhr.onerror = () => reject(new Error("Network error"));
+    xhr.send(formData);
+  });
+}
 
 const APARTMENT_TYPES = [
   { label: "Single room / Shared apartment", value: "single-room/shared-apartment" },
@@ -55,6 +81,14 @@ function EditListingContent({ id }: { id: string }) {
   const [selectedRules, setSelectedRules]         = useState<string[]>([]);
   const [currentStatus, setCurrentStatus] = useState("");
 
+  // Photos & videos
+  const [photoURLs, setPhotoURLs]   = useState<string[]>([]);
+  const [videoURLs, setVideoURLs]   = useState<string[]>([]);
+  const [uploadingPhotos, setUploadingPhotos] = useState<{ id: string; progress: number; name: string }[]>([]);
+  const [uploadingVideos, setUploadingVideos] = useState<{ id: string; progress: number; name: string }[]>([]);
+  const photoInputRef = useRef<HTMLInputElement>(null);
+  const videoInputRef = useRef<HTMLInputElement>(null);
+
   // Options
   const [amenities, setAmenities]   = useState<Amenity[]>([]);
   const [houseRules, setHouseRules] = useState<HouseRule[]>([]);
@@ -86,6 +120,8 @@ function EditListingContent({ id }: { id: string }) {
       setSelectedAmenities(aIds);
       setSelectedRules(rIds);
 
+      setPhotoURLs(p.photoURLs ?? []);
+      setVideoURLs(p.videoURLs ?? []);
       setAmenities(amenRes?.amenities ?? []);
       setHouseRules(ruleRes?.houseRules ?? []);
     }).catch(() => toast.error("Failed to load listing"))
@@ -102,10 +138,63 @@ function EditListingContent({ id }: { id: string }) {
   const toggle = <T,>(arr: T[], val: T): T[] =>
     arr.includes(val) ? arr.filter((x) => x !== val) : [...arr, val];
 
+  const handleAddPhotos = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    e.target.value = "";
+    for (const file of files) {
+      const uid = Math.random().toString(36).slice(2);
+      setUploadingPhotos(p => [...p, { id: uid, progress: 0, name: file.name }]);
+      try {
+        const url = await uploadFile(file, (prog) =>
+          setUploadingPhotos(p => p.map(u => u.id === uid ? { ...u, progress: prog } : u))
+        );
+        setPhotoURLs(p => [...p, url]);
+      } catch (err: any) {
+        toast.error(`Photo upload failed: ${err.message}`);
+      } finally {
+        setUploadingPhotos(p => p.filter(u => u.id !== uid));
+      }
+    }
+  };
+
+  const handleDeletePhoto = async (url: string) => {
+    // Remove from UI immediately
+    setPhotoURLs(p => p.filter(u => u !== url));
+    // Delete from S3 (best-effort)
+    const key = url.split(".amazonaws.com/")[1] ?? url.split("/").pop() ?? "";
+    try { await api.del(`/v1/landlordandagent/file/${encodeURIComponent(key)}`); } catch {}
+  };
+
+  const handleAddVideos = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    e.target.value = "";
+    for (const file of files) {
+      const uid = Math.random().toString(36).slice(2);
+      setUploadingVideos(p => [...p, { id: uid, progress: 0, name: file.name }]);
+      try {
+        const url = await uploadFile(file, (prog) =>
+          setUploadingVideos(p => p.map(u => u.id === uid ? { ...u, progress: prog } : u))
+        );
+        setVideoURLs(p => [...p, url]);
+      } catch (err: any) {
+        toast.error(`Video upload failed: ${err.message}`);
+      } finally {
+        setUploadingVideos(p => p.filter(u => u.id !== uid));
+      }
+    }
+  };
+
+  const handleDeleteVideo = async (url: string) => {
+    setVideoURLs(p => p.filter(u => u !== url));
+    const key = url.split(".amazonaws.com/")[1] ?? url.split("/").pop() ?? "";
+    try { await api.del(`/v1/landlordandagent/file/${encodeURIComponent(key)}`); } catch {}
+  };
+
   const handleSave = async () => {
     if (!apartmentType) { toast.error("Select an apartment type"); return; }
     if (!state || !lga) { toast.error("Select state and city"); return; }
     if (!listingFee || Number(listingFee) < 1) { toast.error("Enter a valid listing fee"); return; }
+    if (photoURLs.length < 3) { toast.error("At least 3 photos required"); return; }
 
     setSaving(true);
     try {
@@ -122,6 +211,8 @@ function EditListingContent({ id }: { id: string }) {
         cautionFee:      cautionFee ? Number(cautionFee) : undefined,
         amenities:       selectedAmenities,
         houseRules:      selectedRules,
+        photoURLs,
+        videoURLs,
       });
       toast.success("Listing updated!");
       router.back();
@@ -301,6 +392,67 @@ function EditListingContent({ id }: { id: string }) {
             </div>
           </Section>
         )}
+
+        {/* Photos */}
+        <Section icon={ImageIcon} title={`Photos (${photoURLs.length})`}>
+          <div className="grid grid-cols-3 gap-2 mb-3">
+            {photoURLs.map((url, i) => (
+              <div key={url} className="relative aspect-square rounded-xl overflow-hidden bg-neutral-100 group">
+                <Image src={url} alt={`Photo ${i+1}`} fill className="object-cover" sizes="120px" />
+                <button
+                  onClick={() => handleDeletePhoto(url)}
+                  className="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 active:opacity-100 transition-opacity"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ))}
+            {uploadingPhotos.map(u => (
+              <div key={u.id} className="aspect-square rounded-xl bg-neutral-100 flex flex-col items-center justify-center gap-1">
+                <Loader2 className="w-5 h-5 animate-spin text-bt-primary" />
+                <span className="text-[10px] text-neutral-500">{u.progress}%</span>
+              </div>
+            ))}
+            <button
+              onClick={() => photoInputRef.current?.click()}
+              className="aspect-square rounded-xl border-2 border-dashed border-neutral-200 flex flex-col items-center justify-center gap-1 hover:border-bt-primary/40 hover:bg-bt-primary/3 transition-colors"
+            >
+              <Plus className="w-5 h-5 text-neutral-400" />
+              <span className="text-[10px] text-neutral-400">Add</span>
+            </button>
+          </div>
+          <p className="text-[11px] text-neutral-400">Minimum 3 photos required. Tap × to remove a photo.</p>
+          <input ref={photoInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleAddPhotos} />
+        </Section>
+
+        {/* Videos */}
+        <Section icon={Video} title={`Videos (${videoURLs.length})`}>
+          <div className="space-y-2 mb-3">
+            {videoURLs.map((url, i) => (
+              <div key={url} className="flex items-center gap-2 p-2.5 bg-neutral-50 rounded-xl border border-neutral-100">
+                <Video className="w-4 h-4 text-neutral-400 shrink-0" />
+                <span className="flex-1 text-xs text-neutral-600 truncate">Video {i+1}</span>
+                <button onClick={() => handleDeleteVideo(url)} className="text-red-400 hover:text-red-600 shrink-0">
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ))}
+            {uploadingVideos.map(u => (
+              <div key={u.id} className="flex items-center gap-2 p-2.5 bg-neutral-50 rounded-xl border border-neutral-100">
+                <Loader2 className="w-4 h-4 animate-spin text-bt-primary shrink-0" />
+                <span className="flex-1 text-xs text-neutral-500 truncate">{u.name}</span>
+                <span className="text-[10px] text-neutral-400">{u.progress}%</span>
+              </div>
+            ))}
+          </div>
+          <button
+            onClick={() => videoInputRef.current?.click()}
+            className="w-full py-2.5 rounded-xl border-2 border-dashed border-neutral-200 text-sm text-neutral-500 flex items-center justify-center gap-2 hover:border-bt-primary/40 hover:text-bt-primary transition-colors"
+          >
+            <Plus className="w-4 h-4" /> Add Video
+          </button>
+          <input ref={videoInputRef} type="file" accept="video/*" multiple className="hidden" onChange={handleAddVideos} />
+        </Section>
 
         {/* Save */}
         <button onClick={handleSave} disabled={saving}
