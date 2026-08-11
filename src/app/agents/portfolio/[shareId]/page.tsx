@@ -27,33 +27,33 @@ async function fetchReviews(userId: string) {
 
 export async function generateMetadata({ params }: { params: Promise<{ shareId: string }> }): Promise<Metadata> {
   const { shareId } = await params;
-  if (shareId === "placeholder") return { title: "Agent Portfolio — BetaTenant" };
+  if (shareId === "placeholder") return { title: "Agent Portfolio — Beta Tenant" };
 
   const profile = await fetchProfile(shareId);
-  if (!profile) return { title: "Agent Portfolio — BetaTenant" };
+  if (!profile) return { title: "Agent Portfolio — Beta Tenant" };
 
   const name = `${profile.firstName ?? ""} ${profile.lastName ?? ""}`.trim();
   const role = profile.role === "landlord" ? "Landlord" : "Rental Agent";
   const loc  = profile.agentBasedLocation ? ` in ${profile.agentBasedLocation}` : "";
   const desc = profile.about?.slice(0, 155)
-    ?? `${name} is a verified ${role.toLowerCase()}${loc} on BetaTenant. View listings, read tenant reviews and contact directly.`;
+    ?? `${name} is a verified ${role.toLowerCase()}${loc} on Beta Tenant. View listings, read tenant reviews and contact directly.`;
   const ogImage = `${API}/v1/og/${shareId}`;
 
   return {
-    title: `${name} — Verified ${role}${loc} | BetaTenant`,
+    title: `${name} — Verified ${role}${loc} | Beta Tenant`,
     description: desc,
     keywords: [
       `${name} agent`, `${name} landlord`, `verified agent${loc}`,
       `rental agent${loc}`, `property agent${loc}`,
     ],
     openGraph: {
-      title: `${name} — Verified ${role}${loc} | BetaTenant`,
+      title: `${name} — Verified ${role}${loc} | Beta Tenant`,
       description: desc,
       type: "profile",
       url: `${SITE}/agents/portfolio/${shareId}`,
-      images: [{ url: ogImage, width: 1200, height: 630, alt: `${name} on BetaTenant` }],
+      images: [{ url: ogImage, width: 1200, height: 630, alt: `${name} on Beta Tenant` }],
     },
-    twitter: { card: "summary_large_image", title: `${name} — ${role} | BetaTenant`, description: desc, images: [ogImage] },
+    twitter: { card: "summary_large_image", title: `${name} — ${role} | Beta Tenant`, description: desc, images: [ogImage] },
     alternates: { canonical: `${SITE}/agents/portfolio/${shareId}` },
   };
 }

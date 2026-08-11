@@ -18,8 +18,8 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   title: {
-    default: "BetaTenant — Find Verified Rental Homes in Nigeria",
-    template: "%s | BetaTenant",
+    default: "Beta Tenant — Find Verified Rental Homes in Nigeria",
+    template: "%s | Beta Tenant",
   },
   description:
     "Find verified rental apartments, flats, and houses across Nigeria. Browse self-contains, 1–4 bedroom flats for rent in Lagos, Abuja, Port Harcourt, Uyo and more. Verified agents, real reviews.",
@@ -27,7 +27,7 @@ export const metadata: Metadata = {
     "rent apartment Nigeria", "flats for rent Lagos", "houses to let Abuja",
     "self contain for rent", "apartment hunting Nigeria", "verified rental agents Nigeria",
     "2 bedroom flat Lagos", "house for rent Port Harcourt", "flat to let Uyo",
-    "BetaTenant", "rental marketplace Nigeria", "verified property agents",
+    "Beta Tenant", "rental marketplace Nigeria", "verified property agents",
   ],
   metadataBase: new URL("https://betatenant.com"),
   alternates: { canonical: "https://betatenant.com" },
@@ -46,17 +46,17 @@ export const metadata: Metadata = {
     shortcut: "/icons/icon-192.png",
   },
   openGraph: {
-    title: "BetaTenant — Find Verified Rental Homes in Nigeria",
+    title: "Beta Tenant — Find Verified Rental Homes in Nigeria",
     description: "Find verified rental apartments, flats and houses across Nigeria. Real reviews, verified agents, transparent pricing.",
     type: "website",
     locale: "en_NG",
     url: "https://betatenant.com",
-    siteName: "BetaTenant",
-    images: [{ url: "https://betatenant.com/icons/icon-512.png", width: 512, height: 512, alt: "BetaTenant" }],
+    siteName: "Beta Tenant",
+    images: [{ url: "https://betatenant.com/icons/icon-512.png", width: 512, height: 512, alt: "Beta Tenant" }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "BetaTenant — Find Verified Rental Homes in Nigeria",
+    title: "Beta Tenant — Find Verified Rental Homes in Nigeria",
     description: "Find verified rental apartments and houses across Nigeria. Vetted agents, real reviews.",
     images: ["https://betatenant.com/icons/icon-512.png"],
   },
@@ -102,7 +102,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               {
                 "@type": ["Organization", "LocalBusiness"],
                 "@id": "https://betatenant.com/#organization",
-                "name": "BetaTenant",
+                "name": "Beta Tenant",
                 "alternateName": "Beta Tenant",
                 "url": "https://betatenant.com",
                 "logo": "https://betatenant.com/icons/icon-512.png",
@@ -131,7 +131,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 "@type": "WebSite",
                 "@id": "https://betatenant.com/#website",
                 "url": "https://betatenant.com",
-                "name": "BetaTenant",
+                "name": "Beta Tenant",
                 "description": "Find verified rental homes in Nigeria",
                 "publisher": { "@id": "https://betatenant.com/#organization" },
                 "potentialAction": {

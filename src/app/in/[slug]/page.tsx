@@ -18,7 +18,7 @@ async function resolveSlug(slug: string) {
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const data = await resolveSlug(slug);
-  if (!data?.successful) return { title: "BetaTenant — Agent Portfolio" };
+  if (!data?.successful) return { title: "Beta Tenant — Agent Portfolio" };
 
   // Fetch profile for OG image
   try {
@@ -29,22 +29,22 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     const ogImageUrl = `${API}/v1/og/${data.shareId}`;
 
     return {
-      title: `${name} — BetaTenant Agent`,
-      description: profile?.about || `View ${name}'s property listings on BetaTenant`,
+      title: `${name} — Beta Tenant Agent`,
+      description: profile?.about || `View ${name}'s property listings on Beta Tenant`,
       openGraph: {
-        title: `${name} — BetaTenant Agent`,
-        description: profile?.about || `View ${name}'s property listings on BetaTenant`,
+        title: `${name} — Beta Tenant Agent`,
+        description: profile?.about || `View ${name}'s property listings on Beta Tenant`,
         type: "profile",
-        images: [{ url: ogImageUrl, width: 1200, height: 630, alt: `${name} on BetaTenant` }],
+        images: [{ url: ogImageUrl, width: 1200, height: 630, alt: `${name} on Beta Tenant` }],
       },
       twitter: {
         card: "summary_large_image",
-        title: `${name} — BetaTenant Agent`,
+        title: `${name} — Beta Tenant Agent`,
         images: [ogImageUrl],
       },
     };
   } catch {
-    return { title: "BetaTenant — Agent Portfolio" };
+    return { title: "Beta Tenant — Agent Portfolio" };
   }
 }
 

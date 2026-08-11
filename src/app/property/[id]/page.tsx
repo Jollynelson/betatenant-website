@@ -10,22 +10,22 @@ export function generateStaticParams() {
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
-  if (id === "placeholder") return { title: "Property for Rent | BetaTenant" };
+  if (id === "placeholder") return { title: "Property for Rent | Beta Tenant" };
 
   try {
     const res = await fetch(`${API}/v1/user/property/${id}`, { next: { revalidate: 3600 } });
     const data = await res.json();
     const p = data?.property;
-    if (!p) return { title: "Property for Rent | BetaTenant" };
+    if (!p) return { title: "Property for Rent | Beta Tenant" };
 
     const type = p.apartmentType?.includes("self") ? "Self Contained" :
                  p.apartmentType?.includes("mini") ? "Mini Flat" :
                  p.roomCount ? `${p.roomCount} Bedroom Flat` : "Apartment";
     const location = `${p.propertyLGA || ""}${p.propertyState ? `, ${p.propertyState}` : ""}`.trim();
     const price = p.listingFee ? `₦${Number(p.listingFee).toLocaleString()}/yr` : "";
-    const title = `${type} for Rent in ${location}${price ? ` — ${price}` : ""} | BetaTenant`;
+    const title = `${type} for Rent in ${location}${price ? ` — ${price}` : ""} | Beta Tenant`;
     const desc = p.houseDescription?.slice(0, 155) ||
-      `${type} for rent in ${location}. ${p.roomCount ? `${p.roomCount} bedroom${p.roomCount > 1 ? "s" : ""}.` : ""} ${price}. Verified listing on BetaTenant.`;
+      `${type} for rent in ${location}. ${p.roomCount ? `${p.roomCount} bedroom${p.roomCount > 1 ? "s" : ""}.` : ""} ${price}. Verified listing on Beta Tenant.`;
     const image = p.photoURLs?.[0] || "https://betatenant.com/icons/icon-512.png";
 
     return {
@@ -42,7 +42,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
       alternates: { canonical: `https://betatenant.com/property/${id}` },
     };
   } catch {
-    return { title: "Property for Rent | BetaTenant" };
+    return { title: "Property for Rent | Beta Tenant" };
   }
 }
 

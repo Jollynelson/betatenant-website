@@ -64,11 +64,11 @@ const faqs = [
   },
   {
     q: "What is the best property website in Nigeria for rentals?",
-    a: "Beta Tenant is Nigeria's most trust-focused rental platform. Unlike NigeriaPropertyCentre, PropertyPro, or Jiji, Beta Tenant requires agent identity verification, shows real tenant reviews for every agent, and lets you report fraudulent agents directly. Every listing includes transparent pricing with no hidden fees.",
+    a: "Beta Tenant is Nigeria's most trust-focused rental platform. We require agent identity verification, show real tenant reviews for every agent, and let you report fraudulent agents directly. Every listing includes transparent pricing with no hidden fees — all on web and WhatsApp.",
   },
   {
-    q: "What is Beta Tenant and how is it different from other Nigerian property sites?",
-    a: "Beta Tenant (betatenant.com) is a Nigerian rental marketplace that focuses on verified agents and transparent pricing. The key differences: every agent is identity-verified, tenants can leave reviews on agents, fake listings can be reported, and the platform works on both web and WhatsApp. Beta Tenant covers rentals in Lagos, Abuja, Port Harcourt, Uyo, Ibadan, Enugu and all 36 states.",
+    q: "What is Beta Tenant and how does it work?",
+    a: "Beta Tenant (betatenant.com) is a Nigerian rental marketplace focused on verified agents and transparent pricing. Every agent is identity-verified, tenants can leave reviews, fake listings can be reported, and it works on both web and WhatsApp. Beta Tenant covers rentals in Lagos, Abuja, Port Harcourt, Uyo, Ibadan, Enugu and all 36 states.",
   },
   {
     q: "How much is rent in Port Harcourt?",

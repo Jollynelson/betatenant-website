@@ -109,10 +109,10 @@ export async function generateMetadata({ params }: { params: Promise<{ location:
   const { location: segments } = await params;
   const slug = segments.join("/");
   const loc = LOC[slug];
-  if (!loc) return { title: "Properties for Rent | BetaTenant" };
+  if (!loc) return { title: "Properties for Rent | Beta Tenant" };
 
   const name = loc.name;
-  const title = `Flats & Houses to Let in ${name} | Verified Agents | BetaTenant`;
+  const title = `Flats & Houses to Let in ${name} | Verified Agents | Beta Tenant`;
   const descParts = [`Find verified flats, self-contains, and houses for rent in ${name} — ${loc.desc}.`];
   if (loc.selfConPrice) descParts.push(`Self-contain from ${loc.selfConPrice}.`);
   if (loc.twoBedPrice) descParts.push(`2-bedroom from ${loc.twoBedPrice}.`);
@@ -177,7 +177,7 @@ export default async function LocationPage({ params }: { params: Promise<{ locat
     <div className="min-h-screen bg-white">
       <section className="bg-gradient-to-b from-bt-primary to-[#12127a] text-white py-14 px-4">
         <div className="max-w-3xl mx-auto text-center">
-          <p className="text-white/60 text-sm font-medium uppercase tracking-wider mb-2">BetaTenant · Verified Rentals</p>
+          <p className="text-white/60 text-sm font-medium uppercase tracking-wider mb-2">Beta Tenant · Verified Rentals</p>
           <h1 className="text-3xl sm:text-4xl font-bold mb-3">Flats &amp; Houses to Let in {loc.name}</h1>
           <p className="text-white/70 text-base mb-2">{loc.desc}. Prices from {loc.priceRange}.</p>
           {loc.selfConPrice && (
@@ -211,7 +211,7 @@ export default async function LocationPage({ params }: { params: Promise<{ locat
         <h2 className="text-xl font-bold text-neutral-900 mb-3">Renting in {loc.name}</h2>
         <p className="text-neutral-600 leading-relaxed mb-4">
           {loc.name} is {loc.desc}. Whether you are looking for a self-contain (self-con), mini flat,
-          2-bedroom or 3-bedroom flat, BetaTenant lists verified properties from vetted agents and
+          2-bedroom or 3-bedroom flat, Beta Tenant lists verified properties from vetted agents and
           landlords across {loc.name}. All agents have public profiles with real tenant reviews and
           response time ratings so you can choose with confidence.
         </p>
@@ -233,7 +233,7 @@ export default async function LocationPage({ params }: { params: Promise<{ locat
 
         <h3 className="text-base font-bold text-neutral-900 mb-2">Find a Verified Agent in {loc.name}</h3>
         <p className="text-neutral-600 text-sm leading-relaxed mb-8">
-          Every agent on BetaTenant in {loc.name} has a verified profile with ID confirmation, tenant
+          Every agent on Beta Tenant in {loc.name} has a verified profile with ID confirmation, tenant
           reviews, and response time ratings. View their active listings, read reviews from previous
           tenants, and contact them — without paying an inspection fee first. Suspicious agents can be
           reported directly through the platform.

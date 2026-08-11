@@ -188,7 +188,7 @@ export function PushToggle() {
     const isStandalone = window.matchMedia("(display-mode: standalone)").matches
       || (navigator as any).standalone === true;
     if (isIOS && !isStandalone && !subscribed) {
-      toast("Add BetaTenant to your home screen first to enable notifications", { duration: 5000 });
+      toast("Add Beta Tenant to your home screen first to enable notifications", { duration: 5000 });
       return;
     }
 

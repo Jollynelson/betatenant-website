@@ -139,7 +139,7 @@ export default function AgentPortfolioPage({ params }: { params: Promise<{ share
   });
 
   const share = async () => {
-    if (navigator.share) { try { await navigator.share({ title: `${profile.firstName} — BetaTenant`, url: location.href }); return; } catch {} }
+    if (navigator.share) { try { await navigator.share({ title: `${profile.firstName} — Beta Tenant`, url: location.href }); return; } catch {} }
     try { await navigator.clipboard.writeText(location.href); toast.success("Link copied!"); } catch { toast.error("Could not copy"); }
   };
 
@@ -157,7 +157,7 @@ export default function AgentPortfolioPage({ params }: { params: Promise<{ share
 
   const isOwn = isLoggedIn && user?.userId === profile._id;
   const roleLabel = profile.role === "agent" ? "Agent" : "Landlord";
-  const waLink = `https://wa.me/${profile.phoneNumber?.replace(/\D/g, "")}?text=${encodeURIComponent(`Hi ${profile.firstName}, I found your profile on BetaTenant and would like to inquire.`)}`;
+  const waLink = `https://wa.me/${profile.phoneNumber?.replace(/\D/g, "")}?text=${encodeURIComponent(`Hi ${profile.firstName}, I found your profile on Beta Tenant and would like to inquire.`)}`;
 
   // Listing tabs + counts
   const rentCount     = allListings.filter((p: any) => p.rentType === "rent" || !p.rentType).length;

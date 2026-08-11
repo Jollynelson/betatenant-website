@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Flats & Houses to Rent in Nigeria | Verified Agents | BetaTenant",
+  title: "Flats & Houses to Rent in Nigeria | Verified Agents | Beta Tenant",
   description: "Browse verified flats, self-contains, mini flats and houses to let across Nigeria. Self con Lagos, flat Abuja, house Port Harcourt, flat Uyo. Verified agents, real reviews.",
   keywords: [
     "flats for rent Nigeria", "houses to let Nigeria", "self contain for rent Nigeria",
@@ -13,7 +13,7 @@ export const metadata: Metadata = {
     "cheap flats Lagos", "affordable flat Abuja",
   ],
   openGraph: {
-    title: "Apartments & Houses for Rent in Nigeria | BetaTenant",
+    title: "Apartments & Houses for Rent in Nigeria | Beta Tenant",
     description: "Browse verified flats, self-contains and houses for rent across Nigeria.",
     url: "https://betatenant.com/properties",
   },

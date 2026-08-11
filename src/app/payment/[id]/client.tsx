@@ -178,7 +178,7 @@ function PaymentContent({ propertyId }: { propertyId: string }) {
                   <span>₦{viewingFee.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between text-neutral-600">
-                  <span>BetaTenant charge</span>
+                  <span>Beta Tenant charge</span>
                   <span>₦{BT_RENT_CHARGE.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between font-semibold text-neutral-900 pt-3 border-t border-neutral-100">

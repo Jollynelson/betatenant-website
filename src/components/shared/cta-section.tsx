@@ -26,7 +26,7 @@ export function CTASection() {
               Are you a landlord?
             </h2>
             <p className="text-base sm:text-lg text-white/60 mt-4 mb-8 leading-relaxed max-w-md mx-auto">
-              Join other landlords in our BetaTenant community and discover ways
+              Join other landlords in our Beta Tenant community and discover ways
               to increase your property&apos;s value and get listed.
             </p>
             <Link

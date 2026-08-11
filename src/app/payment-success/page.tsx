@@ -153,7 +153,7 @@ function PaymentSuccessContent() {
                     <span>₦{Number(property?.inspectionFee ?? 0).toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between text-neutral-600">
-                    <span>BetaTenant charge</span>
+                    <span>Beta Tenant charge</span>
                     <span>₦{Number(bookingDetails.betaTenantGets ?? 0).toLocaleString()}</span>
                   </div>
                 </>
@@ -172,7 +172,7 @@ function PaymentSuccessContent() {
                     <span>₦{Number(property?.cautionFee ?? 0).toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between text-neutral-600">
-                    <span>BetaTenant charge</span>
+                    <span>Beta Tenant charge</span>
                     <span>₦{Number(bookingDetails.betaTenantGets ?? 0).toLocaleString()}</span>
                   </div>
                 </>

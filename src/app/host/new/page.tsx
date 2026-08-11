@@ -1476,7 +1476,7 @@ function NewListingContent() {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-neutral-900">Create a New Listing</h1>
-          <p className="text-neutral-500 text-sm mt-1">List your property on BetaTenant in 3 simple steps</p>
+          <p className="text-neutral-500 text-sm mt-1">List your property on Beta Tenant in 3 simple steps</p>
         </div>
 
         {/* Step indicator — flex with min-w-0 so labels don't overflow on mobile */}

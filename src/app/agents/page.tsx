@@ -413,7 +413,7 @@ function ReportsOnlyCard({ data, phone }: { data: any; phone: string }) {
       <div className="flex items-center gap-2">
         <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-50 text-red-600 text-xs font-semibold border border-red-200">
           <AlertTriangle className="w-3.5 h-3.5" />
-          Not Verified on BetaTenant
+          Not Verified on Beta Tenant
         </span>
       </div>
 
