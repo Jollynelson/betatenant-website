@@ -1138,7 +1138,8 @@ function StepPricing({ onNext, onBack }: { onNext: () => void; onBack: () => voi
 
     setUpdating(true);
     try {
-      const res = await fetch(`/api/bt/v1/landlordandagent/pricing/${propertyId}`, {
+      const apiBase = window.location.hostname === "localhost" ? "/api/bt" : "https://api.betatenant.com";
+      const res = await fetch(`${apiBase}/v1/landlordandagent/pricing/${propertyId}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -1146,9 +1147,18 @@ function StepPricing({ onNext, onBack }: { onNext: () => void; onBack: () => voi
         },
         body: JSON.stringify(data),
       });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.message || "Failed to update pricing");
-      sessionStorage.setItem("propertyToEdit", JSON.stringify(json.propertyDetails));
+
+      // Safe JSON parse — server may return empty body on success
+      let json: any = {};
+      const text = await res.text();
+      if (text) {
+        try { json = JSON.parse(text); } catch { /* non-JSON body, treat as success */ }
+      }
+
+      if (!res.ok) throw new Error(json.message || `Server error (${res.status})`);
+      if (json.propertyDetails) {
+        sessionStorage.setItem("propertyToEdit", JSON.stringify(json.propertyDetails));
+      }
       onNext();
     } catch (err: any) {
       setError(err.message || "Failed to update pricing.");
