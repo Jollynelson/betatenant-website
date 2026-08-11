@@ -85,11 +85,13 @@ function HeroSection() {
         <div className="max-w-[600px] w-full mx-auto px-5 text-center">
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45 }}>
             <h1 className="text-[28px] sm:text-[36px] lg:text-[46px] font-extrabold text-neutral-900 leading-[1.15] tracking-[-0.03em]">
-              Find Flats &amp; Houses<br />
-              <span className="text-bt-primary">for Rent in Nigeria</span>
+              The perfect house awaits.<br />
+              <span className="text-bt-primary">Start your search now!</span>
+              {/* Hidden SEO context — read by search engines, invisible to users */}
+              <span className="sr-only"> Find flats and houses for rent in Nigeria — self-contains, mini flats, 2 and 3 bedroom flats across Lagos, Abuja, Port Harcourt, Uyo and all 36 states.</span>
             </h1>
             <p className="mt-4 text-base sm:text-lg text-neutral-600 font-medium max-w-[460px] mx-auto leading-relaxed">
-              Verified self-contains, mini flats and houses to let across Lagos, Abuja, Port Harcourt, Uyo and all 36 states.
+              Explore our curated selection of rental properties and find one that suits you.
             </p>
           </motion.div>
 
