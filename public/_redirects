@@ -5,5 +5,3 @@
 /agents/portfolio/:shareId       /agents/portfolio/placeholder           200
 /host/edit/:id                   /host/edit/placeholder                  200
 /in/:slug                        /in/placeholder                         200
-/properties/:location            /properties/placeholder                 200
-/properties/:location/:area      /properties/placeholder/placeholder     200

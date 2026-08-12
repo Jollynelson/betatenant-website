@@ -259,10 +259,10 @@ function ListingsSection() {
 
 function LocationDiscovery() {
   const cities = [
-    { name: "Lagos", slug: "lagos", areas: "Lekki, VI, Ikeja, Yaba, Surulere", count: "1,200+", image: "https://images.unsplash.com/photo-1572688648036-e6a0facf6524?w=400&q=80" },
-    { name: "Abuja", slug: "abuja", areas: "Maitama, Wuse 2, Gwarinpa, Jabi", count: "400+", image: "https://images.unsplash.com/photo-1590736969955-71cc94901144?w=400&q=80" },
-    { name: "Port Harcourt", slug: "port-harcourt", areas: "GRA, Rumuola, Woji, Ada George", count: "180+", image: "https://images.unsplash.com/photo-1580587771525-78b9dba3b914?w=400&q=80" },
-    { name: "Uyo", slug: "uyo", areas: "Uyo, Eket, Akwa Ibom State", count: "120+", image: "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=400&q=80" },
+    { name: "Lagos", slug: "lagos", areas: "Lekki, VI, Ikeja, Yaba, Surulere", count: "1,200+", image: "https://images.unsplash.com/photo-1580674684081-7617fbf3d745?w=400&q=80&auto=format" },
+    { name: "Abuja", slug: "abuja", areas: "Maitama, Wuse 2, Gwarinpa, Jabi", count: "400+", image: "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=400&q=80&auto=format" },
+    { name: "Port Harcourt", slug: "port-harcourt", areas: "GRA, Rumuola, Woji, Ada George", count: "180+", image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&q=80&auto=format" },
+    { name: "Uyo", slug: "uyo", areas: "Uyo, Eket, Akwa Ibom State", count: "120+", image: "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=400&q=80&auto=format" },
   ];
 
   const popularAreas = [
@@ -289,7 +289,8 @@ function LocationDiscovery() {
           {cities.map((loc, i) => (
             <motion.div key={loc.name} initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.08 }}>
               <Link href={`/properties/${loc.slug}`} className="group block relative h-[200px] rounded-2xl overflow-hidden">
-                <Image src={loc.image} alt={`Flats and houses for rent in ${loc.name}`} fill className="object-cover group-hover:scale-105 transition-transform duration-700" sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw" />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={loc.image} alt={`Flats and houses for rent in ${loc.name}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" loading="lazy" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
                 <div className="absolute bottom-0 left-0 right-0 p-5">
                   <h3 className="text-lg font-bold text-white">Houses to Let in {loc.name}</h3>
