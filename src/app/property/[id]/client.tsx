@@ -102,14 +102,28 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
   };
 
   const handleShare = async (title: string) => {
-    try {
-      if (navigator.share) {
-        await navigator.share({ title, url: window.location.href });
-      } else {
-        await navigator.clipboard.writeText(window.location.href);
-        toast.success("Link copied!");
+    const url = window.location.href;
+    // Try native share sheet first (works well on mobile)
+    if (navigator.share) {
+      try {
+        await navigator.share({ title, url });
+        return; // success — native sheet handles feedback
+      } catch (e: any) {
+        // AbortError = user cancelled — don't fallback to copy
+        if (e?.name === "AbortError") return;
+        // Other errors (NotAllowedError etc) → fall through to clipboard
       }
-    } catch {}
+    }
+    // Fallback: copy to clipboard
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success("Link copied to clipboard!");
+    } catch {
+      // Last resort: prompt — always works
+      try {
+        window.prompt("Copy this link:", url);
+      } catch {}
+    }
   };
 
   const handleSubmitReport = async () => {
