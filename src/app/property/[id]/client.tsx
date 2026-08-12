@@ -81,6 +81,12 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
   const [actionLoading, setActionLoading] = useState(false);
   const [propertyStatus, setPropertyStatus] = useState<string | null>(null);
   const [boostOpen, setBoostOpen] = useState(false);
+  // Report modal
+  const [reportOpen, setReportOpen] = useState(false);
+  const [reportReason, setReportReason] = useState("");
+  const [reportDetails, setReportDetails] = useState("");
+  const [reportSubmitting, setReportSubmitting] = useState(false);
+  const [reportDone, setReportDone] = useState(false);
 
   const openLightbox = useCallback((index: number) => {
     setLightboxIndex(index);
@@ -93,6 +99,30 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
       return;
     }
     action();
+  };
+
+  const handleShare = async (title: string) => {
+    try {
+      if (navigator.share) {
+        await navigator.share({ title, url: window.location.href });
+      } else {
+        await navigator.clipboard.writeText(window.location.href);
+        toast.success("Link copied!");
+      }
+    } catch {}
+  };
+
+  const handleSubmitReport = async () => {
+    if (!reportReason) { toast.error("Please select a reason"); return; }
+    setReportSubmitting(true);
+    try {
+      await api.post("/v1/user/report-property", { propertyId: id, reason: reportReason, details: reportDetails });
+      setReportDone(true);
+    } catch (err: any) {
+      toast.error(err.message || "Failed to submit report");
+    } finally {
+      setReportSubmitting(false);
+    }
   };
 
   const { data, isLoading } = useQuery({
@@ -168,6 +198,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
   };
 
   return (
+    <>
     <div className="min-h-screen bg-white">
 
       {/* ── MOBILE: full-screen immersive layout ─────────────────────────────── */}
@@ -232,13 +263,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
             </button>
             <div className="flex items-center gap-2">
               <button
-                onClick={async () => {
-                  try {
-                    await navigator.share({ title: property.title, url: window.location.href });
-                  } catch {
-                    await navigator.clipboard.writeText(window.location.href).catch(() => {});
-                  }
-                }}
+                onClick={() => handleShare(property.title)}
                 className="w-10 h-10 rounded-full bg-black/30 backdrop-blur-md flex items-center justify-center"
               >
                 <Share2 className="w-5 h-5 text-white" />
@@ -1056,31 +1081,23 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
                 {!isOwner && (
                   <div className="flex items-center gap-2 pt-3 mt-1 border-t border-neutral-100">
                     <button
-                      onClick={() => setLiked(toggleFavorite(property._id))}
-                      className="flex-1 flex items-center justify-center gap-1.5 border border-neutral-200 rounded-full px-3 py-2 text-xs text-neutral-600 hover:bg-neutral-50 transition-colors"
-                      aria-label="Save listing"
+                      onClick={() => { const n = toggleFavorite(property._id); setLiked(n); toast.success(n ? "Saved!" : "Removed from saved"); }}
+                      className={cn("flex-1 flex items-center justify-center gap-1.5 border rounded-full px-3 py-2 text-xs font-medium transition-colors",
+                        liked ? "border-red-200 text-red-500 bg-red-50" : "border-neutral-200 text-neutral-600 hover:bg-neutral-50")}
                     >
                       <Heart className={cn("w-3.5 h-3.5", liked ? "fill-red-500 text-red-500" : "")} />
-                      Save
+                      {liked ? "Saved" : "Save"}
                     </button>
                     <button
-                      onClick={async () => {
-                        try {
-                          await navigator.share({ title: property.title, url: window.location.href });
-                        } catch {
-                          await navigator.clipboard.writeText(window.location.href).catch(() => {});
-                        }
-                      }}
+                      onClick={() => handleShare(property.title)}
                       className="flex-1 flex items-center justify-center gap-1.5 border border-neutral-200 rounded-full px-3 py-2 text-xs text-neutral-600 hover:bg-neutral-50 transition-colors"
-                      aria-label="Share"
                     >
                       <Share2 className="w-3.5 h-3.5" />
                       Share
                     </button>
                     <button
-                      onClick={() => router.push(`/property/report?id=${id}`)}
-                      className="flex-1 flex items-center justify-center gap-1.5 border border-neutral-200 rounded-full px-3 py-2 text-xs text-neutral-600 hover:bg-neutral-50 transition-colors"
-                      aria-label="Report listing"
+                      onClick={() => { setReportReason(""); setReportDetails(""); setReportDone(false); setReportOpen(true); }}
+                      className="flex-1 flex items-center justify-center gap-1.5 border border-neutral-200 rounded-full px-3 py-2 text-xs text-neutral-600 hover:bg-red-50 hover:text-red-500 hover:border-red-200 transition-colors"
                     >
                       <Flag className="w-3.5 h-3.5" />
                       Report
@@ -1119,6 +1136,91 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
       </div>
 
     </div>
+    {/* ── Report Listing Modal ────────────────────────────────────── */}
+    <AnimatePresence>
+      {reportOpen && (
+        <motion.div
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+          className="fixed inset-0 z-[60] bg-black/50 flex items-end sm:items-center justify-center"
+          onClick={() => setReportOpen(false)}
+        >
+          <motion.div
+            initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
+            transition={{ type: "spring", damping: 28, stiffness: 300 }}
+            className="bg-white w-full sm:max-w-md sm:rounded-2xl rounded-t-2xl p-5 max-h-[85vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="text-lg font-bold text-neutral-900">Report this listing</h3>
+              <button onClick={() => setReportOpen(false)} className="w-8 h-8 rounded-full bg-neutral-100 flex items-center justify-center">
+                <X className="w-4 h-4 text-neutral-500" />
+              </button>
+            </div>
+
+            {reportDone ? (
+              <div className="text-center py-6">
+                <div className="w-14 h-14 rounded-full bg-green-50 flex items-center justify-center mx-auto mb-3">
+                  <Check className="w-7 h-7 text-green-500" />
+                </div>
+                <p className="font-semibold text-neutral-900 mb-1">Report submitted</p>
+                <p className="text-sm text-neutral-500 mb-5">Thank you — our team will review this listing.</p>
+                <button onClick={() => setReportOpen(false)}
+                  className="px-6 py-2.5 rounded-full bg-bt-primary text-white text-sm font-semibold">
+                  Done
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div>
+                  <p className="text-sm font-medium text-neutral-700 mb-2">Why are you reporting this listing?</p>
+                  <div className="space-y-2">
+                    {[
+                      { value: "fake_listing",      label: "Fake or fraudulent listing" },
+                      { value: "wrong_price",       label: "Price is misleading or incorrect" },
+                      { value: "already_rented",    label: "Property is already rented" },
+                      { value: "misleading_photos", label: "Photos don't match the property" },
+                      { value: "scam",              label: "Scam — agent asked for money upfront" },
+                      { value: "wrong_location",    label: "Wrong location shown" },
+                      { value: "other",             label: "Other reason" },
+                    ].map((r) => (
+                      <label key={r.value}
+                        className={cn(
+                          "flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-colors",
+                          reportReason === r.value ? "border-bt-primary bg-bt-primary/5" : "border-neutral-200 hover:bg-neutral-50"
+                        )}>
+                        <input type="radio" name="reason" value={r.value} checked={reportReason === r.value}
+                          onChange={() => setReportReason(r.value)} className="accent-bt-primary" />
+                        <span className="text-sm text-neutral-700">{r.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <p className="text-sm font-medium text-neutral-700 mb-1.5">Additional details (optional)</p>
+                  <textarea
+                    value={reportDetails}
+                    onChange={e => setReportDetails(e.target.value)}
+                    placeholder="Describe the issue..."
+                    rows={3}
+                    className="w-full px-3 py-2.5 rounded-xl border border-neutral-200 text-sm placeholder-neutral-400 focus:outline-none focus:border-bt-primary resize-none"
+                  />
+                </div>
+
+                <button
+                  onClick={handleSubmitReport}
+                  disabled={!reportReason || reportSubmitting}
+                  className="w-full py-3 rounded-full bg-red-500 text-white text-sm font-bold disabled:opacity-50 active:scale-[0.98] transition-transform hover:bg-red-600"
+                >
+                  {reportSubmitting ? "Submitting..." : "Submit Report"}
+                </button>
+              </div>
+            )}
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+    </>
   );
 }
 
