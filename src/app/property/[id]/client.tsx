@@ -331,7 +331,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
         </div>
 
         {/* Bottom sheet content — rounded top corners like a native sheet */}
-        <div className="relative -mt-5 bg-white rounded-t-3xl z-10 pb-[calc(7.5rem+env(safe-area-inset-bottom))]">
+        <div className="relative -mt-5 bg-white rounded-t-3xl z-10 pb-[calc(5rem+env(safe-area-inset-bottom))]">
           {/* Drag handle */}
           <div className="flex justify-center pt-3 pb-1">
             <div className="w-10 h-1 rounded-full bg-neutral-200" />
@@ -532,7 +532,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
         {/* Mobile sticky CTA bar — above safe area */}
         <div
           className="fixed bottom-0 left-0 right-0 bg-white border-t border-neutral-100 z-50 px-4 py-3 flex items-center gap-3"
-          style={{ paddingBottom: "calc(3.25rem + env(safe-area-inset-bottom))" }}
+          style={{ paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom))" }}
         >
         {isOwner ? (
           /* Owner actions */
