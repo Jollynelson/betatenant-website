@@ -40,51 +40,49 @@ function LoginPage() {
     if (!code) return;
 
     setGoogleLoading(true);
-    const apiBase =
-      window.location.hostname === "localhost"
-        ? "/api/bt"
-        : "https://api.betatenant.com";
 
-    const qs = window.location.search;
+    const params = new URLSearchParams();
+    searchParams.forEach((v, k) => params.set(k, v));
 
     (async () => {
       try {
-        const res: any = await fetch(`${apiBase}/v1/auth/oauth2/redirect/google${qs}`)
-          .then(r => r.json());
+        const res = await api.get<any>(`/v1/auth/oauth2/redirect/google?${params.toString()}`);
 
-        if (res?.successful && res?.token) {
-          const user = res.userDetails ?? res.user ?? {};
-          setAuth(res.token, user);
+        const token = res?.token;
+        const user = res?.userDetails ?? res?.user ?? {};
 
-          const isAgentOrLandlord = user.role === "agent" || user.role === "landlord";
-
-          const pendingAgency = localStorage.getItem("BT_PENDING_AGENCY");
-          if (isAgentOrLandlord && pendingAgency) {
-            localStorage.removeItem("BT_PENDING_AGENCY");
-            try { await api.put("/v1/user/profile", { agencyName: pendingAgency }); } catch { /* non-critical */ }
-          }
-
-          toast.success(res.message || "Signed in successfully!");
-
-          const from = sessionStorage.getItem("BT_LOGIN_FROM") || null;
-          sessionStorage.removeItem("BT_LOGIN_FROM");
-
-          if (isAgentOrLandlord && !pendingAgency && !user.agencyName) {
-            router.replace("/onboarding/agency");
-          } else if (from) {
-            router.replace(from);
-          } else if (isAgentOrLandlord) {
-            router.replace("/account/properties");
-          } else {
-            router.replace("/properties");
-          }
-        } else {
+        if (!token) {
           toast.error(res?.message || "Google sign-in failed. Please try again.");
-          // Clear the code from URL so user sees the login form
           router.replace("/login");
+          return;
         }
-      } catch {
-        toast.error("Google sign-in failed. Please try again.");
+
+        setAuth(token, user);
+
+        const isAgentOrLandlord = user.role === "agent" || user.role === "landlord";
+
+        const pendingAgency = localStorage.getItem("BT_PENDING_AGENCY");
+        if (isAgentOrLandlord && pendingAgency) {
+          localStorage.removeItem("BT_PENDING_AGENCY");
+          try { await api.put("/v1/user/profile", { agencyName: pendingAgency }); } catch { /* non-critical */ }
+        }
+
+        toast.success(res.message || "Signed in successfully!");
+
+        const from = sessionStorage.getItem("BT_LOGIN_FROM") || null;
+        sessionStorage.removeItem("BT_LOGIN_FROM");
+
+        if (isAgentOrLandlord && !pendingAgency && !user.agencyName) {
+          router.replace("/onboarding/agency");
+        } else if (from) {
+          router.replace(from);
+        } else if (isAgentOrLandlord) {
+          router.replace("/account/properties");
+        } else {
+          router.replace("/properties");
+        }
+      } catch (err: any) {
+        toast.error(err?.message || "Google sign-in failed. Please try again.");
         router.replace("/login");
       } finally {
         setGoogleLoading(false);
