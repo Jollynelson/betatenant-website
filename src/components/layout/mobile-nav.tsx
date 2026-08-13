@@ -139,7 +139,7 @@ export function MobileNav() {
     <nav className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-white border-t border-neutral-100">
       <div
         className="flex items-center justify-around px-1"
-        style={{ paddingBottom: "max(0.625rem, env(safe-area-inset-bottom))", paddingTop: "0.5rem" }}
+        style={{ paddingBottom: "calc(3.25rem + env(safe-area-inset-bottom))", paddingTop: "0.5rem" }}
       >
         {navItems.map((item) => {
           const isActive =
