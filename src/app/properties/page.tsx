@@ -113,6 +113,7 @@ function PropertiesContent() {
   // Close panel on outside click
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
+      if (window.innerWidth < 640) return; // mobile uses X button / footer to close
       if (panelRef.current && !panelRef.current.contains(e.target as Node))
         setActivePanel(null);
     }
@@ -296,12 +297,31 @@ function PropertiesContent() {
         <AnimatePresence>
           {activePanel && (
             <motion.div
-              initial={{ opacity: 0, y: -4 }}
+              initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -4 }}
-              transition={{ duration: 0.15 }}
-              className="absolute left-0 right-0 bg-white border-b border-neutral-200 shadow-[0_12px_40px_-8px_rgba(0,0,0,0.1)] z-30"
+              exit={{ opacity: 0, y: 8 }}
+              transition={{ duration: 0.18 }}
+              className="fixed inset-0 z-[60] bg-white flex flex-col sm:absolute sm:inset-auto sm:left-0 sm:right-0 sm:z-30 sm:block sm:border-b sm:border-neutral-200 sm:shadow-[0_12px_40px_-8px_rgba(0,0,0,0.1)]"
             >
+              {/* Mobile-only header */}
+              <div className="sm:hidden shrink-0 flex items-center justify-between px-5 py-4 border-b border-neutral-100">
+                <h2 className="text-base font-bold text-neutral-900">
+                  {activePanel === "sort" ? "Sort by"
+                    : activePanel === "location" ? "Location"
+                    : activePanel === "type" ? "Property type"
+                    : activePanel === "budget" ? "Budget"
+                    : "Filters"}
+                </h2>
+                <button
+                  onClick={() => setActivePanel(null)}
+                  className="w-8 h-8 rounded-full bg-neutral-100 flex items-center justify-center"
+                >
+                  <X className="w-4 h-4 text-neutral-600" />
+                </button>
+              </div>
+
+              {/* Scrollable content */}
+              <div className="flex-1 overflow-y-auto sm:overflow-visible sm:flex-none">
               <div className="max-w-[1360px] mx-auto px-5 lg:px-10 py-5">
 
                 {/* ── Sort ── */}
@@ -515,6 +535,36 @@ function PropertiesContent() {
                   </div>
                 )}
               </div>
+              </div>{/* end scrollable */}
+
+              {/* Mobile-only sticky footer — replaces bottom nav */}
+              <div
+                className="sm:hidden shrink-0 px-5 pt-3 border-t border-neutral-100 bg-white"
+                style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom))" }}
+              >
+                <div className="flex items-center gap-3 py-1">
+                  <button
+                    onClick={() => {
+                      if (activePanel === "sort") setSortAndSync("newest");
+                      else if (activePanel === "location") { setFiltersAndSync({ ...filters, state: "", lga: "" }); setLocationStep("state"); }
+                      else if (activePanel === "type") setFiltersAndSync({ ...filters, apartmentType: "" });
+                      else if (activePanel === "budget") setFiltersAndSync({ ...filters, minPrice: "", maxPrice: "" });
+                      else if (activePanel === "filters") setFiltersAndSync({ ...filters, amenities: [] });
+                    }}
+                    className="text-sm font-semibold text-neutral-500 underline underline-offset-2 whitespace-nowrap"
+                  >
+                    Clear all
+                  </button>
+                  <button
+                    onClick={() => setActivePanel(null)}
+                    className="flex-1 py-3.5 rounded-full bg-bt-primary text-white text-sm font-bold text-center"
+                  >
+                    {isFetching
+                      ? "Loading..."
+                      : `Show ${(data?.totalResults ?? data?.totalDocs ?? properties.length).toLocaleString()} results`}
+                  </button>
+                </div>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
@@ -645,7 +695,7 @@ function FilterPill({ label, active, hasValue, onClick }: {
 
 function PanelFooter({ count, loading, onClear, onApply }: { count: number; loading?: boolean; onClear: () => void; onApply: () => void }) {
   return (
-    <div className="flex items-center justify-between mt-5 pt-4 border-t border-neutral-100">
+    <div className="hidden sm:flex items-center justify-between mt-5 pt-4 border-t border-neutral-100">
       <button onClick={onClear} className="text-sm font-medium text-neutral-500 hover:text-neutral-800 underline underline-offset-2">Clear</button>
       <button onClick={onApply} className="px-6 py-2.5 rounded-full bg-bt-primary text-white text-sm font-semibold hover:bg-bt-primary-light transition-colors">
         {loading ? "Loading..." : `Show ${count} results`}
