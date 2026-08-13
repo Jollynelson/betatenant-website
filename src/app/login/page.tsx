@@ -35,18 +35,17 @@ function LoginPage() {
   const [resetForm, setResetForm] = useState({ otp: "", password: "", verificationToken: "" });
 
   // Handle Google OAuth callback — Google redirects here with ?code=...&iss=...
+  // Use window.location.search directly (raw string) to preserve exact encoding,
+  // matching how beta_tenant_frontend does it: getRequest(`auth/oauth2/redirect/google${queryString}`)
   useEffect(() => {
-    const code = searchParams.get("code");
-    if (!code) return;
+    const qs = window.location.search;
+    if (!qs.includes("code=")) return;
 
     setGoogleLoading(true);
 
-    const params = new URLSearchParams();
-    searchParams.forEach((v, k) => params.set(k, v));
-
     (async () => {
       try {
-        const res = await api.get<any>(`/v1/auth/oauth2/redirect/google?${params.toString()}`);
+        const res = await api.get<any>(`/v1/auth/oauth2/redirect/google${qs}`);
 
         const token = res?.token;
         const user = res?.userDetails ?? res?.user ?? {};
