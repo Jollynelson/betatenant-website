@@ -120,7 +120,7 @@ export default function SignupPage() {
       toast.success("Email verified successfully!");
       localStorage.removeItem("verifyVTK");
       localStorage.removeItem("usrEml");
-      setTimeout(() => router.push("/auth/login"), 1500);
+      setTimeout(() => router.push("/login"), 1500);
     } catch (err: any) {
       toast.error(err.message || "Invalid OTP. Please try again.");
     } finally {
@@ -170,7 +170,7 @@ export default function SignupPage() {
             </div>
             <p className="text-center text-neutral-500 mt-6">
               Already have an account?{" "}
-              <Link href="/auth/login" className="underline text-bt-secondary font-medium">Log in instead</Link>
+              <Link href="/login" className="underline text-bt-secondary font-medium">Log in instead</Link>
             </p>
           </motion.div>
         )}
@@ -287,7 +287,7 @@ export default function SignupPage() {
             <div className="flex items-center justify-between mt-5">
               <button onClick={() => setStep("role")} className="text-sm text-neutral-400 hover:text-neutral-600 underline">← Change role</button>
               <p className="text-sm text-neutral-500">Have an account?{" "}
-                <Link href="/auth/login" className="underline text-bt-secondary font-medium">Log in</Link>
+                <Link href="/login" className="underline text-bt-secondary font-medium">Log in</Link>
               </p>
             </div>
           </motion.div>

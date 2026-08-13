@@ -22,7 +22,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     // Double-check after mount in case hydration was delayed
     const currentToken = useAuthStore.getState().token;
     if (!currentToken) {
-      router.replace(`/auth/login?from=${encodeURIComponent(pathname)}`);
+      router.replace(`/login?from=${encodeURIComponent(pathname)}`);
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 

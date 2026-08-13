@@ -95,7 +95,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
 
   const requireAuth = (action: () => void) => {
     if (!isLoggedIn) {
-      router.push(`/auth/login?from=${encodeURIComponent(`/property/${id}`)}`);
+      router.push(`/login?from=${encodeURIComponent(`/property/${id}`)}`);
       return;
     }
     action();
@@ -1036,7 +1036,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
                       Sign in to view contact details and reach out to the {property.host.role}.
                     </p>
                     <Link
-                      href={`/auth/login?from=${encodeURIComponent(`/property/${id}`)}`}
+                      href={`/login?from=${encodeURIComponent(`/property/${id}`)}`}
                       className="text-xs font-semibold text-bt-primary hover:underline shrink-0"
                     >
                       Sign in

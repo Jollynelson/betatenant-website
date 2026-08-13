@@ -140,7 +140,7 @@ function usePredictivePrefetch(pathname: string) {
 
 // ── App Shell ─────────────────────────────────────────────────────────────────
 
-const ONBOARDING_PATHS = ["/onboarding", "/auth/login", "/auth/signup"];
+const ONBOARDING_PATHS = ["/onboarding", "/login", "/auth/signup"];
 
 function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();

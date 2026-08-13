@@ -96,7 +96,7 @@ export function MobileNav() {
   const handleProtectedNav = useCallback((href: string) => {
     if (!token) {
       toast.error("Please sign in to access this");
-      router.push("/auth/login");
+      router.push("/login");
       return;
     }
     router.push(href);

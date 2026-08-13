@@ -677,7 +677,7 @@ export default function AgentPortfolioPage({ params }: { params: Promise<{ share
               ) : (
                 <div className="text-center py-6">
                   <p className="text-sm text-neutral-600 mb-4">Sign in to leave a review for {profile.firstName}</p>
-                  <Link href="/auth/login" className="inline-block px-6 py-3 rounded-full bg-bt-primary text-white text-sm font-semibold">
+                  <Link href="/login" className="inline-block px-6 py-3 rounded-full bg-bt-primary text-white text-sm font-semibold">
                     Sign In
                   </Link>
                 </div>

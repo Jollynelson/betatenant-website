@@ -233,7 +233,7 @@ function AgentFoundCard({ profile, phone }: { profile: any; phone: string }) {
   const handleReport = () => {
     if (!user) {
       toast.error("Please sign in to submit a report.", { duration: 3000 });
-      router.push(`/auth/login`);
+      router.push(`/login`);
       return;
     }
     const params = new URLSearchParams({

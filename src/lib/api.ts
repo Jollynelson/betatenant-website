@@ -70,7 +70,7 @@ async function request<T>(
       localStorage.removeItem("BT_TOKEN");
       localStorage.removeItem("BT_USER");
       if (!window.location.pathname.startsWith("/auth")) {
-        window.location.href = "/auth/login";
+        window.location.href = "/login";
       }
     }
   }
@@ -154,7 +154,7 @@ export interface RegisterResponse {
 
 export const authApi = {
   login: (email: string, password: string) =>
-    api.post<LoginResponse>("/v1/auth/login", { email, password }),
+    api.post<LoginResponse>("/v1/login", { email, password }),
 
   register: (firstName: string, lastName: string, email: string, password: string, role = "user") =>
     api.post<RegisterResponse>("/v1/auth/register", { firstName, lastName, email, password, role }),

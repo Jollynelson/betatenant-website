@@ -74,7 +74,7 @@ function TenantSwitchContent() {
             ) : (
               <div className="flex items-center justify-center gap-3">
                 <Link
-                  href="/auth/login"
+                  href="/login"
                   className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-bt-primary text-white font-semibold text-sm hover:bg-bt-primary-light transition-colors"
                 >
                   Sign in to list your space
@@ -132,7 +132,7 @@ function TenantSwitchContent() {
               Be the first to list your space and start a swap chain.
             </p>
             <Link
-              href={isLoggedIn ? "/host/new" : "/auth/login"}
+              href={isLoggedIn ? "/host/new" : "/login"}
               className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-bt-primary text-white font-semibold text-sm hover:bg-bt-primary-light transition-colors"
             >
               <Home className="w-4 h-4" />

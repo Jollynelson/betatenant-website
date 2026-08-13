@@ -309,7 +309,7 @@ export function Navbar() {
               </div>
             ) : (
               <>
-                <Link href="/auth/login" className="px-5 py-2 text-sm font-medium text-neutral-700 hover:text-bt-primary transition-colors">
+                <Link href="/login" className="px-5 py-2 text-sm font-medium text-neutral-700 hover:text-bt-primary transition-colors">
                   Sign in
                 </Link>
                 <Link href="/auth/signup" className="px-5 py-2.5 rounded-full bg-bt-primary text-white text-sm font-semibold hover:bg-bt-primary-light transition-colors shadow-[0_2px_8px_rgba(10,8,118,0.2)]">
@@ -453,7 +453,7 @@ export function Navbar() {
                     </>
                   ) : (
                     <div className="flex items-center gap-3">
-                      <Link href="/auth/login" className="flex-1 text-center px-5 py-3 rounded-xl border border-neutral-200 text-neutral-700 font-medium text-sm" onClick={() => setMobileMenuOpen(false)}>
+                      <Link href="/login" className="flex-1 text-center px-5 py-3 rounded-xl border border-neutral-200 text-neutral-700 font-medium text-sm" onClick={() => setMobileMenuOpen(false)}>
                         Sign in
                       </Link>
                       <Link href="/auth/signup" className="flex-1 text-center px-5 py-3 rounded-xl bg-bt-primary text-white font-semibold text-sm" onClick={() => setMobileMenuOpen(false)}>

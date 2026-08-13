@@ -76,7 +76,7 @@ export default function AdminPushPage() {
   useEffect(() => {
     // Gate: require admin token in localStorage
     if (!getAdminToken()) {
-      router.replace("/auth/login");
+      router.replace("/login");
       return;
     }
     adminGet("/messaging/push/stats")

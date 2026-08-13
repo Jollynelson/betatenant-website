@@ -19,7 +19,7 @@ function GoogleCallbackContent() {
 
     if (!token || !userRaw) {
       toast.error("Google sign-in failed. Please try again.");
-      router.replace("/auth/login");
+      router.replace("/login");
       return;
     }
 
@@ -61,7 +61,7 @@ function GoogleCallbackContent() {
         }
       } catch {
         toast.error("Sign-in error. Please try again.");
-        router.replace("/auth/login");
+        router.replace("/login");
       }
     })();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps

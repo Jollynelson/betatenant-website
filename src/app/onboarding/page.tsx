@@ -209,7 +209,7 @@ export default function OnboardingPage() {
                 Browse Without Account
               </button>
               <button
-                onClick={() => finish("/auth/login")}
+                onClick={() => finish("/login")}
                 className="w-full py-2 text-white/70 text-sm font-medium"
               >
                 Already have an account? <span className="text-white underline underline-offset-2">Sign in</span>
