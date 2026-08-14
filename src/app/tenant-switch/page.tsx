@@ -301,12 +301,13 @@ function TenantSwitchContent() {
     staleTime: 1000 * 60 * 2,
   });
 
-  const { data: myListing } = useQuery({
+  const { data: myListingData } = useQuery({
     queryKey: ["tenant-switch-my-listing"],
     queryFn: tenantSwitchApi.myListing,
     enabled: isLoggedIn && isUser,
     staleTime: 1000 * 60 * 5,
   });
+  const myListing = myListingData?.primary;
 
   const { data: myUnlocks = [], isLoading: loadingUnlocks } = useQuery({
     queryKey: ["tenant-switch-my-unlocks"],

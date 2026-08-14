@@ -11,6 +11,7 @@ import {
   Video, AlertCircle, RefreshCw, Calendar,
 } from "lucide-react";
 import toast from "react-hot-toast";
+import { cn } from "@/lib/utils";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 interface FileEntry {
@@ -828,11 +829,13 @@ function TenantSwitchListContent() {
   const [step, setStep] = useState(0);
   const [existingId, setExistingId] = useState<string | undefined>();
 
-  const { data: myListing } = useQuery({
+  const { data: myListingData } = useQuery({
     queryKey: ["tenant-switch-my-listing"],
     queryFn: tenantSwitchApi.myListing,
     staleTime: 1000 * 60 * 5,
   });
+  const myListing   = myListingData?.primary;
+  const allListings = myListingData?.all ?? [];
 
   useEffect(() => {
     if (myListing?._id) setExistingId(myListing._id);
@@ -871,6 +874,39 @@ function TenantSwitchListContent() {
           {step === 1 && <StepPricing onNext={() => setStep(2)} onBack={() => setStep(0)} />}
           {step === 2 && <StepPreview onBack={() => setStep(1)} />}
         </div>
+
+        {/* Other / inactive listings */}
+        {allListings.length > 1 && (
+          <div className="mt-8">
+            <h3 className="text-sm font-bold text-neutral-700 mb-3">Your Other Listings</h3>
+            <div className="space-y-2">
+              {allListings
+                .filter((l: any) => l._id !== myListing?._id)
+                .map((l: any) => (
+                  <div key={l._id} className="bg-white rounded-2xl border border-neutral-100 p-4 flex items-center gap-3">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-neutral-900 truncate">{l.title}</p>
+                      <p className="text-xs text-neutral-500">{l.lga}, {l.state}</p>
+                    </div>
+                    <span className={cn(
+                      "px-2.5 py-1 rounded-full text-[11px] font-bold shrink-0",
+                      l.status === "available" ? "bg-emerald-50 text-emerald-700" :
+                      l.status === "draft"     ? "bg-amber-50 text-amber-700" :
+                      "bg-neutral-100 text-neutral-500"
+                    )}>
+                      {l.status === "available" ? "Active" : l.status === "draft" ? "Draft" : l.status}
+                    </span>
+                    <button
+                      onClick={() => { setExistingId(l._id); setStep(0); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+                      className="text-xs font-semibold text-bt-primary hover:underline shrink-0"
+                    >
+                      Edit
+                    </button>
+                  </div>
+                ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

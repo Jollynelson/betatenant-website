@@ -274,7 +274,10 @@ export const tenantSwitchApi = {
 
   myListing: async () => {
     const res = await api.get<any>("/v1/user/tenant-switch/my-listing");
-    return res.listing ? mapTenantListing(res.listing) : null;
+    return {
+      primary: res.listing ? mapTenantListing(res.listing) : null,
+      all: (res.allListings ?? []).map(mapTenantListing),
+    };
   },
 
   create: (data: {
