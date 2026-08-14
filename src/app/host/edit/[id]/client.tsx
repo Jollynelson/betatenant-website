@@ -67,19 +67,24 @@ function EditListingContent({ id }: { id: string }) {
   const [saving, setSaving] = useState(false);
 
   // Core fields
-  const [houseName, setHouseName]         = useState("");
-  const [description, setDescription]     = useState("");
-  const [apartmentType, setApartmentType] = useState("");
-  const [state, setState]                 = useState("");
-  const [lga, setLga]                     = useState("");
-  const [streetAddress, setStreetAddress] = useState("");
-  const [rooms, setRooms]                 = useState(1);
-  const [baths, setBaths]                 = useState(1);
-  const [listingFee, setListingFee]       = useState("");
-  const [cautionFee, setCautionFee]       = useState("");
+  const [houseName, setHouseName]           = useState("");
+  const [description, setDescription]       = useState("");
+  const [apartmentType, setApartmentType]   = useState("");
+  const [rentType, setRentType]             = useState<"rent"|"short-let">("rent");
+  const [state, setState]                   = useState("");
+  const [lga, setLga]                       = useState("");
+  const [streetAddress, setStreetAddress]   = useState("");
+  const [closeLandmark, setCloseLandmark]   = useState("");
+  const [rooms, setRooms]                   = useState(1);
+  const [baths, setBaths]                   = useState(1);
+  const [livingRooms, setLivingRooms]       = useState(1);
+  const [listingFee, setListingFee]         = useState("");
+  const [cautionFee, setCautionFee]         = useState("");
+  const [serviceCharge, setServiceCharge]   = useState("");
+  const [inspectionFee, setInspectionFee]   = useState("");
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
   const [selectedRules, setSelectedRules]         = useState<string[]>([]);
-  const [currentStatus, setCurrentStatus] = useState("");
+  const [currentStatus, setCurrentStatus]   = useState("");
 
   // Photos & videos
   const [photoURLs, setPhotoURLs]   = useState<string[]>([]);
@@ -106,13 +111,18 @@ function EditListingContent({ id }: { id: string }) {
       setHouseName(p.houseName ?? "");
       setDescription(p.houseDescription ?? "");
       setApartmentType(p.apartmentType ?? "");
+      setRentType(p.rentType === "short-let" ? "short-let" : "rent");
       setState(p.propertyState ?? "");
       setLga(p.propertyLGA ?? "");
       setStreetAddress(p.streetAddress ?? "");
+      setCloseLandmark(p.closeLandmark ?? "");
       setRooms(p.roomCount ?? 1);
       setBaths(p.bathroomCount ?? 1);
+      setLivingRooms(p.livingRoomCount ?? 1);
       setListingFee(p.listingFee ? String(p.listingFee) : "");
       setCautionFee(p.cautionFee ? String(p.cautionFee) : "");
+      setServiceCharge(p.serviceCharge ? String(p.serviceCharge) : "");
+      setInspectionFee(p.inspectionFee ? String(p.inspectionFee) : "");
       setCurrentStatus(p.propertyStatus ?? "");
       // amenities/houseRules may be objects or ObjectId strings
       const aIds = (p.amenities ?? []).map((a: any) => typeof a === "object" ? a._id : a);
@@ -199,18 +209,23 @@ function EditListingContent({ id }: { id: string }) {
     setSaving(true);
     try {
       await api.put(`/v1/landlordandagent/my-listings/${id}`, {
-        houseName:       houseName.trim() || undefined,
+        houseName:        houseName.trim() || undefined,
         houseDescription: description.trim() || undefined,
         apartmentType,
-        propertyState:   state,
-        propertyLGA:     lga,
-        streetAddress:   streetAddress.trim() || undefined,
-        roomCount:       rooms,
-        bathroomCount:   baths,
-        listingFee:      Number(listingFee),
-        cautionFee:      cautionFee ? Number(cautionFee) : undefined,
-        amenities:       selectedAmenities,
-        houseRules:      selectedRules,
+        rentType,
+        propertyState:    state,
+        propertyLGA:      lga,
+        streetAddress:    streetAddress.trim() || undefined,
+        closeLandmark:    closeLandmark.trim() || undefined,
+        roomCount:        rooms,
+        bathroomCount:    baths,
+        livingRoomCount:  livingRooms,
+        listingFee:       Number(listingFee),
+        cautionFee:       cautionFee ? Number(cautionFee) : 0,
+        serviceCharge:    serviceCharge ? Number(serviceCharge) : 0,
+        inspectionFee:    inspectionFee ? Number(inspectionFee) : 0,
+        amenities:        selectedAmenities,
+        houseRules:       selectedRules,
         photoURLs,
         videoURLs,
       });
@@ -276,6 +291,23 @@ function EditListingContent({ id }: { id: string }) {
           </div>
         </Section>
 
+        {/* Rent Type */}
+        <Section icon={Home} title="Listing Type">
+          <div className="grid grid-cols-2 gap-2">
+            {(["rent", "short-let"] as const).map((t) => (
+              <button key={t} onClick={() => setRentType(t)}
+                className={cn(
+                  "px-3 py-3 rounded-xl border text-sm font-semibold transition-all",
+                  rentType === t
+                    ? "border-bt-primary bg-bt-primary/5 text-bt-primary"
+                    : "border-neutral-200 text-neutral-600 hover:border-neutral-300"
+                )}>
+                {t === "rent" ? "🏠 Long-term Rent" : "📆 Short-let"}
+              </button>
+            ))}
+          </div>
+        </Section>
+
         {/* Details */}
         <Section icon={FileText} title="Details">
           <div className="space-y-3">
@@ -289,12 +321,15 @@ function EditListingContent({ id }: { id: string }) {
                 rows={3} placeholder="Describe the property..."
                 className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-200 text-[15px] text-neutral-900 focus:outline-none focus:ring-2 focus:ring-bt-primary/20 focus:border-bt-primary transition-all resize-none" />
             </Field>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-3 gap-3">
               <Field label="Bedrooms">
-                <CountInput value={rooms} onChange={setRooms} min={1} max={20} />
+                <CountInput value={rooms} onChange={setRooms} min={0} max={20} />
               </Field>
               <Field label="Bathrooms">
                 <CountInput value={baths} onChange={setBaths} min={1} max={20} />
+              </Field>
+              <Field label="Living Rooms">
+                <CountInput value={livingRooms} onChange={setLivingRooms} min={0} max={10} />
               </Field>
             </div>
           </div>
@@ -324,6 +359,11 @@ function EditListingContent({ id }: { id: string }) {
                 placeholder="e.g. 12 Adeola Odeku Street"
                 className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-200 text-[15px] text-neutral-900 focus:outline-none focus:ring-2 focus:ring-bt-primary/20 focus:border-bt-primary transition-all" />
             </Field>
+            <Field label="Closest Landmark">
+              <input type="text" value={closeLandmark} onChange={(e) => setCloseLandmark(e.target.value)}
+                placeholder="e.g. Near Shoprite, Ikeja"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-200 text-[15px] text-neutral-900 focus:outline-none focus:ring-2 focus:ring-bt-primary/20 focus:border-bt-primary transition-all" />
+            </Field>
           </div>
         </Section>
 
@@ -335,7 +375,7 @@ function EditListingContent({ id }: { id: string }) {
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 text-sm">₦</span>
                 <input type="text" value={listingFee ? Number(listingFee).toLocaleString() : ""}
                   onChange={(e) => setListingFee(e.target.value.replace(/[^0-9]/g, ""))}
-                  placeholder="0" className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-200 text-[15px] text-neutral-900 focus:outline-none focus:ring-2 focus:ring-bt-primary/20 focus:border-bt-primary transition-all pl-7" />
+                  placeholder="0" className="w-full pl-7 pr-3.5 py-2.5 rounded-xl border border-neutral-200 text-[15px] text-neutral-900 focus:outline-none focus:ring-2 focus:ring-bt-primary/20 focus:border-bt-primary transition-all" />
               </div>
             </Field>
             <Field label="Caution Fee (₦)">
@@ -343,7 +383,23 @@ function EditListingContent({ id }: { id: string }) {
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 text-sm">₦</span>
                 <input type="text" value={cautionFee ? Number(cautionFee).toLocaleString() : ""}
                   onChange={(e) => setCautionFee(e.target.value.replace(/[^0-9]/g, ""))}
-                  placeholder="Optional" className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-200 text-[15px] text-neutral-900 focus:outline-none focus:ring-2 focus:ring-bt-primary/20 focus:border-bt-primary transition-all pl-7" />
+                  placeholder="0" className="w-full pl-7 pr-3.5 py-2.5 rounded-xl border border-neutral-200 text-[15px] text-neutral-900 focus:outline-none focus:ring-2 focus:ring-bt-primary/20 focus:border-bt-primary transition-all" />
+              </div>
+            </Field>
+            <Field label="Service Charge (₦)">
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 text-sm">₦</span>
+                <input type="text" value={serviceCharge ? Number(serviceCharge).toLocaleString() : ""}
+                  onChange={(e) => setServiceCharge(e.target.value.replace(/[^0-9]/g, ""))}
+                  placeholder="0" className="w-full pl-7 pr-3.5 py-2.5 rounded-xl border border-neutral-200 text-[15px] text-neutral-900 focus:outline-none focus:ring-2 focus:ring-bt-primary/20 focus:border-bt-primary transition-all" />
+              </div>
+            </Field>
+            <Field label="Inspection Fee (₦)">
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 text-sm">₦</span>
+                <input type="text" value={inspectionFee ? Number(inspectionFee).toLocaleString() : ""}
+                  onChange={(e) => setInspectionFee(e.target.value.replace(/[^0-9]/g, ""))}
+                  placeholder="0" className="w-full pl-7 pr-3.5 py-2.5 rounded-xl border border-neutral-200 text-[15px] text-neutral-900 focus:outline-none focus:ring-2 focus:ring-bt-primary/20 focus:border-bt-primary transition-all" />
               </div>
             </Field>
           </div>
