@@ -296,4 +296,12 @@ export const tenantSwitchApi = {
     const res = await api.get<any>("/v1/user/tenant-switch/my-unlocks");
     return (res.unlocks ?? []).map(mapTenantListing);
   },
+
+  myListingStats: async () => {
+    const res = await api.get<any>("/v1/user/tenant-switch/my-listing-stats");
+    return (res.stats ?? []) as Array<{
+      _id: string; title: string; rentType: string; status: string;
+      unlockedBy: number; lastUnlockedAt: string | null;
+    }>;
+  },
 };

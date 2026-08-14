@@ -211,6 +211,18 @@ function PaymentsContent() {
                         </div>
                       </div>
 
+                      {/* Property context for unlock transactions */}
+                      {t.type === "contact_unlock" && (t as any).propertyTitle && (
+                        <div className="flex items-start gap-2 p-2.5 bg-neutral-50 rounded-xl border border-neutral-100">
+                          <Unlock className="w-3.5 h-3.5 text-emerald-600 mt-0.5 shrink-0" />
+                          <div>
+                            <p className="text-xs font-semibold text-neutral-800">{(t as any).propertyTitle}</p>
+                            {(t as any).propertyLocation && (
+                              <p className="text-[11px] text-neutral-400">{(t as any).propertyLocation}</p>
+                            )}
+                          </div>
+                        </div>
+                      )}
                       {t.channel && (
                         <p className="text-xs text-neutral-400">via {t.channel.replace(/_/g, " ")}</p>
                       )}

@@ -823,6 +823,37 @@ function StepPreview({ onBack }: { onBack: () => void }) {
   );
 }
 
+// ── Unlock analytics ──────────────────────────────────────────────────────────
+function UnlockAnalytics() {
+  const { data: stats = [] } = useQuery({
+    queryKey: ["tenant-switch-listing-stats"],
+    queryFn: tenantSwitchApi.myListingStats,
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const total = stats.reduce((s, l) => s + l.unlockedBy, 0);
+  if (total === 0) return null;
+
+  return (
+    <div className="mt-6 bg-emerald-50 border border-emerald-100 rounded-2xl p-5">
+      <p className="text-sm font-bold text-emerald-800 mb-3 flex items-center gap-2">
+        <span className="text-lg">👁️</span>
+        {total} {total === 1 ? "person has" : "people have"} unlocked your contact
+      </p>
+      <div className="space-y-2">
+        {stats.filter(l => l.unlockedBy > 0).map(l => (
+          <div key={l._id} className="flex items-center justify-between text-xs">
+            <span className="text-emerald-700 truncate max-w-[200px]">{l.title}</span>
+            <span className="font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full shrink-0">
+              {l.unlockedBy} unlock{l.unlockedBy !== 1 ? "s" : ""}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ── Main page ─────────────────────────────────────────────────────────────────
 function TenantSwitchListContent() {
   const router = useRouter();
@@ -874,6 +905,9 @@ function TenantSwitchListContent() {
           {step === 1 && <StepPricing onNext={() => setStep(2)} onBack={() => setStep(0)} />}
           {step === 2 && <StepPreview onBack={() => setStep(1)} />}
         </div>
+
+        {/* Unlock analytics — how many people unlocked your contacts */}
+        <UnlockAnalytics />
 
         {/* Other / inactive listings */}
         {allListings.length > 1 && (
