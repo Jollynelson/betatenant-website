@@ -64,7 +64,7 @@ function HeroSection() {
   };
 
   return (
-    <section className="relative overflow-hidden h-[380px] sm:h-[560px] lg:h-[640px]">
+    <section className="relative overflow-x-hidden h-[380px] sm:h-[560px] lg:h-[640px]">
       <div className="absolute inset-0">
         <Image src="/images/hero-bg-desktop.png" alt="" fill className="object-cover hidden sm:block" priority />
         <Image src="/images/hero-bg-mobile.svg" alt="" fill className="object-cover sm:hidden" priority />
@@ -124,7 +124,7 @@ function HeroSection() {
                 <motion.div
                   initial={{ opacity: 0, y: -4 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="absolute top-full left-0 right-0 mt-2 bg-white border border-neutral-100 rounded-2xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.15)] overflow-hidden z-50"
+                  className="absolute top-full left-0 right-0 mt-2 bg-white border border-neutral-100 rounded-2xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.15)] overflow-y-auto max-h-[min(16rem,50vh)] z-50"
                 >
                   {results.map((item, i) => (
                     <button
