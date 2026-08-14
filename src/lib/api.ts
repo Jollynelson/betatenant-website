@@ -254,11 +254,16 @@ export function mapTenantListing(raw: any) {
 }
 
 export const tenantSwitchApi = {
-  listings: async (page = 1, limit = 20) => {
-    const res = await api.get<any>(`/v1/user/tenant-switch/listings/${page}/${limit}`);
+  listings: async (page = 1, limit = 20, state?: string, lga?: string) => {
+    const qs = new URLSearchParams();
+    if (state) qs.set("state", state);
+    if (lga)   qs.set("lga", lga);
+    const query = qs.toString() ? `?${qs.toString()}` : "";
+    const res = await api.get<any>(`/v1/user/tenant-switch/listings/${page}/${limit}${query}`);
     const docs = res.listings?.docs ?? [];
     return {
       listings: docs.map(mapTenantListing),
+      stateWideResults: (res.stateWideResults ?? []).map(mapTenantListing),
       totalPages: res.listings?.totalPages ?? 1,
       totalDocs: res.listings?.totalDocs ?? docs.length,
       page,
