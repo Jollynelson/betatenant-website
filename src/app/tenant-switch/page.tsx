@@ -284,9 +284,10 @@ function TenantSwitchContent() {
   const { user, token } = useAuthStore();
   const router = useRouter();
   const queryClient = useQueryClient();
-  const [tab, setTab]       = useState<"browse" | "my-unlocks">("browse");
+  const [tab, setTab]             = useState<"browse" | "my-unlocks">("browse");
   const [filterState, setFilterState] = useState("");
   const [filterLga, setFilterLga]     = useState("");
+  const [moveWithin, setMoveWithin]   = useState("");
   const [unlocking, setUnlocking]     = useState<string | null>(null);
 
   const isLoggedIn = !!token;
@@ -295,8 +296,8 @@ function TenantSwitchContent() {
   useEffect(() => { loadPaystack(); }, []);
 
   const { data, isLoading } = useQuery({
-    queryKey: ["tenant-switch-listings", filterState, filterLga],
-    queryFn: () => tenantSwitchApi.listings(1, 40, filterState || undefined, filterLga || undefined),
+    queryKey: ["tenant-switch-listings", filterState, filterLga, moveWithin],
+    queryFn: () => tenantSwitchApi.listings(1, 40, filterState || undefined, filterLga || undefined, moveWithin || undefined),
     staleTime: 1000 * 60 * 2,
   });
 
@@ -447,25 +448,41 @@ function TenantSwitchContent() {
         {/* Browse */}
         {tab === "browse" && (
           <>
-            {/* Location filter + pricing info */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-              <LocationFilter
-                state={filterState} lga={filterLga}
-                onStateChange={setFilterState} onLgaChange={setFilterLga}
-              />
+            {/* Location filter + move-out filter + pricing info */}
+            <div className="flex flex-col gap-3 mb-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <LocationFilter
+                  state={filterState} lga={filterLga}
+                  onStateChange={setFilterState} onLgaChange={setFilterLga}
+                />
+              </div>
+              {/* Move-out date filter */}
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs font-medium text-neutral-500 flex items-center gap-1.5">
+                  <Calendar className="w-3.5 h-3.5" /> Moving out:
+                </span>
+                {[
+                  { label: "Anytime", value: "" },
+                  { label: "This week", value: "7" },
+                  { label: "This month", value: "30" },
+                  { label: "2 months", value: "60" },
+                ].map(f => (
+                  <button key={f.value} onClick={() => setMoveWithin(f.value)}
+                    className={cn(
+                      "px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-all",
+                      moveWithin === f.value
+                        ? "bg-bt-primary text-white border-bt-primary"
+                        : "bg-white border-neutral-200 text-neutral-600 hover:border-neutral-300"
+                    )}>
+                    {f.label}
+                  </button>
+                ))}
+              </div>
               <div className="flex flex-wrap gap-2 text-xs text-neutral-500">
-                <span className="px-2.5 py-1 bg-white rounded-lg border border-neutral-100">
-                  &lt;₦501k → <b className="text-neutral-700">₦500</b>
-                </span>
-                <span className="px-2.5 py-1 bg-white rounded-lg border border-neutral-100">
-                  –₦1.5M → <b className="text-neutral-700">₦850</b>
-                </span>
-                <span className="px-2.5 py-1 bg-white rounded-lg border border-neutral-100">
-                  &gt;₦1.5M → <b className="text-neutral-700">₦1,500</b>
-                </span>
-                <span className="px-2.5 py-1 bg-emerald-50 rounded-lg border border-emerald-100 text-emerald-700 font-semibold">
-                  List your space → 5 free/mo
-                </span>
+                <span className="px-2.5 py-1 bg-white rounded-lg border border-neutral-100">&lt;₦501k → <b className="text-neutral-700">₦500</b></span>
+                <span className="px-2.5 py-1 bg-white rounded-lg border border-neutral-100">–₦1.5M → <b className="text-neutral-700">₦850</b></span>
+                <span className="px-2.5 py-1 bg-white rounded-lg border border-neutral-100">&gt;₦1.5M → <b className="text-neutral-700">₦1,500</b></span>
+                <span className="px-2.5 py-1 bg-emerald-50 rounded-lg border border-emerald-100 text-emerald-700 font-semibold">List your space → 5 free/mo</span>
               </div>
             </div>
 
