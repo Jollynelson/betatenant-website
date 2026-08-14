@@ -9,9 +9,10 @@ import {
   Repeat2, Home, ArrowRight, Loader2, Lock, Unlock,
   Phone, MessageCircle, Calendar, MapPin, Bed, Bath,
   Eye, CheckCircle, ExternalLink, ChevronDown, Flag,
-  Sparkles, AlertCircle,
+  Sparkles, AlertCircle, ShieldCheck,
 } from "lucide-react";
-import { tenantSwitchApi, cdnImg } from "@/lib/api";
+import { tenantSwitchApi, cdnImg, mapProperty } from "@/lib/api";
+import { PropertyCard } from "@/components/property/property-card";
 import { useAuthStore } from "@/lib/auth-store";
 import { locationData } from "@/lib/locations";
 import { cn } from "@/lib/utils";
@@ -245,10 +246,10 @@ function EmptyLocationState({ state, lga, stateWideResults, onUnlock, isLoggedIn
           <Sparkles className="w-5 h-5 text-bt-primary" />
         </div>
         <div>
-          <p className="text-sm font-bold text-neutral-900 mb-1">Boost your listing for more visibility</p>
+          <p className="text-sm font-bold text-neutral-900 mb-1">Agents &amp; landlords — get more eyes here</p>
           <p className="text-xs text-neutral-500 leading-relaxed">
-            If you have a property listed, a promotional package puts it in front of more people —
-            including tenants actively looking to swap in your area.
+            Boost your listing to appear as a &quot;Similar Property&quot; on Tenant Switch pages.
+            Tenants looking to move are actively browsing here — a great opportunity to fill your space.
           </p>
           <Link href="/host/boost"
             className="inline-flex items-center gap-1.5 mt-3 text-xs font-semibold text-bt-primary hover:underline">
@@ -367,9 +368,10 @@ function TenantSwitchContent() {
     });
   };
 
-  const listings       = data?.listings ?? [];
-  const stateWide      = data?.stateWideResults ?? [];
-  const noResults      = !isLoading && listings.length === 0;
+  const listings          = data?.listings ?? [];
+  const stateWide         = data?.stateWideResults ?? [];
+  const boostedSimilar    = data?.boostedSimilar ?? [];
+  const noResults         = !isLoading && listings.length === 0;
   const hasLocationFilter = !!(filterState || filterLga);
 
   return (
@@ -503,6 +505,37 @@ function TenantSwitchContent() {
                     <TenantSwitchCard listing={l} onUnlock={handleUnlock} />
                   </div>
                 ))}
+              </div>
+            )}
+
+            {/* Boosted agent/landlord similar properties */}
+            {!isLoading && boostedSimilar.length > 0 && (
+              <div className="mt-10">
+                <div className="flex items-center gap-3 mb-5">
+                  <div className="flex-1 h-px bg-neutral-200" />
+                  <div className="flex items-center gap-2 shrink-0">
+                    <ShieldCheck className="w-4 h-4 text-bt-secondary" />
+                    <p className="text-sm font-bold text-neutral-700">
+                      Similar Properties by Agents &amp; Landlords
+                      {(filterState || filterLga) && (
+                        <span className="font-normal text-neutral-400"> in {filterLga || filterState}</span>
+                      )}
+                    </p>
+                  </div>
+                  <div className="flex-1 h-px bg-neutral-200" />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+                  {boostedSimilar.map((p: any) => (
+                    <div key={p._id} className="relative">
+                      {/* Agent / Landlord tag */}
+                      <div className="absolute top-3 left-3 z-10 flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/95 backdrop-blur-sm border border-neutral-100 shadow-sm text-[11px] font-bold text-neutral-700">
+                        <ShieldCheck className="w-3 h-3 text-bt-primary" />
+                        {p.host?.role === "landlord" ? "Landlord" : "Agent"}
+                      </div>
+                      <PropertyCard property={p} />
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </>

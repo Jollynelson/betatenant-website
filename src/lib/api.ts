@@ -264,6 +264,7 @@ export const tenantSwitchApi = {
     return {
       listings: docs.map(mapTenantListing),
       stateWideResults: (res.stateWideResults ?? []).map(mapTenantListing),
+      boostedSimilar: (res.boostedSimilar ?? []).map(mapProperty),
       totalPages: res.listings?.totalPages ?? 1,
       totalDocs: res.listings?.totalDocs ?? docs.length,
       page,
