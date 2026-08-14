@@ -214,3 +214,76 @@ export const propertyApi = {
     };
   },
 };
+
+// ── Tenant Switch ─────────────────────────────────────────────────────────────
+export function mapTenantListing(raw: any) {
+  const host = raw.userId ?? {};
+  return {
+    _id: String(raw._id),
+    title: raw.houseName || `${raw.roomCount ?? 1} Bedroom in ${raw.propertyLGA}`,
+    description: raw.houseDescription ?? "",
+    apartmentType: raw.apartmentType ?? "",
+    state: raw.propertyState ?? "",
+    lga: raw.propertyLGA ?? "",
+    address: raw.streetAddress ?? "",
+    closeLandmark: raw.closeLandmark ?? "",
+    price: raw.listingFee ?? 0,
+    cautionFee: raw.cautionFee ?? 0,
+    bedrooms: raw.roomCount ?? 0,
+    bathrooms: raw.bathroomCount ?? 0,
+    photos: Array.isArray(raw.photoURLs) && raw.photoURLs.length > 0
+      ? raw.photoURLs.map((u: string) => cdnImg(u, 800))
+      : ["/placeholder-property.jpg"],
+    status: raw.propertyStatus ?? "available",
+    moveOutDate: raw.moveOutDate ?? null,
+    tenantGender: raw.tenantGender ?? "any",
+    isUnlocked: raw.isUnlocked ?? false,
+    unlockFee: raw.unlockFee ?? 500,
+    unlockedAt: raw.unlockedAt ?? null,
+    host: {
+      _id: String(host._id ?? ""),
+      firstName: host.firstName ?? "",
+      lastName: host.lastName ?? "",
+      email: host.email ?? "",
+      phone: host.phoneNumber ?? "",
+      avatar: host.profilePic ?? undefined,
+      role: (host.role ?? "user") as string,
+    },
+    createdAt: raw.createdAt ?? "",
+  };
+}
+
+export const tenantSwitchApi = {
+  listings: async (page = 1, limit = 20) => {
+    const res = await api.get<any>(`/v1/user/tenant-switch/listings/${page}/${limit}`);
+    const docs = res.listings?.docs ?? [];
+    return {
+      listings: docs.map(mapTenantListing),
+      totalPages: res.listings?.totalPages ?? 1,
+      totalDocs: res.listings?.totalDocs ?? docs.length,
+      page,
+    };
+  },
+
+  myListing: async () => {
+    const res = await api.get<any>("/v1/user/tenant-switch/my-listing");
+    return res.listing ? mapTenantListing(res.listing) : null;
+  },
+
+  create: (data: {
+    apartmentType: string; houseName?: string; houseDescription: string;
+    propertyState: string; propertyLGA: string; streetAddress: string;
+    closeLandmark: string; roomCount: number; bathroomCount: number;
+    livingRoomCount: number; listingFee: number; cautionFee: number;
+    amenities: string[]; houseRules: string[]; photoURLs: string[];
+    moveOutDate: string;
+  }) => api.post<any>("/v1/user/tenant-switch/create", data),
+
+  unlock: (propertyId: string, paymentReference?: string) =>
+    api.post<any>(`/v1/user/tenant-switch/unlock/${propertyId}`, { paymentReference }),
+
+  myUnlocks: async () => {
+    const res = await api.get<any>("/v1/user/tenant-switch/my-unlocks");
+    return (res.unlocks ?? []).map(mapTenantListing);
+  },
+};
