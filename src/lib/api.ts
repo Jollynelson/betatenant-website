@@ -282,7 +282,7 @@ export const tenantSwitchApi = {
     closeLandmark: string; roomCount: number; bathroomCount: number;
     livingRoomCount: number; listingFee: number; cautionFee: number;
     amenities: string[]; houseRules: string[]; photoURLs: string[];
-    moveOutDate: string;
+    moveOutDate: string; tenantGender?: string;
   }) => api.post<any>("/v1/user/tenant-switch/create", data),
 
   unlock: (propertyId: string, paymentReference?: string) =>
