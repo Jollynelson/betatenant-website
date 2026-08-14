@@ -159,7 +159,7 @@ export function Navbar() {
 
   return (
     <header className={cn(
-      "fixed top-0 left-0 right-0 z-50 bg-white transition-shadow duration-200",
+      "fixed top-0 left-0 right-0 z-50 bg-white transition-shadow duration-200 pt-[env(safe-area-inset-top,0px)]",
       scrolled ? "shadow-[0_1px_3px_rgba(0,0,0,0.08)]" : "shadow-none border-b border-transparent"
     )}>
       <nav className="max-w-[1360px] mx-auto px-5 lg:px-10">
@@ -362,7 +362,8 @@ export function Navbar() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.15 }}
-              className="fixed top-[72px] left-0 right-0 bottom-0 bg-white z-50 lg:hidden overflow-y-auto"
+              className="fixed left-0 right-0 bottom-0 bg-white z-50 lg:hidden overflow-y-auto"
+              style={{ top: "calc(72px + env(safe-area-inset-top, 0px))" }}
               style={{ paddingBottom: "calc(4rem + env(safe-area-inset-bottom) + 1rem)" }}
             >
               <div className="px-5 py-5 space-y-1">

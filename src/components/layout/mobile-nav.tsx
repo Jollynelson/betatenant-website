@@ -76,21 +76,29 @@ export function MobileNav() {
 
   // Track the visual viewport so the nav always sits just above the iOS Safari
   // address bar — even on pages that have a fixed top navbar (which causes iOS
-  // to use the layout viewport instead of the visual viewport for fixed elements).
+  // to use the layout viewport for fixed elements instead of the visual viewport).
+  //
+  // KEY: use document.documentElement.clientHeight (the Initial Containing Block,
+  // constant) NOT window.innerHeight (equals vv.height on iOS Safari — always 0 diff).
+  // ICB height stays fixed at screen height; vv.height shrinks when browser chrome shows.
   useEffect(() => {
     const vv = window.visualViewport;
     if (!vv) return;
     const sync = () => {
       if (!navRef.current) return;
-      const offset = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+      const icbHeight = document.documentElement.clientHeight;
+      const offset = Math.max(0, icbHeight - vv.height - vv.offsetTop);
       navRef.current.style.bottom = `${offset}px`;
     };
     vv.addEventListener("resize", sync, { passive: true });
     vv.addEventListener("scroll", sync, { passive: true });
+    // Also re-sync on orientation change (ICB height changes on rotate)
+    window.addEventListener("orientationchange", sync);
     sync();
     return () => {
       vv.removeEventListener("resize", sync);
       vv.removeEventListener("scroll", sync);
+      window.removeEventListener("orientationchange", sync);
     };
   }, []);
 
