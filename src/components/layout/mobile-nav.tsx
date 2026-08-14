@@ -74,25 +74,36 @@ export function MobileNav() {
   const [notifCount, setNotifCount] = useState(0);
   const navRef = useRef<HTMLElement>(null);
 
-  // Track the visual viewport so the nav always sits just above the iOS Safari
-  // address bar — even on pages that have a fixed top navbar (which causes iOS
-  // to use the layout viewport for fixed elements instead of the visual viewport).
+  // Pin the nav above the iOS Safari browser toolbar.
   //
-  // KEY: use document.documentElement.clientHeight (the Initial Containing Block,
-  // constant) NOT window.innerHeight (equals vv.height on iOS Safari — always 0 diff).
-  // ICB height stays fixed at screen height; vv.height shrinks when browser chrome shows.
+  // The problem: on pages that have a fixed top <Navbar>, iOS WebKit positions
+  // fixed elements relative to the LAYOUT viewport (full screen height), so
+  // `bottom: 0` ends up behind the Safari bottom bar.
+  //
+  // The fix: use window.screen.height as the stable baseline.
+  // - window.innerHeight    = vv.height on iOS Safari → always 0 diff → useless
+  // - document.documentElement.clientHeight = same thing → also 0 diff
+  // - window.screen.height  = physical screen CSS-px height → CONSTANT
+  //
+  // offset = screen.height - vv.height = how much the Safari chrome occupies
+  // Setting bottom = offset pushes the nav above the chrome.
   useEffect(() => {
     const vv = window.visualViewport;
     if (!vv) return;
+
+    // Capture screen height once — it only changes on orientation flip
+    let screenH = window.screen.height;
+
     const sync = () => {
       if (!navRef.current) return;
-      const icbHeight = document.documentElement.clientHeight;
-      const offset = Math.max(0, icbHeight - vv.height - vv.offsetTop);
+      // Re-read screen.height after orientation change
+      screenH = window.screen.height;
+      const offset = Math.max(0, screenH - vv.height - vv.offsetTop);
       navRef.current.style.bottom = `${offset}px`;
     };
+
     vv.addEventListener("resize", sync, { passive: true });
     vv.addEventListener("scroll", sync, { passive: true });
-    // Also re-sync on orientation change (ICB height changes on rotate)
     window.addEventListener("orientationchange", sync);
     sync();
     return () => {
