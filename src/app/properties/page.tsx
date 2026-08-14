@@ -195,6 +195,7 @@ function PropertiesContent() {
           <div className="flex items-center gap-2 py-2.5 overflow-x-auto no-scrollbar">
             <FilterPill
               label={locationLabel}
+              shortLabel={filters.lga || filters.state || undefined}
               active={activePanel === "location"}
               hasValue={!!(filters.state || filters.lga)}
               onClick={() => togglePanel("location")}
@@ -674,8 +675,8 @@ function PropertiesContent() {
   );
 }
 
-function FilterPill({ label, active, hasValue, onClick }: {
-  label: string; active: boolean; hasValue: boolean; onClick: () => void;
+function FilterPill({ label, shortLabel, active, hasValue, onClick }: {
+  label: string; shortLabel?: string; active: boolean; hasValue: boolean; onClick: () => void;
 }) {
   return (
     <button
@@ -687,7 +688,14 @@ function FilterPill({ label, active, hasValue, onClick }: {
             "bg-white border-neutral-200 text-neutral-700 hover:border-neutral-300"
       )}
     >
-      <span className="max-w-[140px] truncate">{label}</span>
+      {shortLabel ? (
+        <>
+          <span className="sm:hidden max-w-[120px] truncate">{shortLabel}</span>
+          <span className="hidden sm:inline max-w-[140px] truncate">{label}</span>
+        </>
+      ) : (
+        <span className="max-w-[140px] truncate">{label}</span>
+      )}
       <ChevronDown className={cn("w-3.5 h-3.5 shrink-0 transition-transform", active && "rotate-180")} />
     </button>
   );
