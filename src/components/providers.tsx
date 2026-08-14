@@ -183,7 +183,7 @@ function AppShell({ children }: { children: React.ReactNode }) {
       <main className={
         isPropertyPage
           ? "flex-1 lg:pt-[78px]"
-          : "flex-1 pt-[72px] lg:pt-[78px] pb-[calc(6.25rem+env(safe-area-inset-bottom))] lg:pb-0"
+          : "flex-1 pt-[72px] lg:pt-[78px] pb-[calc(4rem+env(safe-area-inset-bottom))] lg:pb-0"
       }>
         {children}
       </main>

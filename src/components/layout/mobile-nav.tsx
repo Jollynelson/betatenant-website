@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -72,6 +72,27 @@ export function MobileNav() {
   const { token, user } = useAuthStore();
   const [unread, setUnread] = useState(0);
   const [notifCount, setNotifCount] = useState(0);
+  const navRef = useRef<HTMLElement>(null);
+
+  // Track the visual viewport so the nav always sits just above the iOS Safari
+  // address bar — even on pages that have a fixed top navbar (which causes iOS
+  // to use the layout viewport instead of the visual viewport for fixed elements).
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const sync = () => {
+      if (!navRef.current) return;
+      const offset = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+      navRef.current.style.bottom = `${offset}px`;
+    };
+    vv.addEventListener("resize", sync, { passive: true });
+    vv.addEventListener("scroll", sync, { passive: true });
+    sync();
+    return () => {
+      vv.removeEventListener("resize", sync);
+      vv.removeEventListener("scroll", sync);
+    };
+  }, []);
 
   const role = user?.role ?? "user";
   const isAgentOrLandlord = role === "agent" || role === "landlord";
@@ -136,10 +157,10 @@ export function MobileNav() {
   const navItems = isAgentOrLandlord ? agentItems : tenantItems;
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-white border-t border-neutral-100">
+    <nav ref={navRef} className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-white border-t border-neutral-100">
       <div
         className="flex items-center justify-around px-1"
-        style={{ paddingBottom: "calc(3.25rem + env(safe-area-inset-bottom))", paddingTop: "0.5rem" }}
+        style={{ paddingBottom: "max(0.625rem, env(safe-area-inset-bottom))", paddingTop: "0.5rem" }}
       >
         {navItems.map((item) => {
           const isActive =
