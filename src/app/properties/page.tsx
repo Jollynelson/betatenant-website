@@ -407,7 +407,7 @@ function PropertiesContent() {
                                 : "bg-neutral-50 text-neutral-700 hover:bg-neutral-100"
                             )}
                           >
-                            <span className="truncate flex-1">Any area</span>
+                            <span className="truncate flex-1">All {filters.state}</span>
                             {!filters.lga && <Check className="w-3.5 h-3.5 ml-auto shrink-0" />}
                           </button>
                           {selectedStateLGAs.map((lga) => (
