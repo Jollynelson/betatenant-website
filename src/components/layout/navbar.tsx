@@ -363,8 +363,7 @@ export function Navbar() {
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.15 }}
               className="fixed left-0 right-0 bottom-0 bg-white z-50 lg:hidden overflow-y-auto"
-              style={{ top: "calc(72px + env(safe-area-inset-top, 0px))" }}
-              style={{ paddingBottom: "calc(4rem + env(safe-area-inset-bottom) + 1rem)" }}
+              style={{ top: "calc(72px + env(safe-area-inset-top, 0px))", paddingBottom: "calc(4rem + env(safe-area-inset-bottom) + 1rem)" }}
             >
               <div className="px-5 py-5 space-y-1">
                 {/* Only show nav links when logged out — logged-in users use the bottom nav */}
