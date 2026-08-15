@@ -34,25 +34,29 @@ function PropertiesContent() {
   const [page, setPage] = useState(() => Number(searchParams.get("page") || 1));
   const [sort, setSort] = useState<SortOption>((searchParams.get("sort") as SortOption) || "newest");
   const panelRef = useRef<HTMLDivElement>(null);
+  // Compute initial bottom offset synchronously so the footer is correctly
+  // positioned even before the first visualViewport resize event fires.
+  const getBottomOffset = () =>
+    typeof window !== "undefined" && window.visualViewport
+      ? Math.max(0, window.screen.height - window.visualViewport.height - (window.visualViewport.offsetTop ?? 0))
+      : 0;
   const [filterFooterPad, setFilterFooterPad] = useState(0);
   useScrollRestore("/properties");
 
-  // Same visualViewport fix as MobileNav — keeps the "Show results" footer
-  // above the iOS Safari browser toolbar when the filter sheet is open.
+  // Keep the "Show results" footer above the iOS Safari browser toolbar.
   useEffect(() => {
+    // Set immediately on mount (covers the case where panel opens while toolbar is already showing)
+    setFilterFooterPad(getBottomOffset());
     const vv = window.visualViewport;
     if (!vv) return;
-    const sync = () => {
-      const offset = Math.max(0, window.screen.height - vv.height - vv.offsetTop);
-      setFilterFooterPad(offset);
-    };
+    const sync = () => setFilterFooterPad(getBottomOffset());
     vv.addEventListener("resize", sync, { passive: true });
     window.addEventListener("orientationchange", sync);
-    sync();
     return () => {
       vv.removeEventListener("resize", sync);
       window.removeEventListener("orientationchange", sync);
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const [filters, setFilters] = useState({
@@ -585,7 +589,7 @@ function PropertiesContent() {
               {/* Mobile-only sticky footer — replaces bottom nav */}
               <div
                 className="sm:hidden shrink-0 px-5 pt-3 border-t border-neutral-100 bg-white"
-                style={{ paddingBottom: `${Math.max(16, filterFooterPad)}px` }}
+                style={{ paddingBottom: `${Math.max(16, filterFooterPad || getBottomOffset())}px` }}
               >
                 <div className="flex items-center gap-3 py-1">
                   <button
