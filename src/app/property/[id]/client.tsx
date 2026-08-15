@@ -237,24 +237,37 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
             }
           }}
         >
-          {/* Stack all photos — show active via opacity, avoids image re-fetch on swipe */}
-          {property.photos.slice(0, 8).map((src: string, i: number) => (
-            <Image
-              key={src}
-              src={cdnImg(src, 1080)}
-              alt={property.title}
-              fill
-              className={cn("object-cover transition-opacity duration-150",
-                i === currentImage ? "opacity-100" : "opacity-0")}
-              priority={i === 0}
-              loading={i === 0 ? "eager" : "lazy"}
+          {/* Video-only: show fullscreen video player */}
+          {property.photos.filter((p: string) => !p.includes("placeholder")).length === 0 && (property.videos ?? []).length > 0 ? (
+            <video
+              src={(property.videos ?? [])[0]}
+              className="absolute inset-0 w-full h-full object-cover"
+              controls
+              playsInline
+              poster=""
             />
-          ))}
-          <button
-            className="absolute inset-0 w-full h-full"
-            onClick={() => openLightbox(currentImage)}
-            aria-label="View full image"
-          />
+          ) : (
+            <>
+              {/* Stack all photos — show active via opacity, avoids image re-fetch on swipe */}
+              {property.photos.slice(0, 8).map((src: string, i: number) => (
+                <Image
+                  key={src}
+                  src={cdnImg(src, 1080)}
+                  alt={property.title}
+                  fill
+                  className={cn("object-cover transition-opacity duration-150",
+                    i === currentImage ? "opacity-100" : "opacity-0")}
+                  priority={i === 0}
+                  loading={i === 0 ? "eager" : "lazy"}
+                />
+              ))}
+              <button
+                className="absolute inset-0 w-full h-full"
+                onClick={() => openLightbox(currentImage)}
+                aria-label="View full image"
+              />
+            </>
+          )}
 
           {/* Dark gradient at top for button legibility */}
           <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/50 to-transparent pointer-events-none" />
@@ -625,6 +638,17 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
 
       {/* Desktop gallery */}
       <div className="hidden md:block max-w-[1360px] mx-auto px-5 lg:px-10 pt-6">
+        {/* Video-only desktop view */}
+        {property.photos.filter((p: string) => !p.includes("placeholder")).length === 0 && (property.videos ?? []).length > 0 ? (
+          <div className="rounded-2xl overflow-hidden h-[460px] bg-neutral-900">
+            <video
+              src={(property.videos ?? [])[0]}
+              className="w-full h-full object-contain"
+              controls
+              playsInline
+            />
+          </div>
+        ) : (
         <div className="grid grid-cols-4 grid-rows-2 gap-2 rounded-2xl overflow-hidden h-[460px]">
           <button
             className="col-span-2 row-span-2 relative group cursor-pointer text-left"
@@ -673,6 +697,8 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
             </button>
           </div>
         )}
+        </div>
+        )} {/* end photo/video conditional */}
         {/* Video button under desktop gallery */}
         {property.videos && property.videos.length > 0 && (
           <div className="mt-4 flex items-center gap-3">

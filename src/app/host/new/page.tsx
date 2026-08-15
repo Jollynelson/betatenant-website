@@ -602,7 +602,8 @@ function StepCreate({
     const readyPhotos = photoURLs.filter((p) => p.url && !p.error && p.progress === undefined);
     if (uploadingCount > 0) return setError("Please wait for all uploads to finish.");
     if (hasUploadErrors) return setError("Some files failed to upload. Retry or remove them.");
-    if (readyPhotos.length < 3) return setError("Please upload at least 3 photos.");
+    const readyVideos2 = videoURLs.filter((v) => v.url && !v.error && v.progress === undefined);
+    if (readyPhotos.length < 1 && readyVideos2.length < 1) return setError("Please upload at least 1 photo or 1 video.");
 
     const readyVideos = videoURLs.filter((v) => v.url && !v.error && v.progress === undefined);
 
@@ -866,12 +867,12 @@ function StepCreate({
         <div className="flex flex-wrap gap-8">
           <div className="basis-64 shrink-0">
             <h2 className="font-semibold text-neutral-900">Photos</h2>
-            <p className="text-sm text-neutral-500 mt-1">At least 5 photos required. Images are auto-compressed for fast upload.</p>
+            <p className="text-sm text-neutral-500 mt-1">Upload photos, a video, or both. At least 1 photo or video is required.</p>
           </div>
           <div className="flex-1 min-w-64">
             <div className="flex items-center justify-between mb-3">
               <p className="text-sm font-medium text-neutral-700">
-                Photos ({photoURLs.filter(p => p.url && !p.error).length}/5 minimum)
+                Photos ({photoURLs.filter(p => p.url && !p.error).length}) — or upload a video below
                 <span className="text-red-500"> *</span>
               </p>
               {isImageDeleting && <span className="text-xs text-neutral-400 flex items-center gap-1"><Loader2 className="w-3 h-3 animate-spin" /> Removing…</span>}

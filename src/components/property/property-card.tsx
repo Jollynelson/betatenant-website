@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Heart, BedDouble, Bath, BadgeCheck } from "lucide-react";
+import { Heart, BedDouble, Bath, BadgeCheck, PlayCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { isFavorited, toggleFavorite } from "@/lib/favorites";
 import { cdnThumb, propertyApi } from "@/lib/api";
@@ -44,9 +44,13 @@ export function PropertyCard({ property, variant = "default", onRemove }: Proper
     if (!nowLiked && onRemove) onRemove(property._id);
   };
 
-  const typeLabel = APPT_LABELS[property.apartmentType] || property.apartmentType;
-  const agentName = `${property.host.firstName} ${property.host.lastName}`.trim();
-  const photos    = property.photos.length > 0 ? property.photos : ["/placeholder-property.jpg"];
+  const typeLabel   = APPT_LABELS[property.apartmentType] || property.apartmentType;
+  const agentName   = `${property.host.firstName} ${property.host.lastName}`.trim();
+  const hasPhotos   = property.photos.length > 0 && !property.photos[0].includes("placeholder");
+  const hasVideos   = (property.videos ?? []).length > 0;
+  // For cards: use photos if available, otherwise use video thumbnail via poster attribute
+  const photos      = hasPhotos ? property.photos : ["/placeholder-property.jpg"];
+  const videoOnlyMode = !hasPhotos && hasVideos;
 
   // Prefetch property detail on hover/touch so it loads instantly when tapped
   const prefetchProperty = () => {
@@ -67,14 +71,16 @@ export function PropertyCard({ property, variant = "default", onRemove }: Proper
         className="flex gap-4 p-3.5 rounded-2xl bg-white border border-neutral-100 hover:border-neutral-200 hover:shadow-sm transition-all group"
       >
         <div className="relative w-[120px] h-[90px] rounded-xl overflow-hidden shrink-0 bg-neutral-100">
-          <Image
-            src={cdnThumb(photos[0])}
-            alt={property.title}
-            fill
-            className="object-cover"
-            sizes="120px"
-            loading="lazy"
-          />
+          {videoOnlyMode ? (
+            <>
+              <video src={(property.videos ?? [])[0]} className="absolute inset-0 w-full h-full object-cover" muted playsInline preload="metadata" />
+              <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                <PlayCircle className="w-6 h-6 text-white drop-shadow" />
+              </div>
+            </>
+          ) : (
+            <Image src={cdnThumb(photos[0])} alt={property.title} fill className="object-cover" sizes="120px" loading="lazy" />
+          )}
           {/* Promotion badge on horizontal card */}
           {(property.promotionPackage || property.isPromoted) && (
             <span className={cn(
@@ -143,22 +149,42 @@ export function PropertyCard({ property, variant = "default", onRemove }: Proper
             }
           }}
         >
-          {/* Render all images stacked; only show current via opacity — avoids re-fetch */}
-          {photos.slice(0, 5).map((src, i) => (
-            <Image
-              key={src}
-              src={cdnThumb(src)}
-              alt={property.title}
-              fill
-              className={cn(
-                "object-cover transition-opacity duration-150",
-                i === imgIdx ? "opacity-100" : "opacity-0 pointer-events-none"
-              )}
-              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-              loading={i === 0 ? "eager" : "lazy"}
-              fetchPriority={i === 0 ? "high" : "low"}
-            />
-          ))}
+          {/* Video-only: show muted autoplay preview or thumbnail with play badge */}
+          {videoOnlyMode ? (
+            <>
+              <video
+                src={(property.videos ?? [])[0]}
+                className="absolute inset-0 w-full h-full object-cover"
+                muted
+                playsInline
+                preload="metadata"
+                // poster shows first frame as thumbnail
+              />
+              <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                <PlayCircle className="w-10 h-10 text-white drop-shadow-lg" />
+              </div>
+              <div className="absolute bottom-2 left-2 flex items-center gap-1 px-2 py-0.5 rounded-md bg-black/60 text-white text-[10px] font-semibold">
+                <PlayCircle className="w-3 h-3" /> Video
+              </div>
+            </>
+          ) : (
+            /* Render all images stacked; only show current via opacity — avoids re-fetch */
+            photos.slice(0, 5).map((src, i) => (
+              <Image
+                key={src}
+                src={cdnThumb(src)}
+                alt={property.title}
+                fill
+                className={cn(
+                  "object-cover transition-opacity duration-150",
+                  i === imgIdx ? "opacity-100" : "opacity-0 pointer-events-none"
+                )}
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                loading={i === 0 ? "eager" : "lazy"}
+                fetchPriority={i === 0 ? "high" : "low"}
+              />
+            ))
+          )}
 
           {/* Badges */}
           {(property.host?.isVerified || property.promotionPackage || property.isPromoted) && (
