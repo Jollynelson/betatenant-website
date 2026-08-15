@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -72,46 +72,7 @@ export function MobileNav() {
   const { token, user } = useAuthStore();
   const [unread, setUnread] = useState(0);
   const [notifCount, setNotifCount] = useState(0);
-  const navRef = useRef<HTMLElement>(null);
 
-  // Pin the nav above the iOS Safari browser toolbar.
-  //
-  // The problem: on pages that have a fixed top <Navbar>, iOS WebKit positions
-  // fixed elements relative to the LAYOUT viewport (full screen height), so
-  // `bottom: 0` ends up behind the Safari bottom bar.
-  //
-  // The fix: use window.screen.height as the stable baseline.
-  // - window.innerHeight    = vv.height on iOS Safari → always 0 diff → useless
-  // - document.documentElement.clientHeight = same thing → also 0 diff
-  // - window.screen.height  = physical screen CSS-px height → CONSTANT
-  //
-  // offset = screen.height - vv.height = how much the Safari chrome occupies
-  // Setting bottom = offset pushes the nav above the chrome.
-  useEffect(() => {
-    const vv = window.visualViewport;
-    if (!vv) return;
-
-    // Capture screen height once — it only changes on orientation flip
-    let screenH = window.screen.height;
-
-    const sync = () => {
-      if (!navRef.current) return;
-      // Re-read screen.height after orientation change
-      screenH = window.screen.height;
-      const offset = Math.max(0, screenH - vv.height - vv.offsetTop);
-      navRef.current.style.bottom = `${offset}px`;
-    };
-
-    vv.addEventListener("resize", sync, { passive: true });
-    vv.addEventListener("scroll", sync, { passive: true });
-    window.addEventListener("orientationchange", sync);
-    sync();
-    return () => {
-      vv.removeEventListener("resize", sync);
-      vv.removeEventListener("scroll", sync);
-      window.removeEventListener("orientationchange", sync);
-    };
-  }, []);
 
   const role = user?.role ?? "user";
   const isAgentOrLandlord = role === "agent" || role === "landlord";
@@ -176,7 +137,7 @@ export function MobileNav() {
   const navItems = isAgentOrLandlord ? agentItems : tenantItems;
 
   return (
-    <nav ref={navRef} className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-white border-t border-neutral-100">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-white border-t border-neutral-100">
       <div
         className="flex items-center justify-around px-1"
         style={{ paddingBottom: "max(0.625rem, env(safe-area-inset-bottom))", paddingTop: "0.5rem" }}
