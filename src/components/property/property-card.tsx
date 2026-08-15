@@ -73,7 +73,13 @@ export function PropertyCard({ property, variant = "default", onRemove }: Proper
         <div className="relative w-[120px] h-[90px] rounded-xl overflow-hidden shrink-0 bg-neutral-100">
           {videoOnlyMode ? (
             <>
-              <video src={(property.videos ?? [])[0]} className="absolute inset-0 w-full h-full object-cover" muted playsInline preload="metadata" />
+              <video
+                src={(property.videos ?? [])[0]}
+                className="absolute inset-0 w-full h-full object-cover"
+                muted playsInline preload="none"
+                poster={property.photos?.[0] && !property.photos[0].includes("placeholder")
+                  ? property.photos[0] : undefined}
+              />
               <div className="absolute inset-0 flex items-center justify-center bg-black/20">
                 <PlayCircle className="w-6 h-6 text-white drop-shadow" />
               </div>
