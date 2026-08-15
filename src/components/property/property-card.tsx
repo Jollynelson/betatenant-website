@@ -157,8 +157,10 @@ export function PropertyCard({ property, variant = "default", onRemove }: Proper
                 className="absolute inset-0 w-full h-full object-cover"
                 muted
                 playsInline
-                preload="metadata"
-                // poster shows first frame as thumbnail
+                preload="none"
+                // poster = first photo if available (video thumbnail stored there by import)
+                poster={property.photos?.[0] && !property.photos[0].includes("placeholder")
+                  ? property.photos[0] : undefined}
               />
               <div className="absolute inset-0 flex items-center justify-center bg-black/20">
                 <PlayCircle className="w-10 h-10 text-white drop-shadow-lg" />
