@@ -649,56 +649,57 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
             />
           </div>
         ) : (
-        <div className="grid grid-cols-4 grid-rows-2 gap-2 rounded-2xl overflow-hidden h-[460px]">
-          <button
-            className="col-span-2 row-span-2 relative group cursor-pointer text-left"
-            onClick={() => openLightbox(0)}
-            aria-label="View photo 1"
-          >
-            <Image src={cdnImg(property.photos[0] || "/placeholder-property.jpg", 1200)} alt={property.title} fill className="object-cover group-hover:scale-[1.02] transition-transform duration-500" sizes="(max-width: 768px) 100vw, 50vw" priority />
-            {property.host?.isVerified && (
-              <div className="absolute top-4 left-4 px-2.5 py-1 rounded-lg bg-bt-success text-white text-xs font-bold flex items-center gap-1.5 shadow-md">
-                <BadgeCheck className="w-3.5 h-3.5" /> Verified Listing
-              </div>
-            )}
-            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
-              <ZoomIn className="w-8 h-8 text-white drop-shadow-lg" />
-            </div>
-          </button>
-          {property.photos.slice(1, 5).map((photo: string, i: number) => (
+          <>
+          <div className="grid grid-cols-4 grid-rows-2 gap-2 rounded-2xl overflow-hidden h-[460px]">
             <button
-              key={i}
-              className="relative group cursor-pointer overflow-hidden"
-              onClick={() => openLightbox(i + 1)}
-              aria-label={`View photo ${i + 2}`}
+              className="col-span-2 row-span-2 relative group cursor-pointer text-left"
+              onClick={() => openLightbox(0)}
+              aria-label="View photo 1"
             >
-              <Image src={cdnImg(photo, 600)} alt={`Photo ${i + 2}`} fill className="object-cover group-hover:scale-105 transition-transform duration-500" sizes="(max-width: 768px) 50vw, 25vw" />
-              {i === 3 && property.photos.length > 5 ? (
-                <div className="absolute inset-0 bg-black/50 flex items-center justify-center group-hover:bg-black/60 transition-colors">
-                  <span className="text-white font-semibold text-sm">+{property.photos.length - 5} photos</span>
-                </div>
-              ) : (
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/15 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
-                  <ZoomIn className="w-6 h-6 text-white drop-shadow-lg" />
+              <Image src={cdnImg(property.photos[0] || "/placeholder-property.jpg", 1200)} alt={property.title} fill className="object-cover group-hover:scale-[1.02] transition-transform duration-500" sizes="(max-width: 768px) 100vw, 50vw" priority />
+              {property.host?.isVerified && (
+                <div className="absolute top-4 left-4 px-2.5 py-1 rounded-lg bg-bt-success text-white text-xs font-bold flex items-center gap-1.5 shadow-md">
+                  <BadgeCheck className="w-3.5 h-3.5" /> Verified Listing
                 </div>
               )}
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+                <ZoomIn className="w-8 h-8 text-white drop-shadow-lg" />
+              </div>
             </button>
-          ))}
-        </div>
-        {/* "Show all photos" button */}
-        {property.photos.length > 5 && (
-          <div className="flex justify-end mt-2">
-            <button
-              onClick={() => openLightbox(0)}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-neutral-300 text-sm font-semibold text-neutral-700 bg-white hover:bg-neutral-50 transition-colors"
-            >
-              <ZoomIn className="w-4 h-4" />
-              Show all {property.photos.length} photos
-            </button>
+            {property.photos.slice(1, 5).map((photo: string, i: number) => (
+              <button
+                key={i}
+                className="relative group cursor-pointer overflow-hidden"
+                onClick={() => openLightbox(i + 1)}
+                aria-label={`View photo ${i + 2}`}
+              >
+                <Image src={cdnImg(photo, 600)} alt={`Photo ${i + 2}`} fill className="object-cover group-hover:scale-105 transition-transform duration-500" sizes="(max-width: 768px) 50vw, 25vw" />
+                {i === 3 && property.photos.length > 5 ? (
+                  <div className="absolute inset-0 bg-black/50 flex items-center justify-center group-hover:bg-black/60 transition-colors">
+                    <span className="text-white font-semibold text-sm">+{property.photos.length - 5} photos</span>
+                  </div>
+                ) : (
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/15 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+                    <ZoomIn className="w-6 h-6 text-white drop-shadow-lg" />
+                  </div>
+                )}
+              </button>
+            ))}
           </div>
+          {/* "Show all photos" button */}
+          {property.photos.length > 5 && (
+            <div className="flex justify-end mt-2">
+              <button
+                onClick={() => openLightbox(0)}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-neutral-300 text-sm font-semibold text-neutral-700 bg-white hover:bg-neutral-50 transition-colors"
+              >
+                <ZoomIn className="w-4 h-4" />
+                Show all {property.photos.length} photos
+              </button>
+            </div>
+          )}
+          </>
         )}
-        </div>
-        )} {/* end photo/video conditional */}
         {/* Video button under desktop gallery */}
         {property.videos && property.videos.length > 0 && (
           <div className="mt-4 flex items-center gap-3">
