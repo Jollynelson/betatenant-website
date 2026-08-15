@@ -34,7 +34,26 @@ function PropertiesContent() {
   const [page, setPage] = useState(() => Number(searchParams.get("page") || 1));
   const [sort, setSort] = useState<SortOption>((searchParams.get("sort") as SortOption) || "newest");
   const panelRef = useRef<HTMLDivElement>(null);
+  const [filterFooterPad, setFilterFooterPad] = useState(0);
   useScrollRestore("/properties");
+
+  // Same visualViewport fix as MobileNav — keeps the "Show results" footer
+  // above the iOS Safari browser toolbar when the filter sheet is open.
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const sync = () => {
+      const offset = Math.max(0, window.screen.height - vv.height - vv.offsetTop);
+      setFilterFooterPad(offset);
+    };
+    vv.addEventListener("resize", sync, { passive: true });
+    window.addEventListener("orientationchange", sync);
+    sync();
+    return () => {
+      vv.removeEventListener("resize", sync);
+      window.removeEventListener("orientationchange", sync);
+    };
+  }, []);
 
   const [filters, setFilters] = useState({
     state: searchParams.get("state") || "",
@@ -358,7 +377,23 @@ function PropertiesContent() {
                         <h3 className="text-base font-bold text-neutral-900 mb-4 flex items-center gap-2">
                           <MapPin className="w-4 h-4 text-bt-primary" /> Select State
                         </h3>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 max-h-[260px] overflow-y-auto">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 max-h-[260px] sm:max-h-none overflow-y-auto">
+                          {/* All Nigeria option */}
+                          <button
+                            onClick={() => {
+                              setFiltersAndSync({ ...filters, state: "", lga: "" });
+                              setActivePanel(null);
+                            }}
+                            className={cn(
+                              "flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm text-left transition-all col-span-2 sm:col-span-1",
+                              !filters.state
+                                ? "bg-bt-primary/8 border border-bt-primary/30 text-bt-primary font-medium"
+                                : "bg-neutral-50 text-neutral-700 hover:bg-neutral-100"
+                            )}
+                          >
+                            <span className="truncate flex-1">🇳🇬 All Nigeria</span>
+                            {!filters.state && <Check className="w-3.5 h-3.5 ml-auto shrink-0" />}
+                          </button>
                           {NIGERIAN_STATES.map((state) => (
                             <button
                               key={state}
@@ -397,10 +432,13 @@ function PropertiesContent() {
                             <span className="text-neutral-400 font-normal"> · Select city / LGA</span>
                           </h3>
                         </div>
-                        {/* "Any area in [State]" option */}
-                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 max-h-[260px] overflow-y-auto">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 max-h-[260px] sm:max-h-none overflow-y-auto">
+                          {/* All [State] option — auto-closes */}
                           <button
-                            onClick={() => { setFiltersAndSync({ ...filters, lga: "" }); }}
+                            onClick={() => {
+                              setFiltersAndSync({ ...filters, lga: "" });
+                              setActivePanel(null);
+                            }}
                             className={cn(
                               "flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm text-left transition-all",
                               !filters.lga
@@ -414,7 +452,10 @@ function PropertiesContent() {
                           {selectedStateLGAs.map((lga) => (
                             <button
                               key={lga}
-                              onClick={() => setFiltersAndSync({ ...filters, lga: filters.lga === lga ? "" : lga })}
+                              onClick={() => {
+                                setFiltersAndSync({ ...filters, lga: filters.lga === lga ? "" : lga });
+                                setActivePanel(null); // auto-close on selection
+                              }}
                               className={cn(
                                 "flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm text-left transition-all",
                                 filters.lga === lga
@@ -444,7 +485,10 @@ function PropertiesContent() {
                       {APARTMENT_TYPES.map((type) => (
                         <button
                           key={type.value}
-                          onClick={() => setFiltersAndSync({ ...filters, apartmentType: filters.apartmentType === type.value ? "" : type.value })}
+                          onClick={() => {
+                            setFiltersAndSync({ ...filters, apartmentType: filters.apartmentType === type.value ? "" : type.value });
+                            setActivePanel(null); // auto-close on mobile
+                          }}
                           className={cn(
                             "flex items-center gap-2.5 px-4 py-3 rounded-xl text-sm text-left transition-all",
                             filters.apartmentType === type.value
@@ -541,7 +585,7 @@ function PropertiesContent() {
               {/* Mobile-only sticky footer — replaces bottom nav */}
               <div
                 className="sm:hidden shrink-0 px-5 pt-3 border-t border-neutral-100 bg-white"
-                style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom))" }}
+                style={{ paddingBottom: `${Math.max(16, filterFooterPad)}px` }}
               >
                 <div className="flex items-center gap-3 py-1">
                   <button
