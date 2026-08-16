@@ -180,7 +180,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
   const tsUnlockFee    = data?.unlockFee ?? 500;
   const tsFreeUnlocks  = data?.freeUnlocksRemaining ?? 0;
   const tsHasListed    = data?.hasListedSpace ?? false;
-  const contactVisible = !isTenantSwitch || isOwner || isUnlockedTs;
+  const contactVisible = isTenantSwitch ? (isOwner || isUnlockedTs) : isLoggedIn;
 
   const handleTsUnlock = async () => {
     if (!isLoggedIn) { router.push(`/login?from=${encodeURIComponent(`/property/${id}`)}`); return; }
