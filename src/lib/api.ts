@@ -93,7 +93,8 @@ export function mapProperty(raw: any) {
     _id: String(raw._id),
     title: raw.houseName || `${raw.roomCount ?? 1} Bedroom in ${raw.propertyLGA}`,
     description: raw.houseDescription ?? "",
-    type: (raw.rentType ?? "rent") as "rent" | "short-let",
+    type: (raw.rentType ?? "rent") as "rent" | "short-let" | "tenant-switch",
+    rentType: raw.rentType ?? "rent",
     apartmentType: raw.apartmentType ?? "",
     state: raw.propertyState ?? "",
     lga: raw.propertyLGA ?? "",
@@ -211,6 +212,10 @@ export const propertyApi = {
       property: mapProperty(res.property),
       similarProperties: (res.similarProperties ?? []).map(mapProperty),
       areYouLoggedIn: res.areYouLoggedIn ?? false,
+      isUnlockedTs: res.isUnlockedTs ?? false,
+      unlockFee: res.unlockFee ?? 500,
+      freeUnlocksRemaining: res.freeUnlocksRemaining ?? 0,
+      hasListedSpace: res.hasListedSpace ?? false,
     };
   },
 };

@@ -2,7 +2,8 @@ export interface Property {
   _id: string;
   title: string;
   description: string;
-  type: "rent" | "short-let";
+  type: "rent" | "short-let" | "tenant-switch";
+  rentType?: "rent" | "short-let" | "tenant-switch";
   apartmentType: string;
   state: string;
   lga: string;

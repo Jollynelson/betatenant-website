@@ -18,7 +18,7 @@ import { BoostModal } from "@/components/boost-modal";
 import { cn } from "@/lib/utils";
 import { isFavorited, toggleFavorite } from "@/lib/favorites";
 import { formatPriceFullNumber, AMENITY_ICONS, amenitySlugToKey } from "@/lib/constants";
-import { propertyApi, api, cdnImg } from "@/lib/api";
+import { propertyApi, tenantSwitchApi, api, cdnImg } from "@/lib/api";
 import { useAuthStore } from "@/lib/auth-store";
 import toast from "react-hot-toast";
 import { PropertyCard } from "@/components/property/property-card";
@@ -60,6 +60,17 @@ function getRuleIcon(rule: string): React.ComponentType<{ className?: string }> 
   return Check;
 }
 
+const PAYSTACK_KEY = process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY ?? "";
+
+function loadPaystack() {
+  if (typeof window === "undefined") return;
+  if (!document.querySelector('script[src*="paystack.co/v2/inline"]')) {
+    const s = document.createElement("script");
+    s.src = "https://js.paystack.co/v2/inline.js";
+    document.head.appendChild(s);
+  }
+}
+
 export default function PropertyDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: paramId } = use(params);
   // Static export serves placeholder.html for all /property/:id URLs.
@@ -87,6 +98,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
   const [reportDetails, setReportDetails] = useState("");
   const [reportSubmitting, setReportSubmitting] = useState(false);
   const [reportDone, setReportDone] = useState(false);
+  const [tsUnlockLoading, setTsUnlockLoading] = useState(false);
 
   const openLightbox = useCallback((index: number) => {
     setLightboxIndex(index);
@@ -149,6 +161,8 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
   const property = data?.property;
   const similarProperties = data?.similarProperties ?? [];
 
+  useEffect(() => { loadPaystack(); }, []);
+
   useEffect(() => {
     if (property?._id) {
       setLiked(isFavorited(property._id));
@@ -160,6 +174,48 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
   const ownerId = property?.host?._id;
   const currentUserId = user?.userId ?? useAuthStore.getState().user?.userId;
   const isOwner = !!(isLoggedIn && ownerId && currentUserId && ownerId === currentUserId);
+
+  const isTenantSwitch = property?.rentType === "tenant-switch";
+  const isUnlockedTs   = data?.isUnlockedTs ?? false;
+  const tsUnlockFee    = data?.unlockFee ?? 500;
+  const tsFreeUnlocks  = data?.freeUnlocksRemaining ?? 0;
+  const tsHasListed    = data?.hasListedSpace ?? false;
+  const contactVisible = !isTenantSwitch || isOwner || isUnlockedTs;
+
+  const handleTsUnlock = async () => {
+    if (!isLoggedIn) { router.push(`/login?from=${encodeURIComponent(`/property/${id}`)}`); return; }
+    if (!property) return;
+    setTsUnlockLoading(true);
+    if (tsFreeUnlocks > 0) {
+      try {
+        await tenantSwitchApi.unlock(property._id);
+        toast.success(`Contact unlocked! ${tsFreeUnlocks - 1} free unlock${tsFreeUnlocks - 1 !== 1 ? "s" : ""} left.`);
+        queryClient.invalidateQueries({ queryKey: ["property", id] });
+      } catch (err: any) { toast.error(err.message || "Failed to unlock"); }
+      setTsUnlockLoading(false);
+      return;
+    }
+    const PaystackPop = (window as any).PaystackPop;
+    if (!PaystackPop) { toast.error("Payment not ready, refresh and try."); setTsUnlockLoading(false); return; }
+    const popup = new PaystackPop();
+    popup.newTransaction({
+      key: PAYSTACK_KEY,
+      email: user?.email ?? "user@betatenant.com",
+      amount: tsUnlockFee * 100,
+      currency: "NGN",
+      metadata: { propertyId: property._id, type: "tenant-switch-unlock" },
+      onSuccess: async (res: any) => {
+        try {
+          await tenantSwitchApi.unlock(property._id, res.reference);
+          toast.success("Contact unlocked!");
+          queryClient.invalidateQueries({ queryKey: ["property", id] });
+        } catch (err: any) { toast.error(err.message || "Unlock failed"); }
+        setTsUnlockLoading(false);
+      },
+      onCancel: () => setTsUnlockLoading(false),
+      onError: () => { toast.error("Payment failed"); setTsUnlockLoading(false); },
+    });
+  };
 
   const handleStatusChange = async (newStatus: string) => {
     if (!property) return;
@@ -578,9 +634,30 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
               {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
             </button>
           </>
+        ) : isTenantSwitch && !contactVisible ? (
+          /* Tenant-switch locked — mobile unlock bar */
+          <div className="flex flex-col flex-1 gap-1.5">
+            <button
+              onClick={handleTsUnlock}
+              disabled={tsUnlockLoading}
+              className="w-full py-3.5 rounded-full bg-bt-primary text-white font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-60"
+            >
+              {tsUnlockLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Lock className="w-5 h-5" />}
+              {tsFreeUnlocks > 0 ? "Unlock Contact (Free)" : `Unlock · ₦${tsUnlockFee.toLocaleString()}`}
+            </button>
+            {tsHasListed ? (
+              <p className="text-center text-[11px] text-bt-primary font-semibold">
+                {tsFreeUnlocks} free unlock{tsFreeUnlocks !== 1 ? "s" : ""} remaining
+              </p>
+            ) : (
+              <Link href="/tenant-switch/list" className="text-center text-[11px] font-semibold text-bt-primary">
+                Post Your Property to Unlock 5 Tenant Listings
+              </Link>
+            )}
+          </div>
         ) : (<>
           {property.host.phone && (
-            isLoggedIn ? (
+            (contactVisible || isLoggedIn) ? (
               <a
                 href={`tel:${property.host.phone}`}
                 className="flex-1 py-3.5 rounded-full border border-neutral-200 flex items-center justify-center gap-2 text-neutral-700 font-bold text-sm"
@@ -599,7 +676,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
             )
           )}
           {property.host.phone && (
-            isLoggedIn ? (
+            (contactVisible || isLoggedIn) ? (
               <a
                 href={`https://wa.me/${property.host.phone.replace(/\D/g, "")}?text=${encodeURIComponent(`Hi, I'm interested in the property listed on Beta Tenant: ${property.title}. Please share more details.`)}`}
                 target="_blank" rel="noopener noreferrer"
@@ -967,96 +1044,111 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
                 className="p-6 rounded-2xl bg-white border border-neutral-200 shadow-[0_2px_16px_rgba(0,0,0,0.05)]"
               >
                 <p className="text-xs font-semibold text-neutral-400 uppercase tracking-widest mb-4">
-                  {property.host.role === "agent" ? "Listed by Agent" : "Listed by Landlord"}
+                  {isTenantSwitch ? "Contact Information" : property.host.role === "agent" ? "Listed by Agent" : "Listed by Landlord"}
                 </p>
 
-                {/* Agent identity */}
-                <div className="flex items-center gap-3 mb-5">
-                  <div className="relative shrink-0">
-                    {/* Gold ring = premium subscriber */}
-                    <div className={cn("w-12 h-12 rounded-full",
-                      property.host.isPremium ? "ring-2 ring-amber-400 ring-offset-1" : "")}>
-                      {property.host.avatar ? (
-                        <div className="w-full h-full rounded-full overflow-hidden relative">
-                          <Image src={property.host.avatar} alt={property.host.firstName} fill className="object-cover" />
-                        </div>
-                      ) : (
-                        <div className="w-full h-full rounded-full bg-bt-primary/8 flex items-center justify-center text-bt-primary font-bold text-base">
-                          {property.host.firstName[0]}{property.host.lastName[0]}
-                        </div>
-                      )}
-                    </div>
-                    {/* Blue checkmark = identity verified */}
-                    {property.host.isVerified && (
-                      <div className="absolute -bottom-0.5 -right-0.5 w-[18px] h-[18px] rounded-full bg-blue-600 border-2 border-white flex items-center justify-center">
-                        <BadgeCheck className="w-2.5 h-2.5 text-white" />
+                {/* Agent identity — hidden for tenant-switch */}
+                {!isTenantSwitch && (
+                  <div className="flex items-center gap-3 mb-5">
+                    <div className="relative shrink-0">
+                      <div className={cn("w-12 h-12 rounded-full",
+                        property.host.isPremium ? "ring-2 ring-amber-400 ring-offset-1" : "")}>
+                        {property.host.avatar ? (
+                          <div className="w-full h-full rounded-full overflow-hidden relative">
+                            <Image src={property.host.avatar} alt={property.host.firstName} fill className="object-cover" />
+                          </div>
+                        ) : (
+                          <div className="w-full h-full rounded-full bg-bt-primary/8 flex items-center justify-center text-bt-primary font-bold text-base">
+                            {property.host.firstName[0]}{property.host.lastName[0]}
+                          </div>
+                        )}
                       </div>
-                    )}
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      <p className="text-[15px] font-semibold text-neutral-900 capitalize">
-                        {property.host.firstName} {property.host.lastName}
-                      </p>
-                      {/* Blue = identity verified, Gold = premium */}
-                      {property.host.isVerified && <BadgeCheck className="w-4 h-4 text-blue-600 shrink-0" />}
-                      {property.host.isPremium && (
-                        <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded-full border border-amber-200">★ Premium</span>
+                      {property.host.isVerified && (
+                        <div className="absolute -bottom-0.5 -right-0.5 w-[18px] h-[18px] rounded-full bg-blue-600 border-2 border-white flex items-center justify-center">
+                          <BadgeCheck className="w-2.5 h-2.5 text-white" />
+                        </div>
                       )}
                     </div>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-xs text-neutral-500 capitalize">{property.host.role}</span>
-                      {!!property.host.rating && (
-                        <>
-                          <span className="text-neutral-300">·</span>
-                          <span className="flex items-center gap-0.5 text-xs text-neutral-500">
-                            <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
-                            {property.host.rating.toFixed(1)} ({property.host.reviewCount})
-                          </span>
-                        </>
-                      )}
+                    <div>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <p className="text-[15px] font-semibold text-neutral-900 capitalize">
+                          {property.host.firstName} {property.host.lastName}
+                        </p>
+                        {property.host.isVerified && <BadgeCheck className="w-4 h-4 text-blue-600 shrink-0" />}
+                        {property.host.isPremium && (
+                          <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded-full border border-amber-200">★ Premium</span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <span className="text-xs text-neutral-500 capitalize">{property.host.role}</span>
+                        {!!property.host.rating && (
+                          <>
+                            <span className="text-neutral-300">·</span>
+                            <span className="flex items-center gap-0.5 text-xs text-neutral-500">
+                              <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                              {property.host.rating.toFixed(1)} ({property.host.reviewCount})
+                            </span>
+                          </>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
+                )}
 
-                <hr className="border-neutral-100 mb-4" />
+                {!isTenantSwitch && <hr className="border-neutral-100 mb-4" />}
 
-                {/* Contact info — blurred when not logged in, exactly like live site */}
+                {/* Contact info */}
                 <div className="space-y-3 mb-5 text-sm">
                   <div className="flex justify-between">
                     <span className="text-neutral-500">Uploaded by</span>
-                    <span className="font-medium text-neutral-900 capitalize">{property.host.role}</span>
+                    <span className="font-medium text-neutral-900 capitalize">
+                      {isTenantSwitch ? "Tenant" : property.host.role}
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-neutral-500">Name</span>
-                    <span className={cn("font-medium text-neutral-900 capitalize", !isLoggedIn && "blur-[5px] select-none tracking-widest")}>
-                      {isLoggedIn ? `${property.host.firstName} ${property.host.lastName}` : "●●●● ●●●●●●"}
+                    <span className={cn("font-medium text-neutral-900 capitalize", !contactVisible && "blur-[5px] select-none tracking-widest")}>
+                      {contactVisible ? `${property.host.firstName} ${property.host.lastName}` : "●●●● ●●●●●●"}
                     </span>
                   </div>
-                  {property.host.phone && (
-                    <div className="flex justify-between">
-                      <span className="text-neutral-500">Phone</span>
-                      <span className={cn("font-medium text-neutral-900", !isLoggedIn && "blur-[5px] select-none tracking-widest")}>
-                        {isLoggedIn ? property.host.phone : "+234 ●●● ●●● ●●●●"}
-                      </span>
-                    </div>
-                  )}
-                  {property.host.email && !property.host.email.endsWith("@imported.betatenant.local") && (
-                    <div className="flex items-start justify-between gap-4">
-                      <span className="text-neutral-500 shrink-0">Email</span>
-                      <span className={cn("font-medium text-neutral-900 text-right break-all", !isLoggedIn && "blur-[5px] select-none")}>
-                        {isLoggedIn ? property.host.email : "●●●●●@●●●●●●.com"}
-                      </span>
-                    </div>
-                  )}
-                  <div className="flex items-center gap-1.5 text-neutral-400">
-                    <Clock className="w-3.5 h-3.5 shrink-0" />
-                    <span className="text-xs">Responds within 2 hours</span>
+                  <div className="flex justify-between">
+                    <span className="text-neutral-500">Phone Number</span>
+                    <span className={cn("font-medium text-neutral-900", !contactVisible && "blur-[5px] select-none tracking-widest")}>
+                      {contactVisible ? (property.host.phone || "—") : "●●●●●●●●"}
+                    </span>
                   </div>
+                  {!isTenantSwitch && property.host.email && !property.host.email.endsWith("@imported.betatenant.local") && (
+                    <div className="flex items-start justify-between gap-4">
+                      <span className="text-neutral-500 shrink-0">Email Address</span>
+                      <span className={cn("font-medium text-neutral-900 text-right break-all", !contactVisible && "blur-[5px] select-none")}>
+                        {contactVisible ? property.host.email : "●●●●●●●●"}
+                      </span>
+                    </div>
+                  )}
+                  {isTenantSwitch && (
+                    <div className="flex items-start justify-between gap-4">
+                      <span className="text-neutral-500 shrink-0">Email Address</span>
+                      <span className={cn("font-medium text-neutral-900 text-right break-all", !contactVisible && "blur-[5px] select-none")}>
+                        {contactVisible ? property.host.email : "●●●●●●●●"}
+                      </span>
+                    </div>
+                  )}
+                  {!contactVisible && (
+                    <div className="flex items-center gap-1.5 text-neutral-400">
+                      <Lock className="w-3.5 h-3.5 shrink-0" />
+                      <span className="text-xs">Unlock this information by completing the requirement</span>
+                    </div>
+                  )}
+                  {contactVisible && (
+                    <div className="flex items-center gap-1.5 text-neutral-400">
+                      <Clock className="w-3.5 h-3.5 shrink-0" />
+                      <span className="text-xs">Responds within 2 hours</span>
+                    </div>
+                  )}
                 </div>
 
-                {/* Login prompt when not logged in */}
-                {!isLoggedIn && (
+                {/* Login prompt / unlock prompt */}
+                {!isLoggedIn && !isTenantSwitch && (
                   <div className="mb-4 p-3 rounded-xl bg-neutral-50 border border-neutral-200 flex items-center gap-2.5">
                     <Lock className="w-4 h-4 text-neutral-400 shrink-0" />
                     <p className="text-xs text-neutral-500 flex-1">
@@ -1073,48 +1165,74 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
 
                 <hr className="border-neutral-100 mb-4" />
 
-                {/* Buttons — gated behind auth, same as live site */}
+                {/* Buttons */}
                 <div className="space-y-2.5">
-                  {property.host.phone && (
-                    isLoggedIn ? (
-                      <a href={`tel:${property.host.phone}`} className="w-full py-3 rounded-full bg-bt-primary text-white font-semibold text-sm flex items-center justify-center gap-2 hover:bg-bt-primary-light transition-colors">
-                        <Phone className="w-4 h-4" />
-                        Call {property.host.role}
-                      </a>
-                    ) : (
-                      <button onClick={() => requireAuth(() => {})} className="w-full py-3 rounded-full bg-bt-primary text-white font-semibold text-sm flex items-center justify-center gap-2 hover:bg-bt-primary-light transition-colors">
-                        <Phone className="w-4 h-4" />
-                        Call {property.host.role}
-                      </button>
-                    )
-                  )}
-                  {/* Only show Message for non-imported listings */}
-                  {property.host.email && !property.host.email.endsWith("@imported.betatenant.local") && (
-                    <button
-                      onClick={() => requireAuth(() => router.push("/messages"))}
-                      className="w-full py-3 rounded-full border border-neutral-200 text-neutral-700 font-medium text-sm flex items-center justify-center gap-2 hover:bg-neutral-50 transition-colors"
-                    >
-                      <Mail className="w-4 h-4" />
-                      Message {property.host.role}
-                    </button>
-                  )}
-                  {property.host.phone && (
-                    isLoggedIn ? (
-                      <a
-                        href={`https://wa.me/${property.host.phone.replace(/\D/g, "")}?text=${encodeURIComponent("Hi, I would like to get more information on a property listed on Beta Tenant.")}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="w-full py-3 rounded-full bg-[#25D366] text-white font-medium text-sm flex items-center justify-center gap-2 hover:bg-[#1eb858] transition-colors"
+                  {isTenantSwitch && !contactVisible ? (
+                    /* Tenant-switch unlock flow */
+                    <>
+                      <button
+                        onClick={handleTsUnlock}
+                        disabled={tsUnlockLoading}
+                        className="w-full py-3 rounded-full bg-bt-primary text-white font-semibold text-sm flex items-center justify-center gap-2 hover:bg-bt-primary-light transition-colors disabled:opacity-60"
                       >
-                        {WHATSAPP_SVG}
-                        WhatsApp {property.host.role}
-                      </a>
-                    ) : (
-                      <button onClick={() => requireAuth(() => {})} className="w-full py-3 rounded-full bg-[#25D366] text-white font-medium text-sm flex items-center justify-center gap-2 hover:bg-[#1eb858] transition-colors">
-                        {WHATSAPP_SVG}
-                        WhatsApp {property.host.role}
+                        {tsUnlockLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Lock className="w-4 h-4" />}
+                        {tsFreeUnlocks > 0 ? "Unlock Property (Free)" : `Unlock Property · ₦${tsUnlockFee.toLocaleString()}`}
                       </button>
-                    )
+                      {tsHasListed ? (
+                        <p className="text-center text-xs text-bt-primary font-semibold">
+                          {tsFreeUnlocks} free unlock{tsFreeUnlocks !== 1 ? "s" : ""} remaining
+                        </p>
+                      ) : (
+                        <Link href="/tenant-switch/list"
+                          className="block text-center text-xs font-semibold text-bt-primary hover:underline">
+                          Post Your Property to Unlock 5 Tenant Listings
+                        </Link>
+                      )}
+                    </>
+                  ) : (
+                    /* Normal contact buttons (non-TS or TS already unlocked) */
+                    <>
+                      {property.host.phone && (
+                        (contactVisible || isLoggedIn) ? (
+                          <a href={`tel:${property.host.phone}`} className="w-full py-3 rounded-full bg-bt-primary text-white font-semibold text-sm flex items-center justify-center gap-2 hover:bg-bt-primary-light transition-colors">
+                            <Phone className="w-4 h-4" />
+                            Call {isTenantSwitch ? "Tenant" : property.host.role}
+                          </a>
+                        ) : (
+                          <button onClick={() => requireAuth(() => {})} className="w-full py-3 rounded-full bg-bt-primary text-white font-semibold text-sm flex items-center justify-center gap-2 hover:bg-bt-primary-light transition-colors">
+                            <Phone className="w-4 h-4" />
+                            Call {isTenantSwitch ? "Tenant" : property.host.role}
+                          </button>
+                        )
+                      )}
+                      {property.host.email && !property.host.email.endsWith("@imported.betatenant.local") && (
+                        <button
+                          onClick={() => requireAuth(() => router.push("/messages"))}
+                          className="w-full py-3 rounded-full border border-neutral-200 text-neutral-700 font-medium text-sm flex items-center justify-center gap-2 hover:bg-neutral-50 transition-colors"
+                        >
+                          <Mail className="w-4 h-4" />
+                          Message {isTenantSwitch ? "Tenant" : property.host.role}
+                        </button>
+                      )}
+                      {property.host.phone && (
+                        (contactVisible || isLoggedIn) ? (
+                          <a
+                            href={`https://wa.me/${property.host.phone.replace(/\D/g, "")}?text=${encodeURIComponent("Hi, I would like to get more information on a property listed on Beta Tenant.")}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="w-full py-3 rounded-full bg-[#25D366] text-white font-medium text-sm flex items-center justify-center gap-2 hover:bg-[#1eb858] transition-colors"
+                          >
+                            {WHATSAPP_SVG}
+                            WhatsApp {isTenantSwitch ? "Tenant" : property.host.role}
+                          </a>
+                        ) : (
+                          <button onClick={() => requireAuth(() => {})} className="w-full py-3 rounded-full bg-[#25D366] text-white font-medium text-sm flex items-center justify-center gap-2 hover:bg-[#1eb858] transition-colors">
+                            {WHATSAPP_SVG}
+                            WhatsApp {isTenantSwitch ? "Tenant" : property.host.role}
+                          </button>
+                        )
+                      )}
+                    </>
                   )}
                 </div>
 
@@ -1160,8 +1278,8 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
           </div>
         </div>
 
-        {/* About the Agent — only shown to non-owners */}
-        {!isOwner && <AgentExpandedCard property={property} similarProperties={similarProperties} requireAuth={requireAuth} isLoggedIn={isLoggedIn} router={router} />}
+        {/* About the Agent — only shown to non-owners on non-tenant-switch listings */}
+        {!isOwner && !isTenantSwitch && <AgentExpandedCard property={property} similarProperties={similarProperties} requireAuth={requireAuth} isLoggedIn={isLoggedIn} router={router} />}
 
         {/* Similar Properties */}
         {similarProperties.length > 0 && (
