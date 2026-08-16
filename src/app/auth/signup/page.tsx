@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
@@ -18,8 +18,10 @@ const ROLES = [
   { value: "agent",    label: "I'm an Agent",    subtitle: "List properties, manage rentals, and reach more tenants.", icon: Users },
 ];
 
-export default function SignupPage() {
+function SignupContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const fromParam = searchParams.get("from");
   const [step, setStep]           = useState<Step>("role");
   const [role, setRole]           = useState<string>("");
   const [showPassword, setShowPassword] = useState(false);
@@ -117,10 +119,11 @@ export default function SignupPage() {
     setLoading(true);
     try {
       await authApi.verifyEmail(verificationId, otp);
-      toast.success("Email verified successfully!");
+      toast.success("Email verified! Signing you in...");
       localStorage.removeItem("verifyVTK");
       localStorage.removeItem("usrEml");
-      setTimeout(() => router.push("/login"), 1500);
+      const loginDest = fromParam ? `/login?from=${encodeURIComponent(fromParam)}` : "/login";
+      setTimeout(() => router.push(loginDest), 1500);
     } catch (err: any) {
       toast.error(err.message || "Invalid OTP. Please try again.");
     } finally {
@@ -170,7 +173,7 @@ export default function SignupPage() {
             </div>
             <p className="text-center text-neutral-500 mt-6">
               Already have an account?{" "}
-              <Link href="/login" className="underline text-bt-secondary font-medium">Log in instead</Link>
+              <Link href={`/login${fromParam ? `?from=${encodeURIComponent(fromParam)}` : ""}`} className="underline text-bt-secondary font-medium">Log in instead</Link>
             </p>
           </motion.div>
         )}
@@ -287,7 +290,7 @@ export default function SignupPage() {
             <div className="flex items-center justify-between mt-5">
               <button onClick={() => setStep("role")} className="text-sm text-neutral-400 hover:text-neutral-600 underline">← Change role</button>
               <p className="text-sm text-neutral-500">Have an account?{" "}
-                <Link href="/login" className="underline text-bt-secondary font-medium">Log in</Link>
+                <Link href={`/login${fromParam ? `?from=${encodeURIComponent(fromParam)}` : ""}`} className="underline text-bt-secondary font-medium">Log in</Link>
               </p>
             </div>
           </motion.div>
@@ -329,6 +332,14 @@ export default function SignupPage() {
 
       </AnimatePresence>
     </div>
+  );
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><Loader2 className="w-7 h-7 animate-spin text-bt-primary" /></div>}>
+      <SignupContent />
+    </Suspense>
   );
 }
 

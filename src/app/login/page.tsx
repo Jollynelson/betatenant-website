@@ -302,7 +302,10 @@ function LoginPage() {
 
             <p className="text-center text-neutral-500 text-sm mt-5">
               Don&apos;t have an account?{" "}
-              <Link href="/auth/signup" className="underline text-bt-secondary font-medium">
+              <Link
+                href={`/auth/signup${searchParams.get("from") ? `?from=${encodeURIComponent(searchParams.get("from")!)}` : ""}`}
+                className="underline text-bt-secondary font-medium"
+              >
                 Sign up instead
               </Link>
             </p>
