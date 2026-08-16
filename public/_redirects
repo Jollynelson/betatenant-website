@@ -1,3 +1,9 @@
+# Redirect www and http variants to canonical https://betatenant.com
+https://www.betatenant.com/*    https://betatenant.com/:splat           301
+http://betatenant.com/*         https://betatenant.com/:splat           301
+http://www.betatenant.com/*     https://betatenant.com/:splat           301
+
+# SPA dynamic route rewrites (must come after redirects)
 /property/:id                    /property/placeholder                   200
 /payment/:id                     /payment/placeholder                    200
 /m/:code                         /m/placeholder                          200
