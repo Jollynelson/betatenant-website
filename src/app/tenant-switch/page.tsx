@@ -6,7 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
-  Repeat2, Home, ArrowRight, Loader2, Lock, Unlock,
+  Repeat2, Home, ArrowRight, Loader2, Unlock,
   Phone, MessageCircle, Calendar, MapPin, Bed, Bath,
   Eye, CheckCircle, ExternalLink, ChevronDown, Flag,
   Sparkles, AlertCircle, ShieldCheck,
@@ -18,16 +18,6 @@ import { locationData } from "@/lib/locations";
 import { cn } from "@/lib/utils";
 import toast from "react-hot-toast";
 
-const PAYSTACK_KEY = process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY ?? "";
-
-function loadPaystack() {
-  if (typeof window === "undefined") return;
-  if (!document.querySelector('script[src*="paystack.co/v2/inline"]')) {
-    const s = document.createElement("script");
-    s.src = "https://js.paystack.co/v2/inline.js";
-    document.head.appendChild(s);
-  }
-}
 
 function fmt(n: number) { return `₦${n.toLocaleString()}`; }
 
@@ -37,12 +27,13 @@ function daysUntil(d: string | null) {
 }
 
 // ── Tenant Switch Card ────────────────────────────────────────────────────────
-function TenantSwitchCard({ listing, onUnlock, compact }: {
-  listing: any; onUnlock: (id: string) => void; compact?: boolean;
+function TenantSwitchCard({ listing, compact }: {
+  listing: any; compact?: boolean;
 }) {
   const days = daysUntil(listing.moveOutDate);
   return (
-    <div className={cn("bg-white rounded-2xl border border-neutral-100 shadow-sm overflow-hidden", compact && "flex gap-0")}>
+    <Link href={`/property/${listing._id}`}
+      className={cn("block bg-white rounded-2xl border border-neutral-100 shadow-sm overflow-hidden hover:shadow-md hover:border-neutral-200 transition-all", compact && "flex gap-0")}>
       <div className={cn("relative bg-neutral-100 shrink-0", compact ? "w-28 h-full" : "h-44")}>
         <Image src={cdnImg(listing.photos[0], 600)} alt={listing.title} fill
           className="object-cover" sizes={compact ? "112px" : "(max-width:640px) 100vw, 400px"} />
@@ -55,6 +46,11 @@ function TenantSwitchCard({ listing, onUnlock, compact }: {
         {!compact && listing.tenantGender && listing.tenantGender !== "any" && (
           <div className="absolute top-2 right-2 px-2 py-1 rounded-full bg-white/90 backdrop-blur-sm border border-neutral-100 text-xs font-semibold">
             {listing.tenantGender === "male" ? "👨" : "👩"}
+          </div>
+        )}
+        {listing.isUnlocked && (
+          <div className="absolute bottom-2 left-2 flex items-center gap-1 px-2 py-1 rounded-full bg-emerald-600 text-white text-[10px] font-bold">
+            <CheckCircle className="w-3 h-3" /> Unlocked
           </div>
         )}
       </div>
@@ -73,53 +69,26 @@ function TenantSwitchCard({ listing, onUnlock, compact }: {
           )}
         </div>
 
+        {/* Contact preview — blurred until unlocked */}
         <div className={cn("mt-3 rounded-xl border p-3",
           listing.isUnlocked ? "border-emerald-100 bg-emerald-50/50" : "border-neutral-100 bg-neutral-50")}>
           {listing.isUnlocked ? (
-            <>
-              <p className="text-[11px] font-bold text-emerald-700 mb-2 flex items-center gap-1">
-                <CheckCircle className="w-3.5 h-3.5" /> Contact Unlocked
-              </p>
-              <p className="text-sm font-semibold text-neutral-900">{listing.host.firstName} {listing.host.lastName}</p>
-              <p className="text-xs text-neutral-500 mt-0.5">{listing.host.email}</p>
-              <div className="flex gap-2 mt-2.5">
-                {listing.host.phone && <>
-                  <a href={`tel:${listing.host.phone}`}
-                    className="flex-1 flex items-center justify-center gap-1 py-2 rounded-lg bg-bt-primary text-white text-xs font-bold">
-                    <Phone className="w-3.5 h-3.5" /> Call
-                  </a>
-                  <a href={`https://wa.me/${listing.host.phone}`} target="_blank" rel="noopener noreferrer"
-                    className="flex-1 flex items-center justify-center gap-1 py-2 rounded-lg bg-[#25D366] text-white text-xs font-bold">
-                    WhatsApp
-                  </a>
-                </>}
-                {listing.host.email && (
-                  <a href={`mailto:${listing.host.email}`}
-                    className="flex-1 flex items-center justify-center gap-1 py-2 rounded-lg bg-neutral-100 text-neutral-700 text-xs font-bold">
-                    <MessageCircle className="w-3.5 h-3.5" />
-                  </a>
-                )}
-              </div>
-            </>
+            <p className="text-[11px] font-bold text-emerald-700 flex items-center gap-1">
+              <CheckCircle className="w-3.5 h-3.5" /> Contact unlocked — tap to view &amp; call
+            </p>
           ) : (
-            <>
-              <div className="space-y-1.5 select-none pointer-events-none mb-2.5">
-                <div className="h-3.5 rounded-full bg-neutral-200 w-28 blur-[3px]" />
-                <div className="h-3 rounded-full bg-neutral-200 w-36 blur-[3px]" />
-                <div className="flex gap-2 mt-1.5">
-                  <div className="flex-1 h-7 rounded-lg bg-neutral-200 blur-[2px]" />
-                  <div className="flex-1 h-7 rounded-lg bg-neutral-200 blur-[2px]" />
-                </div>
+            <div className="space-y-1.5 select-none pointer-events-none">
+              <div className="h-3 rounded-full bg-neutral-200 w-28 blur-[3px]" />
+              <div className="h-3 rounded-full bg-neutral-200 w-36 blur-[3px]" />
+              <div className="flex gap-2 mt-1.5">
+                <div className="flex-1 h-7 rounded-lg bg-neutral-200 blur-[2px]" />
+                <div className="flex-1 h-7 rounded-lg bg-neutral-200 blur-[2px]" />
               </div>
-              <button onClick={() => onUnlock(listing._id)}
-                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-bt-primary text-white text-xs font-bold hover:bg-bt-primary-light transition-colors">
-                <Lock className="w-3.5 h-3.5" /> Unlock · {fmt(listing.unlockFee)}
-              </button>
-            </>
+            </div>
           )}
         </div>
       </div>
-    </div>
+    </Link>
   );
 }
 
@@ -198,9 +167,9 @@ function LocationFilter({ state, lga, onStateChange, onLgaChange }: {
 }
 
 // ── Empty state ───────────────────────────────────────────────────────────────
-function EmptyLocationState({ state, lga, stateWideResults, onUnlock, isLoggedIn }: {
+function EmptyLocationState({ state, lga, stateWideResults, isLoggedIn }: {
   state: string; lga: string; stateWideResults: any[];
-  onUnlock: (id: string) => void; isLoggedIn: boolean;
+  isLoggedIn: boolean;
 }) {
   const location = lga ? `${lga}, ${state}` : state || "this area";
 
@@ -270,7 +239,7 @@ function EmptyLocationState({ state, lga, stateWideResults, onUnlock, isLoggedIn
           </div>
           <div className="space-y-3">
             {stateWideResults.map((l: any) => (
-              <TenantSwitchCard key={l._id} listing={l} onUnlock={onUnlock} compact />
+              <TenantSwitchCard key={l._id} listing={l} compact />
             ))}
           </div>
         </div>
@@ -288,12 +257,8 @@ function TenantSwitchContent() {
   const [filterState, setFilterState] = useState("");
   const [filterLga, setFilterLga]     = useState("");
   const [moveWithin, setMoveWithin]   = useState("");
-  const [unlocking, setUnlocking]     = useState<string | null>(null);
-
   const isLoggedIn = !!token;
   const isUser = !user?.role || user.role === "user";
-
-  useEffect(() => { loadPaystack(); }, []);
 
   const { data, isLoading } = useQuery({
     queryKey: ["tenant-switch-listings", filterState, filterLga, moveWithin],
@@ -316,59 +281,6 @@ function TenantSwitchContent() {
     staleTime: 1000 * 60 * 2,
   });
 
-  const { data: userProfile } = useQuery({
-    queryKey: ["user-profile-ts"],
-    queryFn: () => fetch(`${typeof window !== "undefined" && window.location.hostname !== "localhost" ? "https://api.betatenant.com" : "/api/bt"}/v1/user/profile`, {
-      headers: { Authorization: `Bearer ${token}` },
-    }).then(r => r.json()).then(d => d.userDetails),
-    enabled: isLoggedIn,
-    staleTime: 1000 * 60 * 5,
-  });
-
-  const freeUnlocks: number = userProfile?.tenantSwitchFreeUnlocks ?? 0;
-
-  const handleUnlock = async (propertyId: string) => {
-    if (!isLoggedIn) { toast.error("Sign in to unlock contact"); router.push("/auth/login"); return; }
-
-    const listing = [...(data?.listings ?? []), ...(data?.stateWideResults ?? [])].find((l: any) => l._id === propertyId);
-    if (!listing) return;
-
-    setUnlocking(propertyId);
-
-    if (freeUnlocks > 0) {
-      try {
-        await tenantSwitchApi.unlock(propertyId);
-        toast.success(`Contact unlocked! ${freeUnlocks - 1} free unlock${freeUnlocks - 1 !== 1 ? "s" : ""} left.`);
-        queryClient.invalidateQueries({ queryKey: ["tenant-switch-listings"] });
-        queryClient.invalidateQueries({ queryKey: ["user-profile-ts"] });
-      } catch (err: any) { toast.error(err.message || "Failed to unlock"); }
-      setUnlocking(null);
-      return;
-    }
-
-    const PaystackPop = (window as any).PaystackPop;
-    if (!PaystackPop) { toast.error("Payment not ready, refresh and try."); setUnlocking(null); return; }
-
-    const popup = new PaystackPop();
-    popup.newTransaction({
-      key: PAYSTACK_KEY,
-      email: user?.email ?? "user@betatenant.com",
-      amount: listing.unlockFee * 100,
-      currency: "NGN",
-      metadata: { propertyId, type: "tenant-switch-unlock" },
-      onSuccess: async (res: any) => {
-        try {
-          await tenantSwitchApi.unlock(propertyId, res.reference);
-          toast.success("Contact unlocked!");
-          queryClient.invalidateQueries({ queryKey: ["tenant-switch-listings"] });
-          queryClient.invalidateQueries({ queryKey: ["tenant-switch-my-unlocks"] });
-        } catch (err: any) { toast.error(err.message || "Unlock failed"); }
-        setUnlocking(null);
-      },
-      onCancel: () => setUnlocking(null),
-      onError: () => { toast.error("Payment failed"); setUnlocking(null); },
-    });
-  };
 
   const listings          = data?.listings ?? [];
   const stateWide         = data?.stateWideResults ?? [];
@@ -391,10 +303,10 @@ function TenantSwitchContent() {
             Connect directly with tenants leaving their space — no agents, no middlemen.
           </p>
 
-          {freeUnlocks > 0 && (
+          {myListing && (
             <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm font-semibold">
               <Unlock className="w-4 h-4" />
-              {freeUnlocks} free unlock{freeUnlocks !== 1 ? "s" : ""} this month
+              You have free unlocks — tap a listing to view contact
             </div>
           )}
 
@@ -497,7 +409,7 @@ function TenantSwitchContent() {
               <EmptyLocationState
                 state={filterState} lga={filterLga}
                 stateWideResults={stateWide}
-                onUnlock={handleUnlock}
+
                 isLoggedIn={isLoggedIn}
               />
             ) : noResults ? (
@@ -519,8 +431,8 @@ function TenantSwitchContent() {
                 "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
               )}>
                 {listings.map((l: any) => (
-                  <div key={l._id} className={cn(unlocking === l._id && "opacity-60 pointer-events-none")}>
-                    <TenantSwitchCard listing={l} onUnlock={handleUnlock} />
+                  <div key={l._id}>
+                    <TenantSwitchCard listing={l} />
                   </div>
                 ))}
               </div>
