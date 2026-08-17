@@ -678,7 +678,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
           {property.host.phone && (
             (contactVisible || isLoggedIn) ? (
               <a
-                href={`https://wa.me/${property.host.phone.replace(/\D/g, "")}?text=${encodeURIComponent(`Hi, I'm interested in the property listed on Beta Tenant: ${property.title}. Please share more details.`)}`}
+                href={`https://wa.me/${property.host.phone.replace(/\D/g, "")}?text=${encodeURIComponent(`Hi, I will like to get more information on this property connected to you on Beta Tenant https://betatenant.com/share/property/${id}`)}`}
                 target="_blank" rel="noopener noreferrer"
                 className="flex-1 py-3.5 rounded-full bg-[#25D366] text-white font-bold text-sm flex items-center justify-center gap-2"
               >
@@ -1217,7 +1217,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
                       {property.host.phone && (
                         (contactVisible || isLoggedIn) ? (
                           <a
-                            href={`https://wa.me/${property.host.phone.replace(/\D/g, "")}?text=${encodeURIComponent("Hi, I would like to get more information on a property listed on Beta Tenant.")}`}
+                            href={`https://wa.me/${property.host.phone.replace(/\D/g, "")}?text=${encodeURIComponent(`Hi, I will like to get more information on this property connected to you on Beta Tenant https://betatenant.com/share/property/${id}`)}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="w-full py-3 rounded-full bg-[#25D366] text-white font-medium text-sm flex items-center justify-center gap-2 hover:bg-[#1eb858] transition-colors"
@@ -1594,7 +1594,7 @@ function AgentExpandedCard({
           {property.host.phone && (
             isLoggedIn ? (
               <a
-                href={`https://wa.me/${property.host.phone.replace(/\D/g, "")}?text=${encodeURIComponent(`Hi, I'm interested in the property listed on Beta Tenant: ${property.title}. Please share more details.`)}`}
+                href={`https://wa.me/${property.host.phone.replace(/\D/g, "")}?text=${encodeURIComponent(`Hi, I will like to get more information on this property connected to you on Beta Tenant https://betatenant.com/share/property/${property._id}`)}`}
                 target="_blank" rel="noopener noreferrer"
                 className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-full bg-[#25D366] text-white text-sm font-semibold hover:bg-[#1eb858] transition-colors"
               >

@@ -3,11 +3,16 @@ https://www.betatenant.com/*    https://betatenant.com/:splat           301
 http://betatenant.com/*         https://betatenant.com/:splat           301
 http://www.betatenant.com/*     https://betatenant.com/:splat           301
 
-# SPA dynamic route rewrites (must come after redirects)
+# WhatsApp share link — backend serves OG image/title/price for crawlers, redirects humans to property page
+/share/property/*               https://api.betatenant.com/v1/share/property/:splat  302
+
+# Short links — backend handles lookup and redirect (no JS needed, works for bots)
+/s/*                            https://api.betatenant.com/s/:splat     302
+/m/*                            https://api.betatenant.com/m/:splat     302
+
+# SPA dynamic route rewrites
 /property/:id                    /property/placeholder                   200
 /payment/:id                     /payment/placeholder                    200
-/m/:code                         /m/placeholder                          200
-/s/:code                         /s/placeholder                          200
 /agents/portfolio/:shareId       /agents/portfolio/placeholder           200
 /host/edit/:id                   /host/edit/placeholder                  200
 /in/:slug                        /in/placeholder                         200
