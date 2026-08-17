@@ -5,7 +5,6 @@ import { setAppBadge } from "@/components/sw-register";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
 import {
   Menu, X, ChevronDown, User, Heart, MessageCircle, LogOut,
   Home, Bell, Repeat2, Shield, Plus, LayoutDashboard, Crown,
@@ -213,14 +212,9 @@ export function Navbar() {
                 </button>
 
                 {/* Dropdown */}
-                <AnimatePresence>
                   {dropdownOpen && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -4 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -4 }}
-                      transition={{ duration: 0.12 }}
-                      className="absolute right-0 top-full mt-2 w-60 bg-white border border-neutral-100 rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.1)] overflow-hidden py-1.5"
+                    <div
+                      className="absolute right-0 top-full mt-2 w-60 bg-white border border-neutral-100 rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.1)] overflow-hidden py-1.5 animate-in fade-in slide-in-from-top-1 duration-100"
                     >
                       {/* User info */}
                       <div className="px-4 py-3 border-b border-neutral-50">
@@ -303,9 +297,8 @@ export function Navbar() {
                           Sign out
                         </button>
                       </div>
-                    </motion.div>
+                    </div>
                   )}
-                </AnimatePresence>
               </div>
             ) : (
               <>
@@ -347,22 +340,14 @@ export function Navbar() {
       </nav>
 
       {/* Mobile menu */}
-      <AnimatePresence>
         {mobileMenuOpen && (
           <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 top-[72px] bg-black/20 backdrop-blur-[2px] z-40 lg:hidden"
+            <div
+              className="fixed inset-0 top-[72px] bg-black/20 backdrop-blur-[2px] z-40 lg:hidden animate-in fade-in duration-150"
               onClick={() => setMobileMenuOpen(false)}
             />
-            <motion.div
-              initial={{ opacity: 0, y: -8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.15 }}
-              className="fixed top-[72px] left-0 right-0 bottom-0 bg-white z-50 lg:hidden overflow-y-auto"
+            <div
+              className="fixed top-[72px] left-0 right-0 bottom-0 bg-white z-50 lg:hidden overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-150"
               style={{ paddingBottom: "calc(4rem + env(safe-area-inset-bottom) + 1rem)" }}
             >
               <div className="px-5 py-5 space-y-1">
@@ -463,10 +448,9 @@ export function Navbar() {
                   )}
                 </div>
               </div>
-            </motion.div>
+            </div>
           </>
         )}
-      </AnimatePresence>
 
     </header>
   );
