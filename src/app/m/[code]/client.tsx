@@ -1,17 +1,16 @@
 "use client";
 
-import { use, useEffect } from "react";
+import { use } from "react";
 
 export default function ProfileShortLinkPage({ params }: { params: Promise<{ code: string }> }) {
   const { code } = use(params);
-
-  useEffect(() => {
-    window.location.href = `https://api.betatenant.com/m/${code}`;
-  }, [code]);
-
+  // Redirect synchronously — backend resolves code and redirects to WhatsApp
+  if (typeof window !== "undefined") {
+    window.location.replace(`https://api.betatenant.com/m/${code}`);
+  }
   return (
     <div className="flex items-center justify-center min-h-[60vh]">
-      <p className="text-neutral-500">Redirecting...</p>
+      <p className="text-neutral-500">Opening WhatsApp…</p>
     </div>
   );
 }
