@@ -116,7 +116,12 @@ export function PropertyCard({ property, variant = "default", onRemove }: Proper
               {property.address ? `${property.address}, ` : ""}{property.lga}, {property.state}
             </p>
           </div>
-          <p className="text-[11px] text-neutral-400 uppercase tracking-wide font-medium truncate">{agentName}</p>
+          <p className="text-[11px] uppercase tracking-wide font-medium truncate flex items-center gap-1">
+            <span className={cn("truncate", property.host?.isPremium ? "text-amber-600 font-semibold" : "text-neutral-400")}>
+              {property.host?.isPremium && <span className="mr-0.5">★</span>}{agentName}
+            </span>
+            {property.host?.isVerified && <BadgeCheck className="w-2.5 h-2.5 text-blue-500 shrink-0" />}
+          </p>
         </div>
       </Link>
     );

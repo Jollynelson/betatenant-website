@@ -568,20 +568,31 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
             {/* Agent card — mobile */}
             <div className="border-t border-neutral-100 pt-5 pb-2">
               <div className="flex items-center gap-3">
-                {property.host.avatar ? (
-                  <Image src={property.host.avatar} alt="" width={44} height={44} className="w-11 h-11 rounded-full object-cover shrink-0" />
-                ) : (
-                  <div className="w-11 h-11 rounded-full bg-bt-primary/8 flex items-center justify-center shrink-0 text-bt-primary font-bold text-sm">
-                    {property.host.firstName?.[0]}{property.host.lastName?.[0]}
+                <div className="relative shrink-0">
+                  <div className={cn("w-11 h-11 rounded-full overflow-hidden",
+                    property.host.isPremium ? "ring-2 ring-amber-400 ring-offset-1" : "")}>
+                    {property.host.avatar ? (
+                      <Image src={property.host.avatar} alt="" width={44} height={44} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full bg-bt-primary/8 flex items-center justify-center text-bt-primary font-bold text-sm">
+                        {property.host.firstName?.[0]}{property.host.lastName?.[0]}
+                      </div>
+                    )}
                   </div>
-                )}
+                  {property.host.isVerified && (
+                    <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-blue-600 border-2 border-white flex items-center justify-center">
+                      <BadgeCheck className="w-2.5 h-2.5 text-white" />
+                    </div>
+                  )}
+                </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-neutral-900 capitalize">{property.host.firstName} {property.host.lastName}</p>
+                  <p className="flex items-center gap-1 text-sm font-semibold text-neutral-900 capitalize">
+                    {property.host.firstName} {property.host.lastName}
+                    {property.host.isVerified && <BadgeCheck className="w-3.5 h-3.5 text-blue-600 shrink-0" />}
+                    {property.host.isPremium && <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded-full border border-amber-200">★ Premium</span>}
+                  </p>
                   <p className="text-xs text-neutral-500 capitalize">{property.host.role}</p>
                 </div>
-                {property.host.isVerified && (
-                  <BadgeCheck className="w-4 h-4 text-bt-success shrink-0" />
-                )}
               </div>
             </div>
 
