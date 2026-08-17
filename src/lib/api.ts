@@ -211,6 +211,7 @@ export const propertyApi = {
     return {
       property: mapProperty(res.property),
       similarProperties: (res.similarProperties ?? []).map(mapProperty),
+      agentListings: (res.agentListings ?? []).map(mapProperty),
       areYouLoggedIn: res.areYouLoggedIn ?? false,
       isUnlockedTs: res.isUnlockedTs ?? false,
       unlockFee: res.unlockFee ?? 500,

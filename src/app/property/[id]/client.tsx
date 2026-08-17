@@ -160,6 +160,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
 
   const property = data?.property;
   const similarProperties = data?.similarProperties ?? [];
+  const agentListings = data?.agentListings ?? [];
 
   useEffect(() => { loadPaystack(); }, []);
 
@@ -1279,7 +1280,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
         </div>
 
         {/* About the Agent — only shown to non-owners on non-tenant-switch listings */}
-        {!isOwner && !isTenantSwitch && <AgentExpandedCard property={property} similarProperties={similarProperties} requireAuth={requireAuth} isLoggedIn={isLoggedIn} router={router} />}
+        {!isOwner && !isTenantSwitch && <AgentExpandedCard property={property} similarProperties={similarProperties} agentListings={agentListings} requireAuth={requireAuth} isLoggedIn={isLoggedIn} router={router} />}
 
         {/* Similar Properties */}
         {similarProperties.length > 0 && (
@@ -1394,12 +1395,14 @@ const AGENT_WA_SVG = (
 function AgentExpandedCard({
   property,
   similarProperties,
+  agentListings,
   requireAuth,
   isLoggedIn,
   router,
 }: {
   property: any;
   similarProperties: any[];
+  agentListings: any[];
   requireAuth: (action: () => void) => void;
   isLoggedIn: boolean;
   router: ReturnType<typeof import("next/navigation").useRouter>;
@@ -1423,8 +1426,8 @@ function AgentExpandedCard({
     ? `/agents?hostId=${property.host._id}`
     : "/agents";
 
-  // Other listings = up to 3 from similar (same agent is not guaranteed, just use similar)
-  const otherListings = similarProperties.slice(0, 3);
+  // Other listings by same agent — use dedicated agentListings from backend
+  const otherListings = agentListings.slice(0, 3);
 
   const joinedDate = property.host.joinedAt
     ? new Date(property.host.joinedAt).getFullYear()
