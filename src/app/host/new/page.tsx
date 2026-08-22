@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef, ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
 import { AuthGuard } from "@/components/auth-guard";
-import { api } from "@/lib/api";
+import { api, API_BASE_URL } from "@/lib/api";
 import { locationData } from "@/lib/locations";
 import {
   Bath, Bed, Tv, Upload, X, Loader2, Check, ChevronRight,
@@ -161,8 +161,7 @@ async function generateThumbnail(file: File): Promise<string> {
 const CHUNK_SIZE = 5 * 1024 * 1024; // 5MB — S3 minimum part size
 
 function getApiBase() {
-  return window.location.hostname === "localhost"
-    ? "/api/bt" : "https://api.betatenant.com";
+  return API_BASE_URL;
 }
 
 function getToken() {
@@ -571,7 +570,7 @@ function StepCreate({
     try {
       const token = localStorage.getItem("BT_TOKEN");
       const filename = entry.url.split("/").at(-1);
-      await fetch(`/api/bt/v1/landlordandagent/file/${filename}`, {
+      await fetch(`${getApiBase()}/v1/landlordandagent/file/${filename}`, {
         method: "DELETE",
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
@@ -1244,7 +1243,7 @@ function StepPreview({ onBack }: { onBack: () => void }) {
     const p = JSON.parse(raw);
     const token = localStorage.getItem("BT_TOKEN");
 
-    fetch(`/api/bt/v1/landlordandagent/preview/${p._id}`, {
+    fetch(`${getApiBase()}/v1/landlordandagent/preview/${p._id}`, {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     })
       .then((r) => r.json())
@@ -1259,7 +1258,7 @@ function StepPreview({ onBack }: { onBack: () => void }) {
     setError("");
     try {
       const token = localStorage.getItem("BT_TOKEN");
-      const apiBase = window.location.hostname === "localhost" ? "/api/bt" : "https://api.betatenant.com";
+      const apiBase = getApiBase();
       const res = await fetch(`${apiBase}/v1/landlordandagent/publish/${house._id}`, {
         method: "POST",
         headers: token ? { Authorization: `Bearer ${token}` } : {},

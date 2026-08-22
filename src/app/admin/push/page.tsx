@@ -7,13 +7,14 @@ import {
   CheckCircle2, ChevronDown, Smartphone,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { API_BASE_URL } from "@/lib/api";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 
 // Admin push panel — calls the backend admin push endpoint
 // Admin token must be in localStorage as BT_ADMIN_TOKEN
 
-const ADMIN_API = "/api/bt/v1/admin";
+const ADMIN_API = `${API_BASE_URL}/v1/admin`;
 
 function getAdminToken(): string | null {
   if (typeof window === "undefined") return null;

@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { useAuthStore } from "@/lib/auth-store";
+import { sanitizeRedirect } from "@/lib/utils";
 import { api } from "@/lib/api";
 import toast from "react-hot-toast";
 import { Suspense } from "react";
@@ -46,7 +47,7 @@ function GoogleCallbackContent() {
         const googleRole = localStorage.getItem("BT_GOOGLE_ROLE");
         localStorage.removeItem("BT_GOOGLE_ROLE");
 
-        const from = sessionStorage.getItem("BT_LOGIN_FROM") || null;
+        const from = sanitizeRedirect(sessionStorage.getItem("BT_LOGIN_FROM"));
         sessionStorage.removeItem("BT_LOGIN_FROM");
 
         if (isAgentOrLandlord && !pendingAgency && !user.agencyName) {

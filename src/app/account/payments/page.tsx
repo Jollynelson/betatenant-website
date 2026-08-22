@@ -33,14 +33,23 @@ const TYPE_CONFIG: Record<string, { icon: React.ComponentType<any>; color: strin
   other:            { icon: ShoppingBag, color: "text-neutral-500",  bg: "bg-neutral-100" },
 };
 
+function esc(s: unknown): string {
+  return String(s ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 function generateReceiptHTML(t: Transaction): string {
   const date = new Date(t.date).toLocaleDateString("en-NG", { day: "numeric", month: "long", year: "numeric" });
   return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Receipt — Beta Tenant</title>
 <style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#111;padding:40px}.logo{font-size:22px;font-weight:800;color:#0A0876;margin-bottom:48px}h1{font-size:32px;font-weight:700;margin-bottom:32px}.meta{display:flex;justify-content:space-between;margin-bottom:32px}.label{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#666;margin-bottom:4px}.value{font-size:14px;font-weight:500}.card{background:#f4f4f4;border-radius:12px;padding:20px 24px;margin-bottom:16px}.row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #e5e5e5}.row:last-child{border-bottom:none}.total{font-weight:700;font-size:16px}.footer{margin-top:32px;font-size:12px;color:#888}</style></head><body>
 <div class="logo">🏠 Beta Tenant</div><h1>Receipt</h1>
-<div class="meta"><div><div class="label">Invoice ID</div><div class="value">${t.reference}</div></div><div style="text-align:right"><div class="label">Date</div><div class="value">${date}</div></div></div>
-<div class="card"><div class="row"><span style="font-weight:600">${t.label}</span><span></span></div>
-<div class="row"><span>${t.label}${t.plan ? ` (${t.plan})` : ""}</span><span>₦${t.amount.toLocaleString()}</span></div>
+<div class="meta"><div><div class="label">Invoice ID</div><div class="value">${esc(t.reference)}</div></div><div style="text-align:right"><div class="label">Date</div><div class="value">${date}</div></div></div>
+<div class="card"><div class="row"><span style="font-weight:600">${esc(t.label)}</span><span></span></div>
+<div class="row"><span>${esc(t.label)}${t.plan ? ` (${esc(t.plan)})` : ""}</span><span>₦${t.amount.toLocaleString()}</span></div>
 <div class="row total"><span>Total</span><span>₦${t.amount.toLocaleString()}</span></div></div>
 <p class="footer">Questions? Contact support@betatenant.com</p></body></html>`;
 }

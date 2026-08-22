@@ -67,22 +67,12 @@ function PaymentContent({ propertyId }: { propertyId: string }) {
         amountPaid: total * 100, // in kobo for Paystack
       };
 
-      const res = await fetch("/api/bt/v1/user/create-order", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(payload),
-      });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || data.errorMessage || "Payment initiation failed.");
+      const res = await api.post<any>("/v1/user/create-order", payload);
 
       // Redirect to Paystack checkout
       const authUrl: string =
-        data?.data?.paystackResponse?.data?.authorization_url ??
-        data?.paystackResponse?.data?.authorization_url ??
+        res?.data?.paystackResponse?.data?.authorization_url ??
+        res?.paystackResponse?.data?.authorization_url ??
         "";
 
       if (!authUrl) throw new Error("Could not retrieve payment link. Please try again.");

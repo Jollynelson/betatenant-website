@@ -1,5 +1,5 @@
-import { redirect, notFound } from "next/navigation";
 import type { Metadata } from "next";
+import SlugRedirectClient from "./client";
 
 const API = process.env.NEXT_PUBLIC_API_BASE_URL ?? "https://api.betatenant.com";
 
@@ -53,8 +53,6 @@ export async function generateStaticParams() {
 }
 
 export default async function SlugRedirectPage({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params;
-  const data = await resolveSlug(slug);
-  if (!data?.successful || !data.shareId) notFound();
-  redirect(`/agents/portfolio/${data.shareId}`);
+  await params;
+  return <SlugRedirectClient />;
 }

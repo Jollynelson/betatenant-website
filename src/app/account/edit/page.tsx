@@ -11,7 +11,7 @@ import {
 import toast from "react-hot-toast";
 import { AuthGuard } from "@/components/auth-guard";
 import { useAuthStore } from "@/lib/auth-store";
-import { api } from "@/lib/api";
+import { api, API_BASE_URL } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -112,7 +112,7 @@ function EditProfileContent() {
     try {
       const formData = new FormData();
       formData.append("files", file);
-      const apiBase = window.location.hostname === "localhost" ? "/api/bt" : "https://api.betatenant.com";
+      const apiBase = API_BASE_URL;
       const token = localStorage.getItem("BT_TOKEN");
       const res = await fetch(`${apiBase}/v1/user/aws-upload`, {
         method: "POST",
@@ -819,7 +819,7 @@ function PortfolioLinkSection({
   const [availMsg, setAvailMsg] = useState("");
   const [saving, setSaving] = useState(false);
 
-  const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "https://api.betatenant.com";
+  const API_BASE = API_BASE_URL;
   const portfolioUrl = currentSlug
     ? `${API_BASE}/in/${currentSlug}`
     : currentShareId

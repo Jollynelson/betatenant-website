@@ -4,7 +4,7 @@ import { useState, useEffect, use, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { AuthGuard } from "@/components/auth-guard";
-import { api } from "@/lib/api";
+import { api, API_BASE_URL } from "@/lib/api";
 import { locationData } from "@/lib/locations";
 import {
   ArrowLeft, Loader2, Check, Bed, Bath, MapPin, Home,
@@ -14,8 +14,7 @@ import {
 import toast from "react-hot-toast";
 import { cn } from "@/lib/utils";
 
-const API_BASE = typeof window !== "undefined" && window.location.hostname !== "localhost"
-  ? "https://api.betatenant.com" : "/api/bt";
+const API_BASE = API_BASE_URL;
 
 async function uploadFile(file: File, onProgress: (p: number) => void): Promise<string> {
   return new Promise((resolve, reject) => {

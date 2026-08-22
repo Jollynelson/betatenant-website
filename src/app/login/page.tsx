@@ -6,8 +6,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { Eye, EyeOff, Lock, Mail } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { authApi, api } from "@/lib/api";
+import { cn, sanitizeRedirect } from "@/lib/utils";
+import { authApi, api, API_BASE_URL } from "@/lib/api";
 import { useAuthStore } from "@/lib/auth-store";
 import toast from "react-hot-toast";
 
@@ -68,7 +68,7 @@ function LoginPage() {
 
         toast.success(res.message || "Signed in successfully!");
 
-        const from = sessionStorage.getItem("BT_LOGIN_FROM") || null;
+        const from = sanitizeRedirect(sessionStorage.getItem("BT_LOGIN_FROM"));
         sessionStorage.removeItem("BT_LOGIN_FROM");
 
         if (isAgentOrLandlord && !pendingAgency && !user.agencyName) {
@@ -108,7 +108,7 @@ function LoginPage() {
           api.put("/v1/user/profile", { agencyName: pendingAgency }).catch(() => {});
         }
 
-        const from = searchParams.get("from");
+        const from = sanitizeRedirect(searchParams.get("from"));
         const defaultPath = (role === "agent" || role === "landlord") ? "/account/properties" : "/properties";
         router.push(from || defaultPath);
       }
@@ -283,9 +283,9 @@ function LoginPage() {
                 onClick={() => {
                   const from = searchParams.get("from");
                   if (from) {
-                    try { sessionStorage.setItem("BT_LOGIN_FROM", from); } catch {}
+                    try { sessionStorage.setItem("BT_LOGIN_FROM", sanitizeRedirect(from) ?? ""); } catch {}
                   }
-                  const apiBase = window.location.hostname === "localhost" ? "/api/bt" : "https://api.betatenant.com";
+                  const apiBase = API_BASE_URL;
                   window.location.href = `${apiBase}/v1/auth/login/federated/google`;
                 }}
                 className="w-full py-3.5 rounded-full border-2 border-neutral-200 text-neutral-700 font-medium hover:bg-neutral-50 transition-colors flex items-center justify-center gap-3"

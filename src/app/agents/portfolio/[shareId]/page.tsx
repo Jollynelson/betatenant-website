@@ -126,7 +126,7 @@ export default async function Page({ params }: { params: Promise<{ shareId: stri
   return (
     <>
       {schema.map((s, i) => (
-        <Script key={i} id={`agent-schema-${i}`} type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(s) }} />
+        <Script key={i} id={`agent-schema-${i}`} type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(s).replace(/</g, "\\u003c") }} />
       ))}
       <AgentPortfolioPage params={params} />
     </>

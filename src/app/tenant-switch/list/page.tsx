@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef, ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AuthGuard } from "@/components/auth-guard";
-import { api, tenantSwitchApi } from "@/lib/api";
+import { api, tenantSwitchApi, API_BASE_URL } from "@/lib/api";
 import { locationData } from "@/lib/locations";
 import {
   Bath, Bed, Tv, Upload, X, Loader2, Check, ChevronRight,
@@ -93,7 +93,7 @@ async function generateThumbnail(file: File): Promise<string> {
   });
 }
 const CHUNK_SIZE = 5 * 1024 * 1024;
-function getApiBase() { return window.location.hostname === "localhost" ? "/api/bt" : "https://api.betatenant.com"; }
+function getApiBase() { return API_BASE_URL; }
 function getToken()   { return localStorage.getItem("BT_TOKEN"); }
 async function uploadFileChunked(file: File, onProgress: (p: number, s?: number) => void, signal?: AbortSignal): Promise<string> {
   return file.size <= CHUNK_SIZE ? uploadDirect(file, onProgress, signal) : uploadMultipart(file, onProgress, signal);
@@ -288,7 +288,7 @@ function StepCreate({ onNext, existingId }: { onNext: (id: string, details: any)
     try {
       const tok = localStorage.getItem("BT_TOKEN");
       const filename = entry.url.split("/").at(-1);
-      await fetch(`/api/bt/v1/landlordandagent/file/${filename}`, { method: "DELETE", headers: tok ? { Authorization: `Bearer ${tok}` } : {} });
+      await fetch(`${getApiBase()}/v1/landlordandagent/file/${filename}`, { method: "DELETE", headers: tok ? { Authorization: `Bearer ${tok}` } : {} });
       setPhotoURLs(prev => prev.filter(p => p.id !== id));
     } catch { setError("Failed to remove image."); }
     finally { setImageDeleting(false); }
@@ -672,7 +672,7 @@ function StepPricing({ onNext, onBack }: { onNext: () => void; onBack: () => voi
     };
     setUpdating(true);
     try {
-      const base = window.location.hostname === "localhost" ? "/api/bt" : "https://api.betatenant.com";
+      const base = getApiBase();
       const res = await fetch(`${base}/v1/landlordandagent/pricing/${propertyId}`, {
         method: "PUT", headers: { "Content-Type": "application/json", Authorization: `Bearer ${tok}` }, body: JSON.stringify(data),
       });
@@ -752,7 +752,7 @@ function StepPreview({ onBack }: { onBack: () => void }) {
     if (!raw) { setLoading(false); return; }
     const p = JSON.parse(raw);
     const tok = localStorage.getItem("BT_TOKEN");
-    fetch(`/api/bt/v1/landlordandagent/preview/${p._id}`, { headers: tok ? { Authorization: `Bearer ${tok}` } : {} })
+    fetch(`${getApiBase()}/v1/landlordandagent/preview/${p._id}`, { headers: tok ? { Authorization: `Bearer ${tok}` } : {} })
       .then(r => r.json()).then(d => setHouse(d.propertyDetails)).catch(() => setHouse(p)).finally(() => setLoading(false));
   }, []);
 
@@ -761,7 +761,7 @@ function StepPreview({ onBack }: { onBack: () => void }) {
     setPublishing(true); setError("");
     try {
       const tok = localStorage.getItem("BT_TOKEN");
-      const base = window.location.hostname === "localhost" ? "/api/bt" : "https://api.betatenant.com";
+      const base = getApiBase();
       const res = await fetch(`${base}/v1/landlordandagent/publish/${house._id}`, { method: "POST", headers: tok ? { Authorization: `Bearer ${tok}` } : {} });
       const d = await res.json();
       if (!res.ok) throw new Error(d.message || "Failed to publish.");

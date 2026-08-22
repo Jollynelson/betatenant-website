@@ -519,9 +519,9 @@ function ReportsOnlyCard({ data, phone }: { data: any; phone: string }) {
 
 /* ── Top Agent Card ── */
 function TopAgentCard({ agent }: { agent: typeof mockTopAgents[0] }) {
-  const trustScore = Math.round(
-    (agent.positiveReports / (agent.positiveReports + agent.negativeReports)) * 100
-  );
+  const trustScore = agent.positiveReports + agent.negativeReports > 0
+    ? Math.round((agent.positiveReports / (agent.positiveReports + agent.negativeReports)) * 100)
+    : 0;
   return (
     <div className="p-5 rounded-2xl bg-white border border-neutral-100 hover:shadow-[0_4px_20px_rgba(0,0,0,0.06)] transition-all">
       <div className="flex items-center gap-3 mb-4">

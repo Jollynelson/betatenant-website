@@ -7,7 +7,7 @@ import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { Eye, EyeOff, Lock, Mail, User, Home, Users, Building2, CheckCircle2, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { authApi, api } from "@/lib/api";
+import { authApi, api, API_BASE_URL } from "@/lib/api";
 import toast from "react-hot-toast";
 
 type Step = "role" | "form" | "verify";
@@ -273,7 +273,7 @@ function SignupContent() {
                   if (isAgentOrLandlord && agencyName.trim()) {
                     localStorage.setItem("BT_PENDING_AGENCY", agencyName.trim());
                   }
-                  const apiBase = window.location.hostname === "localhost" ? "/api/bt" : "https://api.betatenant.com";
+                  const apiBase = API_BASE_URL;
                   window.location.href = `${apiBase}/v1/auth/login/federated/google`;
                 }}
                 className="w-full py-3.5 rounded-full border-2 border-neutral-200 text-neutral-700 font-medium hover:bg-neutral-50 transition-colors flex items-center justify-center gap-3">

@@ -8,11 +8,9 @@ import {
 import toast from "react-hot-toast";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { API_BASE_URL } from "@/lib/api";
 
-const ADMIN_API =
-  typeof window !== "undefined" && window.location.hostname === "localhost"
-    ? "/api/bt/v1/admin"
-    : "https://api.betatenant.com/v1/admin";
+const ADMIN_API = `${API_BASE_URL}/v1/admin`;
 
 function getAdminToken() {
   if (typeof window === "undefined") return null;
@@ -43,6 +41,15 @@ interface Payment {
     firstName?: string; lastName?: string; email?: string; phoneNumber?: string;
     userSubscriptionObject?: { status?: string; expiresAt?: string; plan?: string };
   };
+}
+
+function esc(s: unknown): string {
+  return String(s ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 }
 
 function generateReceiptHTML(p: Payment): string {
@@ -84,14 +91,14 @@ function generateReceiptHTML(p: Payment): string {
   <div class="meta">
     <div class="meta-block">
       <p>INVOICE ID</p>
-      <p>${p.reference}</p>
+      <p>${esc(p.reference)}</p>
     </div>
     <div class="meta-block" style="text-align:right">
       <p>DATE</p>
       <p>${date}</p>
     </div>
   </div>
-  ${userName ? `<div style="margin-bottom:24px"><p style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#666;margin-bottom:4px">BILLED TO</p><p style="font-size:14px;font-weight:500">${userName}</p><p style="font-size:12px;color:#666">${p.user?.email ?? ""}</p></div>` : ""}
+  ${userName ? `<div style="margin-bottom:24px"><p style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#666;margin-bottom:4px">BILLED TO</p><p style="font-size:14px;font-weight:500">${esc(userName)}</p><p style="font-size:12px;color:#666">${esc(p.user?.email ?? "")}</p></div>` : ""}
   <div class="card">
     <div class="row"><span style="font-weight:600">Items</span><span></span></div>
     <div class="row"><span>${planLabel}</span><span>₦${p.amount.toLocaleString()}</span></div>

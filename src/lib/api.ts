@@ -37,10 +37,17 @@ export function cdnThumb(url: string): string {
   return cdnImg(url, 400);
 }
 
-const BASE =
-  typeof window !== "undefined" && window.location.hostname !== "localhost"
+// Shared base URL for every direct-to-API call in the app.
+// No Next.js rewrite exists for /api/bt (static export has no server), so both
+// dev and prod call the API directly. Override with NEXT_PUBLIC_API_URL if needed.
+export const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL ??
+  process.env.NEXT_PUBLIC_API_URL ??
+  (typeof window !== "undefined" && window.location.hostname !== "localhost"
     ? "https://api.betatenant.com"
-    : "/api/bt";
+    : "/api/bt");
+
+const BASE = API_BASE_URL;
 
 function getToken(): string | null {
   if (typeof window === "undefined") return null;

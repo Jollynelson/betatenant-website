@@ -173,7 +173,7 @@ export default async function LocationPage({ params }: { params: Promise<{ locat
 
   return (
     <>
-    <Script id={`breadcrumb-${slug}`} type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
+    <Script id={`breadcrumb-${slug}`} type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema).replace(/</g, "\\u003c") }} />
     <div className="min-h-screen bg-white">
       <section className="bg-gradient-to-b from-bt-primary to-[#12127a] text-white py-14 px-4">
         <div className="max-w-3xl mx-auto text-center">
