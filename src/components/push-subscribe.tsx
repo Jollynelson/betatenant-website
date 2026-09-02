@@ -6,7 +6,7 @@ import { Bell, BellOff, X } from "lucide-react";
 import { api } from "@/lib/api";
 import toast from "react-hot-toast";
 
-const VAPID_PUBLIC_KEY = "BL3sf9qSiYidsgmd1zBX4Zk2KbmllVtAxi8oh3OhgKcxkndtG0KXQusyyqxfDp-rBonip4QhyUV-wUqePMo0KXE";
+const VAPID_PUBLIC_KEY = "BIohLD6rKf_TZgqaxBuTqLMcNGVZyZeON3MirYkNfoI9m4FnyEGz5bIRRvGeqE-8PexU1Qusft60R_7UxeKlZDo";
 const PUSH_DISMISSED_KEY = "BT_PUSH_DISMISSED";
 const PUSH_DISMISS_DAYS = 30;
 
