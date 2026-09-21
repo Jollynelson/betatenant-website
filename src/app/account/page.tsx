@@ -7,7 +7,7 @@ import Image from "next/image";
 import {
   Heart, MessageCircle, Home, LayoutDashboard, Shield,
   LogOut, ChevronRight, Phone, Mail, Bell, Repeat2, Plus,
-  MapPin, ShieldCheck, Crown, Edit3, Calendar, AlertTriangle, Receipt, Zap, Camera,
+  MapPin, ShieldCheck, Crown, Edit3, Calendar, AlertTriangle, Receipt, Zap, Camera, Gift,
 } from "lucide-react";
 import { AuthGuard } from "@/components/auth-guard";
 import { cn } from "@/lib/utils";
@@ -53,6 +53,7 @@ function AccountContent() {
 
   // Role-specific navigation sections
   const tenantNav = [
+    { icon: Gift,          label: "Refer & Earn",      href: "/account/referrals",           desc: "Invite friends, earn free views" },
     { icon: Heart,         label: "Saved Properties",  href: "/saved",                       desc: "Properties you saved" },
     { icon: Bell,          label: "Listing Alerts",    href: "/alerts",                      desc: "Get notified of new listings" },
     { icon: Bell,          label: "Notifications",     href: "/notifications",               desc: "Reviews, messages & updates" },
@@ -63,6 +64,7 @@ function AccountContent() {
   ];
 
   const agentNav = [
+    { icon: Gift,            label: "Refer & Earn",    href: "/account/referrals",  desc: "Invite friends, earn free views" },
     { icon: LayoutDashboard, label: "Dashboard",       href: "/host",               desc: "Stats, bookings & listings" },
     { icon: Home,            label: "My Listings",     href: "/account/properties", desc: "Manage your listings" },
     { icon: Plus,            label: "Add Listing",     href: "/host/new",           desc: "List a new property" },
@@ -225,6 +227,28 @@ function AccountContent() {
             )}
           </div>
         </div>
+
+        {/* ── Refer & Earn Banner ─────────────────────────────── */}
+        <Link
+          href="/account/referrals"
+          className="flex items-center gap-3.5 px-5 py-4 bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 rounded-2xl border border-blue-100/80 shadow-sm hover:border-blue-200 active:scale-[0.99] transition-all group"
+        >
+          <div className="w-10 h-10 rounded-xl bg-bt-primary flex items-center justify-center text-white shrink-0 shadow-sm">
+            <Gift className="w-5 h-5" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1.5">
+              <p className="text-sm font-bold text-neutral-900">Refer & Earn Free Views</p>
+              <span className="px-2 py-0.5 rounded-full bg-bt-primary text-white text-[10px] font-bold">
+                +3 Views
+              </span>
+            </div>
+            <p className="text-[11px] text-neutral-500 mt-0.5 truncate">
+              Invite friends: they get 2 free views, you get 3 views
+            </p>
+          </div>
+          <ChevronRight className="w-4 h-4 text-neutral-400 group-hover:text-neutral-600 shrink-0 transition-colors" />
+        </Link>
 
         {/* ── Navigation ───────────────────────────────────────── */}
         <div className="bg-white rounded-2xl border border-neutral-100 shadow-sm divide-y divide-neutral-50 overflow-hidden">

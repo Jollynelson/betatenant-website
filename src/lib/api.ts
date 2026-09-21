@@ -164,11 +164,68 @@ export const authApi = {
   login: (email: string, password: string) =>
     api.post<LoginResponse>("/v1/auth/login", { email, password }),
 
-  register: (firstName: string, lastName: string, email: string, password: string, role = "user") =>
-    api.post<RegisterResponse>("/v1/auth/register", { firstName, lastName, email, password, role }),
+  register: (firstName: string, lastName: string, email: string, password: string, role = "user", referralCode?: string) =>
+    api.post<RegisterResponse>("/v1/auth/register", {
+      firstName,
+      lastName,
+      email,
+      password,
+      role,
+      ...(referralCode ? { referralCode: referralCode.trim().toUpperCase() } : {}),
+    }),
 
   verifyEmail: (verificationId: string, otp: string) =>
     api.post("/v1/auth/verify-email", { verificationId, otp }),
+};
+
+// ── Referrals ─────────────────────────────────────────────────────────────────
+export interface ReferralSummary {
+  referralCode: string;
+  registerUrl: string;
+  whatsappUrl: string;
+  twitterUrl?: string;
+  shareText: string;
+  stats: {
+    totalReferred: number;
+    totalRewarded: number;
+    freeViewsEarned: number;
+    boostCreditsEarned: number;
+  };
+  rewards: {
+    referrerBenefit: string;
+    refereeBenefit: string;
+    agentBonus: string | null;
+  };
+  currentBalance: {
+    freeViewCount: number;
+    userBalance: number;
+  };
+  referrals: Array<{
+    id: string;
+    refereeName: string;
+    status: string;
+    rewardGiven: number;
+    rewardType: string;
+    joinedAt: string;
+  }>;
+}
+
+export const referralApi = {
+  getSummary: () => api.get<ReferralSummary>("/v1/referral/me"),
+  validateCode: (code: string) => api.get<{
+    valid: boolean;
+    message?: string;
+    referrerName?: string;
+    role?: string;
+    bonusFreeViews?: number;
+  }>(`/v1/referral/validate/${encodeURIComponent(code.trim().toUpperCase())}`),
+  applyCode: (referralCode: string, channel = "web") =>
+    api.post<{ successful: boolean; message?: string; errorMessage?: string }>("/v1/referral/apply", {
+      referralCode: referralCode.trim().toUpperCase(),
+      channel,
+    }),
+  getHistory: (page = 1, limit = 20) => api.get<any>(`/v1/referral/history?page=${page}&limit=${limit}`),
+  getLeaderboard: (limit = 10) => api.get<any>(`/v1/referral/leaderboard?limit=${limit}`),
 };
 
 // ── Properties ────────────────────────────────────────────────────────────────

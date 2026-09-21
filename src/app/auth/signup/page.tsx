@@ -5,9 +5,9 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import { Eye, EyeOff, Lock, Mail, User, Home, Users, Building2, CheckCircle2, Loader2 } from "lucide-react";
+import { Eye, EyeOff, Lock, Mail, User, Home, Users, Building2, CheckCircle2, Loader2, Gift } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { authApi, api, API_BASE_URL } from "@/lib/api";
+import { authApi, api, referralApi, API_BASE_URL } from "@/lib/api";
 import toast from "react-hot-toast";
 
 type Step = "role" | "form" | "verify";
@@ -22,6 +22,7 @@ function SignupContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const fromParam = searchParams.get("from");
+  const refParam = searchParams.get("ref") || "";
   const [step, setStep]           = useState<Step>("role");
   const [role, setRole]           = useState<string>("");
   const [showPassword, setShowPassword] = useState(false);
@@ -29,6 +30,17 @@ function SignupContent() {
   const [resendLoading, setResendLoading] = useState(false);
   const [verificationId, setVerificationId] = useState("");
   const [otp, setOtp]             = useState("");
+
+  // Referral code state
+  const [referralCode, setReferralCode]   = useState(refParam);
+  const [referralInfo, setReferralInfo]   = useState<{
+    valid: boolean;
+    referrerName?: string;
+    bonusFreeViews?: number;
+    message?: string;
+  } | null>(null);
+  const [referralChecking, setReferralChecking] = useState(false);
+  const [showReferralInput, setShowReferralInput] = useState(Boolean(refParam));
 
   // Agency name state (agents/landlords only)
   const [agencyName, setAgencyName]       = useState("");
@@ -40,6 +52,34 @@ function SignupContent() {
   const [errors, setErrors] = useState({ firstName: "", lastName: "", email: "", password: "" });
 
   const isAgentOrLandlord = role === "agent" || role === "landlord";
+
+  useEffect(() => {
+    if (refParam) {
+      setReferralCode(refParam);
+      setShowReferralInput(true);
+    }
+  }, [refParam]);
+
+  // Live validate referral code
+  useEffect(() => {
+    const code = referralCode.trim();
+    if (code.length < 4) {
+      setReferralInfo(null);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      setReferralChecking(true);
+      try {
+        const res = await referralApi.validateCode(code);
+        setReferralInfo(res);
+      } catch {
+        setReferralInfo({ valid: false, message: "Invalid referral code" });
+      } finally {
+        setReferralChecking(false);
+      }
+    }, 450);
+    return () => clearTimeout(timer);
+  }, [referralCode]);
 
   // ── CRITICAL FIX: Never restore usrLoginType on mount ─────────────────────
   // If we restored it, logged-out users coming back to signup would skip role
@@ -94,7 +134,14 @@ function SignupContent() {
     if (!validate()) return;
     setLoading(true);
     try {
-      const res = await authApi.register(form.firstName, form.lastName, form.email, form.password, role);
+      const res = await authApi.register(
+        form.firstName,
+        form.lastName,
+        form.email,
+        form.password,
+        role,
+        referralCode.trim() || undefined
+      );
       if (res.successful) {
         // If agency name provided, save it via profile update after a short delay
         // (user won't be logged in yet, but we save it to localStorage to apply after login)
@@ -250,6 +297,50 @@ function SignupContent() {
                   </button>
                 </div>
               </Field>
+
+              {/* Referral Code Field */}
+              <div className="pt-1">
+                {!showReferralInput ? (
+                  <button
+                    type="button"
+                    onClick={() => setShowReferralInput(true)}
+                    className="text-xs font-semibold text-bt-primary hover:underline flex items-center gap-1.5 transition-colors"
+                  >
+                    <Gift className="w-3.5 h-3.5 text-bt-primary" /> Have a referral code?
+                  </button>
+                ) : (
+                  <Field label="Referral Code (optional)">
+                    <div className="relative">
+                      <Gift className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
+                      <input
+                        type="text"
+                        placeholder="e.g. BT-8M4Q"
+                        value={referralCode}
+                        onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
+                        className={cn(inputCls(false), "pl-11 pr-11 uppercase font-mono tracking-wider")}
+                      />
+                      <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                        {referralChecking && <Loader2 className="w-4 h-4 animate-spin text-neutral-400" />}
+                        {!referralChecking && referralInfo?.valid && (
+                          <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                        )}
+                      </div>
+                    </div>
+                    {referralInfo && (
+                      <p
+                        className={cn(
+                          "text-xs mt-1.5 flex items-center gap-1 font-medium",
+                          referralInfo.valid ? "text-emerald-600" : "text-red-500"
+                        )}
+                      >
+                        {referralInfo.valid
+                          ? `✓ ${referralInfo.message || `Valid code from ${referralInfo.referrerName || "a friend"}!`}`
+                          : `✗ ${referralInfo.message || "Invalid referral code"}`}
+                      </p>
+                    )}
+                  </Field>
+                )}
+              </div>
 
               <label className="flex items-start gap-2.5 text-sm cursor-pointer">
                 <input type="checkbox" checked={form.agree} onChange={(e) => setForm({ ...form, agree: e.target.checked })} className="w-4 h-4 mt-0.5 accent-bt-primary" />
