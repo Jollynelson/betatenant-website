@@ -6,6 +6,7 @@ interface AuthUser {
   fullName: string;
   role: string;
   profilePic?: string;
+  referralCode?: string;
 }
 
 interface AuthState {

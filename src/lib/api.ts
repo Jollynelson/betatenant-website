@@ -182,6 +182,7 @@ export const authApi = {
 export interface ReferralSummary {
   referralCode: string;
   registerUrl: string;
+  signupUrl?: string;
   whatsappUrl: string;
   twitterUrl?: string;
   shareText: string;
@@ -190,10 +191,20 @@ export interface ReferralSummary {
     totalRewarded: number;
     freeViewsEarned: number;
     boostCreditsEarned: number;
+    walletBonusEarned?: number;
+    commissionEarned?: number;
+    agentReferralsCount?: number;
+  };
+  agentCommission?: {
+    enabled: boolean;
+    ratePercent: number;
+    validityMonths: number;
+    totalEarned: number;
   };
   rewards: {
     referrerBenefit: string;
     refereeBenefit: string;
+    agentCommissionBenefit?: string;
     agentBonus: string | null;
   };
   currentBalance: {
@@ -202,10 +213,18 @@ export interface ReferralSummary {
   };
   referrals: Array<{
     id: string;
+    name?: string;
     refereeName: string;
+    role?: string;
+    isAgent?: boolean;
     status: string;
     rewardGiven: number;
     rewardType: string;
+    totalCommissionEarned?: number;
+    commissionRatePercent?: number;
+    commissionExpiresAt?: string | null;
+    isCommissionValid?: boolean;
+    daysRemaining?: number;
     joinedAt: string;
   }>;
 }

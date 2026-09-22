@@ -8,12 +8,14 @@ import {
   Heart, MessageCircle, Home, LayoutDashboard, Shield,
   LogOut, ChevronRight, Phone, Mail, Bell, Repeat2, Plus,
   MapPin, ShieldCheck, Crown, Edit3, Calendar, AlertTriangle, Receipt, Zap, Camera, Gift,
+  Copy, Check,
 } from "lucide-react";
 import { AuthGuard } from "@/components/auth-guard";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/lib/auth-store";
 import { api } from "@/lib/api";
 import { PushToggle } from "@/components/push-subscribe";
+import toast from "react-hot-toast";
 
 function AccountContent() {
   const router = useRouter();
@@ -21,6 +23,7 @@ function AccountContent() {
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [copiedCode, setCopiedCode] = useState(false);
 
   // Derive role from profile (available after load), falling back to auth store
   const role = profile?.role ?? user?.role ?? useAuthStore.getState().user?.role ?? "user";
@@ -229,26 +232,58 @@ function AccountContent() {
         </div>
 
         {/* ── Refer & Earn Banner ─────────────────────────────── */}
-        <Link
-          href="/account/referrals"
-          className="flex items-center gap-3.5 px-5 py-4 bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 rounded-2xl border border-blue-100/80 shadow-sm hover:border-blue-200 active:scale-[0.99] transition-all group"
-        >
-          <div className="w-10 h-10 rounded-xl bg-bt-primary flex items-center justify-center text-white shrink-0 shadow-sm">
-            <Gift className="w-5 h-5" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-1.5">
-              <p className="text-sm font-bold text-neutral-900">Refer & Earn Free Views</p>
-              <span className="px-2 py-0.5 rounded-full bg-bt-primary text-white text-[10px] font-bold">
-                +3 Views
-              </span>
+        {(() => {
+          const refCode = profile?.referralCode || user?.referralCode;
+          return (
+            <div className="p-4 sm:p-5 bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 rounded-2xl border border-blue-100/80 shadow-sm space-y-3">
+              <Link href="/account/referrals" className="flex items-center gap-3.5 group">
+                <div className="w-10 h-10 rounded-xl bg-bt-primary flex items-center justify-center text-white shrink-0 shadow-sm">
+                  <Gift className="w-5 h-5" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <p className="text-sm font-bold text-neutral-900">Refer & Earn Rewards</p>
+                    <span className="px-2 py-0.5 rounded-full bg-bt-primary text-white text-[10px] font-bold">
+                      +3 Views
+                    </span>
+                    <span className="px-2 py-0.5 rounded-full bg-amber-500 text-white text-[10px] font-bold">
+                      10% Cash
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-neutral-500 mt-0.5">
+                    Give 2 views, get 3 views + 10% agent commission for 4 months
+                  </p>
+                </div>
+                <ChevronRight className="w-4 h-4 text-neutral-400 group-hover:text-neutral-600 shrink-0 transition-colors" />
+              </Link>
+
+              {refCode && (
+                <div className="flex items-center justify-between gap-2 pt-2 border-t border-blue-100/70">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <span className="text-[11px] text-neutral-500 font-medium">Your Code:</span>
+                    <span className="font-mono text-xs font-black text-bt-primary bg-white px-2.5 py-1 rounded-lg border border-blue-200 shadow-2xs">
+                      {refCode}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      navigator.clipboard.writeText(refCode);
+                      setCopiedCode(true);
+                      toast.success("Referral code copied!");
+                      setTimeout(() => setCopiedCode(false), 2000);
+                    }}
+                    className="flex items-center gap-1.5 text-xs font-semibold bg-white text-bt-primary px-3 py-1.5 rounded-lg border border-blue-200 hover:bg-blue-50 active:scale-95 transition-all shadow-2xs cursor-pointer"
+                  >
+                    {copiedCode ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                    {copiedCode ? "Copied!" : "Copy Code"}
+                  </button>
+                </div>
+              )}
             </div>
-            <p className="text-[11px] text-neutral-500 mt-0.5 truncate">
-              Invite friends: they get 2 free views, you get 3 views
-            </p>
-          </div>
-          <ChevronRight className="w-4 h-4 text-neutral-400 group-hover:text-neutral-600 shrink-0 transition-colors" />
-        </Link>
+          );
+        })()}
 
         {/* ── Navigation ───────────────────────────────────────── */}
         <div className="bg-white rounded-2xl border border-neutral-100 shadow-sm divide-y divide-neutral-50 overflow-hidden">
