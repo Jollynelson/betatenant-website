@@ -12,6 +12,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/lib/auth-store";
 import { api } from "@/lib/api";
+import { CountrySwitcher } from "@/components/CountrySwitcher";
 
 interface NavItem {
   href: string;
@@ -179,6 +180,9 @@ export function Navbar() {
 
           {/* Desktop right */}
           <div className="hidden lg:flex items-center gap-2">
+            <div className="mr-2">
+               <CountrySwitcher />
+            </div>
             {user ? (
               <div className="relative" ref={dropdownRef}>
                 {/* Single pill: bell (conditional) + avatar + name */}
@@ -351,6 +355,9 @@ export function Navbar() {
               style={{ paddingBottom: "calc(4rem + env(safe-area-inset-bottom) + 1rem)" }}
             >
               <div className="px-5 py-5 space-y-1">
+                <div className="mb-4 lg:hidden">
+                  <CountrySwitcher />
+                </div>
                 {/* Only show nav links when logged out — logged-in users use the bottom nav */}
                 {!user && (
                   <>

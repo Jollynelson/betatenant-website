@@ -14,6 +14,7 @@ import { MobileNav } from "@/components/layout/mobile-nav";
 import { BackgroundSync } from "@/components/background-sync";
 import { PaymentReturn } from "@/components/payment-return";
 import { propertyApi, api } from "@/lib/api";
+import { CountryProvider } from "@/components/CountryProvider";
 
 // ── QueryClient — aggressive caching for PWA-like experience ─────────────────
 const queryClient = new QueryClient({
@@ -204,9 +205,11 @@ function AppShell({ children }: { children: React.ReactNode }) {
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
-      <AppShell>
-        {children}
-      </AppShell>
+      <CountryProvider>
+        <AppShell>
+          {children}
+        </AppShell>
+      </CountryProvider>
       <Toaster
         position="top-center"
         toastOptions={{
