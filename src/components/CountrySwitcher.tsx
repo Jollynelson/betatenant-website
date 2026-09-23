@@ -6,15 +6,9 @@ import { useCountry } from "./CountryProvider";
 export function CountrySwitcher() {
   const { activeCountry, setCountry, availablePacks, loading } = useCountry();
 
-  if (loading) {
-    return null; // Don't show while loading
+  if (loading || availablePacks.length <= 1) {
+    return null; // Don't show if loading or only 1 country is supported
   }
-
-  // Fallback if API is unreachable (e.g., backend not deployed yet)
-  const packsToDisplay = availablePacks.length > 0 ? availablePacks : [
-    { countryCode: "NG", countryName: "Nigeria" } as any,
-    { countryCode: "KE", countryName: "Kenya" } as any
-  ];
 
   return (
     <div className="relative">
@@ -24,7 +18,7 @@ export function CountrySwitcher() {
         className="w-full cursor-pointer appearance-none rounded-lg bg-neutral-100/50 px-3 py-2 pr-8 text-left text-sm font-medium text-neutral-700 shadow-sm border border-neutral-200 hover:bg-neutral-100 transition-colors outline-none focus:ring-2 focus:ring-bt-primary focus:border-transparent"
         aria-label="Select Country"
       >
-        {packsToDisplay.map((pack: any) => (
+        {availablePacks.map((pack) => (
           <option key={pack.countryCode} value={pack.countryCode}>
             {pack.countryName}
           </option>
