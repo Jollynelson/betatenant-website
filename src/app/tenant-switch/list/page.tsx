@@ -461,7 +461,7 @@ function StepCreate({ onNext, existingId }: { onNext: (id: string, details: any)
               <label className="block text-sm font-medium text-neutral-700 mb-1.5">State</label>
               <select value={propertyState} onChange={e => { setPropertyState(e.target.value); setPropertyLGA(""); }} className="w-full bg-white border border-neutral-200 rounded-xl px-4 py-2.5 text-[16px] focus:outline-none focus:ring-2 focus:ring-bt-primary/30">
                 <option value="">Select a state</option>
-                {countryPack?.regions?.map((r) => (<option key={r.key} value={r.value || r.key}>{r.name}</option>))}
+                {countryPack?.regions?.map((r) => (<option key={r.key} value={r.key}>{r.name}</option>))}
               </select>
             </div>
             {((countryPack?.geographySchema?.length || 0) > 1) && (
@@ -625,11 +625,7 @@ function StepCreate({ onNext, existingId }: { onNext: (id: string, details: any)
 // ── Step 2: Pricing (no inspection fee) ───────────────────────────────────────
 function StepPricing({ onNext, onBack }: { onNext: () => void; onBack: () => void }) {
   const { countryPack } = useCountry();
-  const [listingFee, setListingFee]     = useState("0");
-  const [cautionFee, setCautionFee]     = useState("0");
-  const [serviceCharge, setServiceCharge] = useState("0");
-  const [lawyerFee, setLawyerFee]       = useState("0");
-  const [cleaningFee, setCleaningFee]   = useState("0");
+  const [fees, setFees] = useState<Record<string, string>>({});
   const [isUpdating, setUpdating]       = useState(false);
   const [error, setError]               = useState("");
 
@@ -637,17 +633,18 @@ function StepPricing({ onNext, onBack }: { onNext: () => void; onBack: () => voi
     const raw = sessionStorage.getItem("ts_propertyToEdit");
     if (raw) {
       const p = JSON.parse(raw);
-      setListingFee(formatCurrency(safeParse(String(p?.listingFee ?? 0))));
-      setCautionFee(formatCurrency(safeParse(String(p?.cautionFee ?? 0))));
-      setServiceCharge(formatCurrency(safeParse(String(p?.serviceCharge ?? 0))));
-      setLawyerFee(formatCurrency(safeParse(String(p?.lawyerFee ?? 0))));
-      setCleaningFee(formatCurrency(safeParse(String(p?.cleaningFee ?? 0))));
+      const initialFees: Record<string, string> = {};
+      countryPack?.pricingModels?.forEach(model => {
+        initialFees[model.feeKey] = formatCurrency(safeParse(String(p?.[model.feeKey] ?? 0)));
+      });
+      setFees(initialFees);
     }
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [countryPack]);
 
-  const handleChange = (e: ChangeEvent<HTMLInputElement>, setter: (v: string) => void) => {
+  const handleChange = (e: ChangeEvent<HTMLInputElement>, id: string) => {
     const raw = e.target.value.replace(/[^\d]/g, "") || "0";
-    setter(formatCurrency(parseInt(raw)));
+    setFees(prev => ({ ...prev, [id]: formatCurrency(parseInt(raw)) }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -658,15 +655,15 @@ function StepPricing({ onNext, onBack }: { onNext: () => void; onBack: () => voi
     if (!propertyId) return setError("Property ID missing.");
     const tok = localStorage.getItem("BT_TOKEN");
     if (!tok) return setError("Not authenticated.");
-    const scNum = safeParse(serviceCharge);
+    const scNum = safeParse(fees["serviceCharge"]);
     const data = {
-      listingFee: safeParse(listingFee),
-      cautionFee: safeParse(cautionFee),
+      listingFee: safeParse(fees["listingFee"]),
+      cautionFee: safeParse(fees["cautionFee"]),
       inspectionFee: 0, // no inspection fee for tenant switch
       serviceCharge: scNum,
       serviceChargeFrequency: scNum > 0 ? "yearly" : "N/A",
-      lawyerFee: safeParse(lawyerFee),
-      cleaningFee: safeParse(cleaningFee),
+      lawyerFee: safeParse(fees["lawyerFee"]),
+      cleaningFee: safeParse(fees["cleaningFee"]),
       additionalFee: 0,
     };
     setUpdating(true);
@@ -689,16 +686,16 @@ function StepPricing({ onNext, onBack }: { onNext: () => void; onBack: () => voi
     } finally { setUpdating(false); }
   };
 
-  const total = safeParse(listingFee) + safeParse(cautionFee) + safeParse(serviceCharge) + safeParse(lawyerFee);
-  const unlockFee = safeParse(listingFee) > 1_500_000 ? 1500 : safeParse(listingFee) > 501_000 ? 850 : 500;
+  const total = Object.values(fees).reduce((acc, curr) => acc + safeParse(curr), 0);
+  const unlockFee = safeParse(fees["listingFee"]) > 1_500_000 ? 1500 : safeParse(fees["listingFee"]) > 501_000 ? 850 : 500;
 
   return (
     <form onSubmit={handleSubmit} className="max-w-xl mx-auto space-y-6">
       <div className="bg-neutral-50 rounded-2xl p-6 text-center">
         <p className="text-sm text-neutral-500 mb-1">Rent per annum</p>
         <p className="text-4xl font-bold text-neutral-800">{countryPack?.currencySymbol}{fees["listingFee"] || "0"}</p>
-        <p className="text-sm text-neutral-500 mt-1">{countryPack?.currencySymbol}{formatCurrency(Object.values(fees).reduce((acc, curr) => acc + safeParse(curr), 0))} total with all fees</p>
-        {safeParse(listingFee) > 0 && (
+        <p className="text-sm text-neutral-500 mt-1">{countryPack?.currencySymbol}{formatCurrency(total)} total with all fees</p>
+        {safeParse(fees["listingFee"]) > 0 && (
           <p className="text-xs text-bt-primary font-semibold mt-2">
             Viewers will pay ₦{unlockFee.toLocaleString()} to unlock your contact
           </p>
@@ -706,19 +703,19 @@ function StepPricing({ onNext, onBack }: { onNext: () => void; onBack: () => voi
       </div>
 
       {[
-        { id: "listingFee",   label: "Rent per annum",          val: listingFee,   set: setListingFee,   req: true },
-        { id: "serviceCharge",label: "Service Charge (optional)",val: serviceCharge,set: setServiceCharge,req: false },
-        { id: "lawyerFee",    label: "Legal Fee (optional)",     val: lawyerFee,    set: setLawyerFee,    req: false },
-        { id: "cautionFee",   label: "Caution Fee (optional)",   val: cautionFee,   set: setCautionFee,   req: false },
-        { id: "cleaningFee",  label: "Cleaning Fee (optional)",  val: cleaningFee,  set: setCleaningFee,  req: false },
-      ].map(({ id, label, val, set, req }) => (
+        { id: "listingFee",   label: "Rent per annum",          req: true },
+        { id: "serviceCharge",label: "Service Charge (optional)",req: false },
+        { id: "lawyerFee",    label: "Legal Fee (optional)",     req: false },
+        { id: "cautionFee",   label: "Caution Fee (optional)",   req: false },
+        { id: "cleaningFee",  label: "Cleaning Fee (optional)",  req: false },
+      ].map(({ id, label, req }) => (
         <div key={id}>
           <label htmlFor={id} className="block text-sm font-medium text-neutral-700 mb-1.5">
             {label} {req && <span className="text-red-500">*</span>}
           </label>
           <div className="relative">
             <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-500 text-sm">₦</span>
-            <input id={id} type="text" inputMode="numeric" value={val} onChange={e => handleChange(e, set)}
+            <input id={id} type="text" inputMode="numeric" value={fees[id] || ""} onChange={e => handleChange(e, id)}
               className="w-full border border-neutral-200 rounded-xl pl-8 pr-4 py-2.5 text-[16px] focus:outline-none focus:ring-2 focus:ring-bt-primary/30" />
           </div>
         </div>

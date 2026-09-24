@@ -650,11 +650,11 @@ function StepCreate({
               Is this an entire apartment or shared? <span className="text-red-500">*</span>
             </p>
             <div className="flex flex-wrap gap-3">
-              {APARTMENT_TYPES.map((t) => (
+              {(countryPack?.propertyTypes || []).map((t: any) => (
                 <label
-                  key={t.value}
+                  key={t.key}
                   className={`flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer text-sm transition-colors ${
-                    apartmentType === t.value
+                    apartmentType === t.key
                       ? "border-bt-primary bg-bt-primary/5 text-bt-primary font-medium"
                       : "border-neutral-200 hover:border-neutral-300"
                   }`}
@@ -662,8 +662,8 @@ function StepCreate({
                   <input
                     type="radio"
                     name="apartmentType"
-                    value={t.value}
-                    checked={apartmentType === t.value}
+                    value={t.key}
+                    checked={apartmentType === t.key}
                     onChange={(e) => {
                       const val = e.target.value;
                       setApartmentType(val);
@@ -686,7 +686,7 @@ function StepCreate({
                     }}
                     className="sr-only"
                   />
-                  {apartmentType === t.value && <Check className="w-3.5 h-3.5" />}
+                  {apartmentType === t.key && <Check className="w-3.5 h-3.5" />}
                   {t.label}
                 </label>
               ))}
@@ -774,7 +774,7 @@ function StepCreate({
                 className="w-full bg-white border border-neutral-200 rounded-xl px-4 py-2.5 text-[16px] focus:outline-none focus:ring-2 focus:ring-bt-primary/30"
               >
                 <option value="">Select a state</option>
-                {countryPack?.regions?.map((r) => (<option key={r.key} value={r.value || r.key}>{r.name}</option>))}
+                {countryPack?.regions?.map((r) => (<option key={r.key} value={r.key}>{r.name}</option>))}
               </select>
             </div>
             {((countryPack?.geographySchema?.length || 0) > 1) && (
@@ -1083,14 +1083,15 @@ function StepPricing({ onNext, onBack }: { onNext: () => void; onBack: () => voi
       });
       setFees(initialFees);
     }
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [countryPack]);
 
   const handleChange = (
     e: ChangeEvent<HTMLInputElement>,
-    setter: (v: string) => void
+    id: string
   ) => {
     const raw = e.target.value.replace(/[^\d]/g, "") || "0";
-    setter(formatCurrency(parseInt(raw)));
+    setFees(prev => ({ ...prev, [id]: formatCurrency(parseInt(raw)) }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -1107,16 +1108,16 @@ function StepPricing({ onNext, onBack }: { onNext: () => void; onBack: () => voi
     const token = localStorage.getItem("BT_TOKEN");
     if (!token) return setError("Not authenticated. Please log in again.");
 
-    const serviceChargeNum = safeParse(serviceCharge);
+    const serviceChargeNum = safeParse(fees["serviceCharge"]);
     const data = {
-      listingFee: safeParse(listingFee),
-      cautionFee: safeParse(cautionFee),
-      inspectionFee: safeParse(inspectionFee),
+      listingFee: safeParse(fees["listingFee"]),
+      cautionFee: safeParse(fees["cautionFee"]),
+      inspectionFee: safeParse(fees["inspectionFee"]),
       serviceCharge: serviceChargeNum,
       // publish endpoint validates serviceChargeFrequency as "monthly"|"yearly"|"N/A"
       serviceChargeFrequency: serviceChargeNum > 0 ? "yearly" : "N/A",
-      lawyerFee: safeParse(lawyerFee),
-      cleaningFee: safeParse(cleaningFee),
+      lawyerFee: safeParse(fees["lawyerFee"]),
+      cleaningFee: safeParse(fees["cleaningFee"]),
       additionalFee: 0,
     };
 
@@ -1151,24 +1152,24 @@ function StepPricing({ onNext, onBack }: { onNext: () => void; onBack: () => voi
     }
   };
 
-  const total = safeParse(listingFee) + safeParse(cautionFee) + safeParse(inspectionFee) + safeParse(serviceCharge) + safeParse(lawyerFee);
+  const total = Object.values(fees).reduce((acc, curr) => acc + safeParse(curr), 0);
 
   return (
     <form onSubmit={handleSubmit} className="max-w-xl mx-auto space-y-6">
       <div className="bg-neutral-50 rounded-2xl p-6 text-center">
         <p className="text-sm text-neutral-500 mb-1">Rent per annum</p>
         <p className="text-4xl font-bold text-neutral-800">{countryPack?.currencySymbol}{fees["listingFee"] || "0"}</p>
-        <p className="text-sm text-neutral-500 mt-1">{countryPack?.currencySymbol}{formatCurrency(Object.values(fees).reduce((acc, curr) => acc + safeParse(curr), 0))} total with all fees</p>
+        <p className="text-sm text-neutral-500 mt-1">{countryPack?.currencySymbol}{formatCurrency(total)} total with all fees</p>
       </div>
 
       {[
-        { id: "listingFee", label: "Rent per annum", val: listingFee, set: setListingFee, required: true },
-        { id: "serviceCharge", label: "Service Charge (optional)", val: serviceCharge, set: setServiceCharge, required: false },
-        { id: "lawyerFee", label: "Legal Fee (optional)", val: lawyerFee, set: setLawyerFee, required: false },
-        { id: "inspectionFee", label: "Inspection Fee", val: inspectionFee, set: setInspectionFee, required: true },
-        { id: "cautionFee", label: "Caution Fee (optional)", val: cautionFee, set: setCautionFee, required: false },
-        { id: "cleaningFee", label: "Cleaning Fee (optional)", val: cleaningFee, set: setCleaningFee, required: false },
-      ].map(({ id, label, val, set, required }) => (
+        { id: "listingFee", label: "Rent per annum", required: true },
+        { id: "serviceCharge", label: "Service Charge (optional)", required: false },
+        { id: "lawyerFee", label: "Legal Fee (optional)", required: false },
+        { id: "inspectionFee", label: "Inspection Fee", required: true },
+        { id: "cautionFee", label: "Caution Fee (optional)", required: false },
+        { id: "cleaningFee", label: "Cleaning Fee (optional)", required: false },
+      ].map(({ id, label, required }) => (
         <div key={id}>
           <label htmlFor={id} className="block text-sm font-medium text-neutral-700 mb-1.5">
             {label} {required && <span className="text-red-500">*</span>}
@@ -1179,8 +1180,8 @@ function StepPricing({ onNext, onBack }: { onNext: () => void; onBack: () => voi
               id={id}
               type="text"
               inputMode="numeric"
-              value={val}
-              onChange={(e) => handleChange(e, set)}
+              value={fees[id] || ""}
+              onChange={(e) => handleChange(e, id)}
               className="w-full border border-neutral-200 rounded-xl pl-8 pr-4 py-2.5 text-[16px] focus:outline-none focus:ring-2 focus:ring-bt-primary/30"
             />
           </div>
