@@ -4,8 +4,8 @@ import { useState, useEffect, useCallback, useRef, ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AuthGuard } from "@/components/auth-guard";
+import { useCountry } from "@/components/CountryProvider";
 import { api, tenantSwitchApi, API_BASE_URL } from "@/lib/api";
-import { locationData } from "@/lib/locations";
 import {
   Bath, Bed, Tv, Upload, X, Loader2, Check, ChevronRight,
   Video, AlertCircle, RefreshCw, Calendar,
@@ -30,15 +30,6 @@ interface Amenity  { _id: string; name: string; slug: string; }
 interface HouseRule { _id: string; name: string; slug: string; }
 
 // ── Constants ─────────────────────────────────────────────────────────────────
-const APARTMENT_TYPES = [
-  { label: "Single room/Shared apartment", value: "single-room/shared-apartment" },
-  { label: "Self Contained Apartment",     value: "self-contained" },
-  { label: "Mini flat/One bedroom",        value: "mini-flat/one-bedroom" },
-  { label: "Two bedroom flat",             value: "two-bedroom" },
-  { label: "Three bedroom flat",           value: "three-bedroom" },
-  { label: "Four bedroom flat",            value: "four-bedroom" },
-  { label: "Big family house/4+ Bedrooms", value: "big-family-house-4plus" },
-] as const;
 
 const STEPS = ["List My Space", "Pricing", "Preview"] as const;
 const DRAFT_KEY = "BT_TS_LISTING_DRAFT";
@@ -146,6 +137,7 @@ async function uploadMultipart(file: File, onProgress: (p: number, s?: number) =
 
 // ── Step 1: Create Listing ────────────────────────────────────────────────────
 function StepCreate({ onNext, existingId }: { onNext: (id: string, details: any) => void; existingId?: string }) {
+  const { countryPack } = useCountry();
   const [apartmentType, setApartmentType]   = useState("");
   const [roomCount, setRoomCount]           = useState(1);
   const [bathroomCount, setBathroomCount]   = useState(1);
@@ -346,8 +338,7 @@ function StepCreate({ onNext, existingId }: { onNext: (id: string, details: any)
   };
 
   const today = new Date().toISOString().split("T")[0];
-  const citiesForState = locationData.find(l => l.state === propertyState)?.cities ?? [];
-
+  
   return (
     <div className="space-y-10">
       {/* Gender */}
@@ -408,19 +399,20 @@ function StepCreate({ onNext, existingId }: { onNext: (id: string, details: any)
           <div className="flex-1 min-w-64">
             <p className="font-medium text-neutral-800 mb-3">Is this an entire apartment or shared? <span className="text-red-500">*</span></p>
             <div className="flex flex-wrap gap-3">
-              {APARTMENT_TYPES.map(t => (
-                <label key={t.value} className={`flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer text-sm transition-colors ${
-                  apartmentType === t.value ? "border-bt-primary bg-bt-primary/5 text-bt-primary font-medium" : "border-neutral-200 hover:border-neutral-300"
+              {countryPack?.propertyTypes?.map((t) => (
+                <label key={t.key} className={`flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer text-sm transition-colors ${
+                  apartmentType === t.key ? "border-bt-primary bg-bt-primary/5 text-bt-primary font-medium" : "border-neutral-200 hover:border-neutral-300"
                 }`}>
-                  <input type="radio" name="apartmentType" value={t.value} checked={apartmentType === t.value}
+                  <input type="radio" name="apartmentType" value={t.key} checked={apartmentType === t.key}
                     onChange={e => {
-                      const v = e.target.value; setApartmentType(v);
+                      setApartmentType(e.target.value);
                       const rm: Record<string, number> = { "single-room/shared-apartment": 1, "self-contained": 1, "mini-flat/one-bedroom": 1, "two-bedroom": 2, "three-bedroom": 3, "four-bedroom": 4, "big-family-house-4plus": 4 };
-                      setRoomCount(rm[v] ?? 1); setBathroomCount(1);
-                      if (v === "self-contained" || v === "mini-flat/one-bedroom") setLivingRoomCount(0);
-                      else if (livingRoomCount === 0 && v !== "single-room/shared-apartment") setLivingRoomCount(1);
-                    }} className="sr-only" />
-                  {apartmentType === t.value && <Check className="w-3.5 h-3.5" />}
+                      setRoomCount(rm[e.target.value] ?? 1); setBathroomCount(1);
+                      if (e.target.value === "self-contained" || e.target.value === "mini-flat/one-bedroom") setLivingRoomCount(0);
+                      else if (livingRoomCount === 0 && e.target.value !== "single-room/shared-apartment") setLivingRoomCount(1);
+                    }}
+                    className="w-4 h-4 text-bt-primary border-neutral-300 focus:ring-bt-primary"
+                  />
                   {t.label}
                 </label>
               ))}
@@ -469,16 +461,22 @@ function StepCreate({ onNext, existingId }: { onNext: (id: string, details: any)
               <label className="block text-sm font-medium text-neutral-700 mb-1.5">State</label>
               <select value={propertyState} onChange={e => { setPropertyState(e.target.value); setPropertyLGA(""); }} className="w-full bg-white border border-neutral-200 rounded-xl px-4 py-2.5 text-[16px] focus:outline-none focus:ring-2 focus:ring-bt-primary/30">
                 <option value="">Select a state</option>
-                {locationData.map(l => <option key={l.state} value={l.state}>{l.state}</option>)}
+                {countryPack?.regions?.map((r) => (<option key={r.key} value={r.value || r.key}>{r.name}</option>))}
               </select>
             </div>
+            {((countryPack?.geographySchema?.length || 0) > 1) && (
             <div>
               <label className="block text-sm font-medium text-neutral-700 mb-1.5">Town/LGA</label>
-              <select value={propertyLGA} onChange={e => setPropertyLGA(e.target.value)} className="w-full bg-white border border-neutral-200 rounded-xl px-4 py-2.5 text-[16px] focus:outline-none focus:ring-2 focus:ring-bt-primary/30">
-                <option value="">Select a city</option>
-                {citiesForState.map(c => <option key={c} value={c}>{c}</option>)}
-              </select>
+              <input
+                type="text"
+                value={propertyLGA}
+                onChange={(e) => setPropertyLGA(e.target.value)}
+                placeholder="Enter Town/LGA"
+                disabled={!propertyState}
+                className="w-full bg-white border border-neutral-200 rounded-xl px-4 py-2.5 text-[16px] focus:outline-none focus:ring-2 focus:ring-bt-primary/30 disabled:opacity-50"
+              />
             </div>
+          )}
           </div>
         </div>
       </section>
@@ -626,6 +624,7 @@ function StepCreate({ onNext, existingId }: { onNext: (id: string, details: any)
 
 // ── Step 2: Pricing (no inspection fee) ───────────────────────────────────────
 function StepPricing({ onNext, onBack }: { onNext: () => void; onBack: () => void }) {
+  const { countryPack } = useCountry();
   const [listingFee, setListingFee]     = useState("0");
   const [cautionFee, setCautionFee]     = useState("0");
   const [serviceCharge, setServiceCharge] = useState("0");
@@ -697,8 +696,8 @@ function StepPricing({ onNext, onBack }: { onNext: () => void; onBack: () => voi
     <form onSubmit={handleSubmit} className="max-w-xl mx-auto space-y-6">
       <div className="bg-neutral-50 rounded-2xl p-6 text-center">
         <p className="text-sm text-neutral-500 mb-1">Rent per annum</p>
-        <p className="text-4xl font-bold text-neutral-800">₦{listingFee}</p>
-        <p className="text-sm text-neutral-500 mt-1">₦{formatCurrency(total)} total with all fees</p>
+        <p className="text-4xl font-bold text-neutral-800">{countryPack?.currencySymbol}{fees["listingFee"] || "0"}</p>
+        <p className="text-sm text-neutral-500 mt-1">{countryPack?.currencySymbol}{formatCurrency(Object.values(fees).reduce((acc, curr) => acc + safeParse(curr), 0))} total with all fees</p>
         {safeParse(listingFee) > 0 && (
           <p className="text-xs text-bt-primary font-semibold mt-2">
             Viewers will pay ₦{unlockFee.toLocaleString()} to unlock your contact
@@ -740,6 +739,7 @@ function StepPricing({ onNext, onBack }: { onNext: () => void; onBack: () => voi
 
 // ── Step 3: Preview ────────────────────────────────────────────────────────────
 function StepPreview({ onBack }: { onBack: () => void }) {
+  const { countryPack } = useCountry();
   const router = useRouter();
   const queryClient = useQueryClient();
   const [house, setHouse]           = useState<any>(null);
@@ -793,7 +793,7 @@ function StepPreview({ onBack }: { onBack: () => void }) {
           <div>
             <h1 className="text-xl font-bold text-neutral-900">{house.houseName}</h1>
             <p className="text-neutral-500 text-sm mt-1">{house.streetAddress}, {house.propertyLGA}, {house.propertyState}</p>
-            <p className="text-bt-primary font-bold text-lg mt-2">₦{Number(house.listingFee ?? 0).toLocaleString()}/year</p>
+            <p className="text-bt-primary font-bold text-lg mt-2">{countryPack?.currencySymbol}{Number(house.listingFee ?? 0).toLocaleString()}/year</p>
             {house.moveOutDate && <p className="text-sm text-bt-secondary font-medium mt-1">Moving out: {new Date(house.moveOutDate).toLocaleDateString("en-NG", { day: "numeric", month: "long", year: "numeric" })}</p>}
             {house.tenantGender && house.tenantGender !== "any" && <p className="text-sm text-neutral-600 mt-1">{house.tenantGender === "male" ? "👨 Male" : "👩 Female"}</p>}
           </div>

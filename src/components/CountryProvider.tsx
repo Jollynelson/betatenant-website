@@ -9,6 +9,7 @@ export interface ICountryPack {
   countryName: string;
   currencyCode: string;
   currencySymbol: string;
+  regions?: { key: string; name: string }[];
   geographySchema: { level: number; name: string; key: string }[];
   propertyTypes: { key: string; label: string; description?: string }[];
   amenities: { key: string; label: string }[];

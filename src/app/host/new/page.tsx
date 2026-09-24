@@ -3,8 +3,8 @@
 import { useState, useEffect, useCallback, useRef, ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
 import { AuthGuard } from "@/components/auth-guard";
+import { useCountry } from "@/components/CountryProvider";
 import { api, API_BASE_URL } from "@/lib/api";
-import { locationData } from "@/lib/locations";
 import {
   Bath, Bed, Tv, Upload, X, Loader2, Check, ChevronRight,
   Video, Play, AlertCircle, RefreshCw, Crown,
@@ -37,15 +37,6 @@ interface HouseRule {
 }
 
 // ── Constants ─────────────────────────────────────────────────────────────────
-const APARTMENT_TYPES = [
-  { label: "Single room/Shared apartment", value: "single-room/shared-apartment" },
-  { label: "Self Contained Apartment", value: "self-contained" },
-  { label: "Mini flat/One bedroom", value: "mini-flat/one-bedroom" },
-  { label: "Two bedroom flat", value: "two-bedroom" },
-  { label: "Three bedroom flat", value: "three-bedroom" },
-  { label: "Four bedroom flat", value: "four-bedroom" },
-  { label: "Big family house/4+ Bedrooms", value: "big-family-house-4plus" },
-] as const;
 
 const STEPS = ["Create Listing", "Pricing", "Preview"] as const;
 
@@ -379,6 +370,7 @@ function StepCreate({
 }: {
   onNext: (propertyId: string, propertyDetails: any) => void;
 }) {
+  const { countryPack } = useCountry();
   const [apartmentType, setApartmentType] = useState("");
   const [roomCount, setRoomCount] = useState(1);
   const [bathroomCount, setBathroomCount] = useState(1);
@@ -643,8 +635,7 @@ function StepCreate({
     }
   };
 
-  const citiesForState = locationData.find((l) => l.state === propertyState)?.cities ?? [];
-
+  
   return (
     <div className="space-y-10">
       {/* Apartment Type */}
@@ -783,24 +774,22 @@ function StepCreate({
                 className="w-full bg-white border border-neutral-200 rounded-xl px-4 py-2.5 text-[16px] focus:outline-none focus:ring-2 focus:ring-bt-primary/30"
               >
                 <option value="">Select a state</option>
-                {locationData.map((l) => (
-                  <option key={l.state} value={l.state}>{l.state}</option>
-                ))}
+                {countryPack?.regions?.map((r) => (<option key={r.key} value={r.value || r.key}>{r.name}</option>))}
               </select>
             </div>
+            {((countryPack?.geographySchema?.length || 0) > 1) && (
             <div>
               <label className="block text-sm font-medium text-neutral-700 mb-1.5">Town/LGA</label>
-              <select
+              <input
+                type="text"
                 value={propertyLGA}
                 onChange={(e) => setPropertyLGA(e.target.value)}
-                className="w-full bg-white border border-neutral-200 rounded-xl px-4 py-2.5 text-[16px] focus:outline-none focus:ring-2 focus:ring-bt-primary/30"
-              >
-                <option value="">Select a city</option>
-                {citiesForState.map((c) => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
-              </select>
+                placeholder="Enter Town/LGA"
+                disabled={!propertyState}
+                className="w-full bg-white border border-neutral-200 rounded-xl px-4 py-2.5 text-[16px] focus:outline-none focus:ring-2 focus:ring-bt-primary/30 disabled:opacity-50"
+              />
             </div>
+          )}
           </div>
         </div>
       </section>
@@ -1079,12 +1068,8 @@ function StepCreate({
 
 // ── Step 2: Pricing ────────────────────────────────────────────────────────────
 function StepPricing({ onNext, onBack }: { onNext: () => void; onBack: () => void }) {
-  const [listingFee, setListingFee] = useState("0");
-  const [cautionFee, setCautionFee] = useState("0");
-  const [inspectionFee, setInspectionFee] = useState("0");
-  const [serviceCharge, setServiceCharge] = useState("0");
-  const [lawyerFee, setLawyerFee] = useState("0");
-  const [cleaningFee, setCleaningFee] = useState("0");
+  const { countryPack } = useCountry();
+  const [fees, setFees] = useState<Record<string, string>>({});
   const [isUpdating, setUpdating] = useState(false);
   const [error, setError] = useState("");
 
@@ -1092,12 +1077,11 @@ function StepPricing({ onNext, onBack }: { onNext: () => void; onBack: () => voi
     const raw = sessionStorage.getItem("propertyToEdit");
     if (raw) {
       const p = JSON.parse(raw);
-      setListingFee(formatCurrency(safeParse(String(p?.listingFee ?? 0))));
-      setCautionFee(formatCurrency(safeParse(String(p?.cautionFee ?? 0))));
-      setInspectionFee(formatCurrency(safeParse(String(p?.inspectionFee ?? 0))));
-      setServiceCharge(formatCurrency(safeParse(String(p?.serviceCharge ?? 0))));
-      setLawyerFee(formatCurrency(safeParse(String(p?.lawyerFee ?? 0))));
-      setCleaningFee(formatCurrency(safeParse(String(p?.cleaningFee ?? 0))));
+      const initialFees: Record<string, string> = {};
+      countryPack?.pricingModels?.forEach(model => {
+        initialFees[model.feeKey] = formatCurrency(safeParse(String(p?.[model.feeKey] ?? 0)));
+      });
+      setFees(initialFees);
     }
   }, []);
 
@@ -1173,8 +1157,8 @@ function StepPricing({ onNext, onBack }: { onNext: () => void; onBack: () => voi
     <form onSubmit={handleSubmit} className="max-w-xl mx-auto space-y-6">
       <div className="bg-neutral-50 rounded-2xl p-6 text-center">
         <p className="text-sm text-neutral-500 mb-1">Rent per annum</p>
-        <p className="text-4xl font-bold text-neutral-800">₦{listingFee}</p>
-        <p className="text-sm text-neutral-500 mt-1">₦{formatCurrency(total)} total with all fees</p>
+        <p className="text-4xl font-bold text-neutral-800">{countryPack?.currencySymbol}{fees["listingFee"] || "0"}</p>
+        <p className="text-sm text-neutral-500 mt-1">{countryPack?.currencySymbol}{formatCurrency(Object.values(fees).reduce((acc, curr) => acc + safeParse(curr), 0))} total with all fees</p>
       </div>
 
       {[
@@ -1229,6 +1213,7 @@ function StepPricing({ onNext, onBack }: { onNext: () => void; onBack: () => voi
 
 // ── Step 3: Preview ────────────────────────────────────────────────────────────
 function StepPreview({ onBack }: { onBack: () => void }) {
+  const { countryPack } = useCountry();
   const router = useRouter();
   const [house, setHouse] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -1325,7 +1310,7 @@ function StepPreview({ onBack }: { onBack: () => void }) {
               {house.streetAddress}, {house.propertyLGA}, {house.propertyState}
             </p>
             <p className="text-bt-primary font-bold text-lg mt-2">
-              ₦{Number(house.listingFee ?? 0).toLocaleString()}/year
+              {countryPack?.currencySymbol}{Number(house.listingFee ?? 0).toLocaleString()}/year
             </p>
           </div>
 
@@ -1379,7 +1364,7 @@ function StepPreview({ onBack }: { onBack: () => void }) {
                   val ? (
                     <div key={label as string} className="flex justify-between border-b border-neutral-100 pb-2">
                       <span className="text-neutral-500">{label}</span>
-                      <span className="font-medium">₦{Number(val).toLocaleString()}</span>
+                      <span className="font-medium">{countryPack?.currencySymbol}{Number(val).toLocaleString()}</span>
                     </div>
                   ) : null
                 )}
@@ -1478,6 +1463,7 @@ function StepPreview({ onBack }: { onBack: () => void }) {
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 function NewListingContent() {
+  const { countryPack } = useCountry();
   const [step, setStep] = useState(0);
 
   return (
