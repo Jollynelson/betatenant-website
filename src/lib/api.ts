@@ -230,7 +230,10 @@ export interface ReferralSummary {
 }
 
 export const referralApi = {
-  getSummary: () => api.get<ReferralSummary>("/v1/referral/me"),
+  getSummary: async () => {
+    const res = await api.get<{ successful: boolean; data: ReferralSummary }>("/v1/referral/me");
+    return res.data;
+  },
   validateCode: (code: string) => api.get<{
     valid: boolean;
     message?: string;
