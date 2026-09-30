@@ -11,7 +11,7 @@ import {
   Copy, Check,
 } from "lucide-react";
 import { AuthGuard } from "@/components/auth-guard";
-import { cn } from "@/lib/utils";
+import { cn, copyToClipboard } from "@/lib/utils";
 import { useAuthStore } from "@/lib/auth-store";
 import { api } from "@/lib/api";
 import { PushToggle } from "@/components/push-subscribe";
@@ -269,10 +269,15 @@ function AccountContent() {
                     type="button"
                     onClick={(e) => {
                       e.preventDefault();
-                      navigator.clipboard.writeText(refCode);
-                      setCopiedCode(true);
-                      toast.success("Referral code copied!");
-                      setTimeout(() => setCopiedCode(false), 2000);
+                      copyToClipboard(refCode).then(success => {
+                        if (success) {
+                          setCopiedCode(true);
+                          toast.success("Referral code copied!");
+                          setTimeout(() => setCopiedCode(false), 2000);
+                        } else {
+                          toast.error("Failed to copy code.");
+                        }
+                      });
                     }}
                     className="flex items-center gap-1.5 text-xs font-semibold bg-white text-bt-primary px-3 py-1.5 rounded-lg border border-blue-200 hover:bg-blue-50 active:scale-95 transition-all shadow-2xs cursor-pointer"
                   >

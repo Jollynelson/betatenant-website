@@ -12,7 +12,7 @@ import toast from "react-hot-toast";
 import { AuthGuard } from "@/components/auth-guard";
 import { useAuthStore } from "@/lib/auth-store";
 import { api, API_BASE_URL } from "@/lib/api";
-import { cn } from "@/lib/utils";
+import { cn, copyToClipboard } from "@/lib/utils";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -860,7 +860,7 @@ function PortfolioLinkSection({
 
   const copyLink = () => {
     if (!portfolioUrl) return;
-    navigator.clipboard.writeText(portfolioUrl).then(() => toast.success("Link copied!")).catch(() => {});
+    copyToClipboard(portfolioUrl).then(s => s ? toast.success("Link copied!") : toast.error("Could not copy"));
   };
 
   return (
