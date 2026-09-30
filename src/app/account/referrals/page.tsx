@@ -54,24 +54,53 @@ function ReferralsContent() {
     return data?.registerUrl || `https://betatenant.com/auth/signup?ref=${encodeURIComponent(referralCode)}`;
   };
 
+
+  const copyToClipboard = (text: string, setCopied: (val: boolean) => void, msg: string) => {
+    if (!text) return;
+    
+    const fallbackCopy = () => {
+      const textArea = document.createElement("textarea");
+      textArea.value = text;
+      textArea.style.position = "fixed";
+      textArea.style.left = "-999999px";
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      try {
+        document.execCommand('copy');
+        setCopied(true);
+        toast.success(msg);
+        setTimeout(() => setCopied(false), 2000);
+      } catch (err) {
+        toast.error("Failed to copy. Try selecting manually.");
+      } finally {
+        textArea.remove();
+      }
+    };
+
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text).then(() => {
+        setCopied(true);
+        toast.success(msg);
+        setTimeout(() => setCopied(false), 2000);
+      }).catch(() => fallbackCopy());
+    } else {
+      fallbackCopy();
+    }
+  };
+
   const handleCopyCode = () => {
     if (!referralCode) {
       toast.error("Referral code is loading...");
       return;
     }
-    navigator.clipboard.writeText(referralCode);
-    setCopiedCode(true);
-    toast.success("Referral code copied to clipboard!");
-    setTimeout(() => setCopiedCode(false), 2000);
+    copyToClipboard(referralCode, setCopiedCode, "Referral code copied to clipboard!");
   };
 
   const handleCopyLink = () => {
     const url = getSignupUrl();
     if (!url) return;
-    navigator.clipboard.writeText(url);
-    setCopiedLink(true);
-    toast.success("Referral link copied to clipboard!");
-    setTimeout(() => setCopiedLink(false), 2000);
+    copyToClipboard(url, setCopiedLink, "Referral link copied to clipboard!");
   };
 
   const handleShareWhatsApp = (e?: React.MouseEvent) => {
