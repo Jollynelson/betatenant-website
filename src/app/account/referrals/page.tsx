@@ -181,7 +181,7 @@ function ReferralsContent() {
               Earn free views and cash commissions on every invite
             </h2>
             <p className="text-xs text-blue-100/90 leading-relaxed max-w-sm">
-              Your friends get <strong className="text-white">+2 free unlock views</strong>. When you invite an agent, you also earn <strong className="text-white">10% cash</strong> every time they perform a transaction for 4 months!
+              Your friends get <strong className="text-white">+2 free unlock views</strong>. When you invite anyone, you also earn <strong className="text-white">10% cash</strong> every time they perform a transaction for 4 months!
             </p>
 
             {/* Prominent Referral Code Box */}
@@ -275,7 +275,7 @@ function ReferralsContent() {
           </div>
 
           <p className="text-xs text-neutral-600 leading-relaxed">
-            Whether you are a tenant or an agent: when you invite an agent or landlord with your code, you automatically receive <strong className="text-neutral-900">10% of every transaction</strong> they make (subscriptions, boost credits, listings) for their first 4 months! Earnings are credited directly to your cash wallet.
+            When you invite any user with your code, you automatically receive <strong className="text-neutral-900">10% of every transaction</strong> they make (unlocking contacts, subscriptions, boost credits, listings) for their first 4 months! Earnings are credited directly to your cash wallet.
           </p>
 
           <div className="grid grid-cols-2 gap-2.5 pt-1">
@@ -358,7 +358,7 @@ function ReferralsContent() {
               </div>
               <p className="text-sm font-medium text-neutral-700">No referrals yet</p>
               <p className="text-xs text-neutral-400 max-w-xs mx-auto">
-                Share your unique code on WhatsApp or copy the invite link to start earning free property views & agent cash commissions!
+                Share your unique code on WhatsApp or copy the invite link to start earning free property views & cash commissions!
               </p>
             </div>
           ) : (
