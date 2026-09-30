@@ -12,32 +12,38 @@ export function sanitizeRedirect(url: string | null | undefined): string | null 
   return url;
 }
 
-export async function copyToClipboard(text: string): Promise<boolean> {
-  if (!text) return false;
-  
-  if (navigator.clipboard && window.isSecureContext) {
-    try {
-      await navigator.clipboard.writeText(text);
-      return true;
-    } catch (err) {
-      // Fallback
-    }
-  }
+export function copyToClipboard(text: string): Promise<boolean> {
+  if (!text) return Promise.resolve(false);
 
-  // Fallback for older browsers / in-app browsers
+  // Try legacy execCommand FIRST because it must run synchronously 
+  // in the same tick as the user interaction on older iOS browsers.
   try {
     const textArea = document.createElement("textarea");
     textArea.value = text;
+    // Prevent zooming and scrolling on iOS
+    textArea.style.fontSize = "16px";
     textArea.style.position = "fixed";
-    textArea.style.left = "-999999px";
+    textArea.style.top = "0";
+    textArea.style.left = "0";
+    textArea.style.opacity = "0";
     document.body.appendChild(textArea);
     textArea.focus();
     textArea.select();
     const success = document.execCommand('copy');
-    textArea.remove();
-    return success;
+    document.body.removeChild(textArea);
+    if (success) {
+      return Promise.resolve(true);
+    }
   } catch (err) {
-    console.error("Failed to copy", err);
-    return false;
+    console.error("execCommand copy failed:", err);
   }
+
+  // If fallback failed, try modern API
+  if (navigator.clipboard && window.isSecureContext) {
+    return navigator.clipboard.writeText(text)
+      .then(() => true)
+      .catch(() => false);
+  }
+
+  return Promise.resolve(false);
 }

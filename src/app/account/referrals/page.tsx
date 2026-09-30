@@ -9,6 +9,7 @@ import {
   MessageCircle, Loader2, Wallet, Briefcase, Clock, DollarSign,
 } from "lucide-react";
 import { AuthGuard } from "@/components/auth-guard";
+import { copyToClipboard } from "@/lib/utils";
 import { referralApi, ReferralSummary } from "@/lib/api";
 import { useAuthStore } from "@/lib/auth-store";
 import { cn } from "@/lib/utils";
@@ -55,52 +56,34 @@ function ReferralsContent() {
   };
 
 
-  const copyToClipboard = (text: string, setCopied: (val: boolean) => void, msg: string) => {
-    if (!text) return;
-    
-    const fallbackCopy = () => {
-      const textArea = document.createElement("textarea");
-      textArea.value = text;
-      textArea.style.position = "fixed";
-      textArea.style.left = "-999999px";
-      document.body.appendChild(textArea);
-      textArea.focus();
-      textArea.select();
-      try {
-        document.execCommand('copy');
-        setCopied(true);
-        toast.success(msg);
-        setTimeout(() => setCopied(false), 2000);
-      } catch (err) {
-        toast.error("Failed to copy. Try selecting manually.");
-      } finally {
-        textArea.remove();
-      }
-    };
-
-    if (navigator.clipboard && window.isSecureContext) {
-      navigator.clipboard.writeText(text).then(() => {
-        setCopied(true);
-        toast.success(msg);
-        setTimeout(() => setCopied(false), 2000);
-      }).catch(() => fallbackCopy());
-    } else {
-      fallbackCopy();
-    }
-  };
-
   const handleCopyCode = () => {
     if (!referralCode) {
       toast.error("Referral code is loading...");
       return;
     }
-    copyToClipboard(referralCode, setCopiedCode, "Referral code copied to clipboard!");
+    copyToClipboard(referralCode).then(success => {
+      if (success) {
+        setCopiedCode(true);
+        toast.success("Referral code copied to clipboard!");
+        setTimeout(() => setCopiedCode(false), 2000);
+      } else {
+        toast.error("Failed to copy. Try selecting manually.");
+      }
+    });
   };
 
   const handleCopyLink = () => {
     const url = getSignupUrl();
     if (!url) return;
-    copyToClipboard(url, setCopiedLink, "Referral link copied to clipboard!");
+    copyToClipboard(url).then(success => {
+      if (success) {
+        setCopiedLink(true);
+        toast.success("Referral link copied to clipboard!");
+        setTimeout(() => setCopiedLink(false), 2000);
+      } else {
+        toast.error("Failed to copy. Try selecting manually.");
+      }
+    });
   };
 
   const handleShareWhatsApp = (e?: React.MouseEvent) => {

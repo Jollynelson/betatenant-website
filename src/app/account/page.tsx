@@ -269,7 +269,8 @@ function AccountContent() {
                     type="button"
                     onClick={(e) => {
                       e.preventDefault();
-                      copyToClipboard(refCode).then(success => {
+                      const url = `https://betatenant.com/auth/signup?ref=${encodeURIComponent(refCode)}`;
+                      copyToClipboard(url).then(success => {
                         if (success) {
                           setCopiedCode(true);
                           toast.success("Referral code copied!");
