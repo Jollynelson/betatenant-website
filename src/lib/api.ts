@@ -24,9 +24,14 @@ export function cdnImg(url: string, width = 800): string {
     return url.replace("/upload/", `/upload/q_auto,f_auto,w_${width}/`);
   }
 
-  // S3 + imagedelivery.net → Cloudflare Image Transformations
-  if (url.includes("amazonaws.com") || url.includes("imagedelivery.net")) {
+  // imagedelivery.net → Cloudflare Image Transformations
+  if (url.includes("imagedelivery.net")) {
     return `https://betatenant.com/cdn-cgi/image/width=${width},quality=85,format=auto/${url}`;
+  }
+
+  // AWS S3 images: serve directly from public S3 bucket
+  if (url.includes("amazonaws.com")) {
+    return url;
   }
 
   return url;
