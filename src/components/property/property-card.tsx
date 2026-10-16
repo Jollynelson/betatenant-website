@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Heart, BedDouble, Bath, BadgeCheck, PlayCircle } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, formatLocation } from "@/lib/utils";
 import { isFavorited, toggleFavorite } from "@/lib/favorites";
 import { cdnThumb, propertyApi } from "@/lib/api";
 import { queryClient } from "@/components/providers";
@@ -113,7 +113,7 @@ export function PropertyCard({ property, variant = "default", onRemove }: Proper
               <span>{typeLabel}</span>
             </div>
             <p className="text-[12px] text-neutral-400 truncate mt-0.5">
-              {property.address ? `${property.address}, ` : ""}{property.lga}, {property.state}
+              {formatLocation(property.address, property.lga, property.state)}
             </p>
           </div>
           <p className="text-[11px] uppercase tracking-wide font-medium truncate flex items-center gap-1">
@@ -267,7 +267,7 @@ export function PropertyCard({ property, variant = "default", onRemove }: Proper
           </div>
 
           <p className="text-[12px] text-neutral-500 mt-1 truncate">
-            {property.address ? `${property.address}, ` : ""}{property.lga}, {property.state}
+            {formatLocation(property.address, property.lga, property.state)}
           </p>
 
           <p className={cn(

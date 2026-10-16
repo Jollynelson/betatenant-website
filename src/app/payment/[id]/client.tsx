@@ -6,6 +6,7 @@ import { Loader2, Calendar, Phone, Home, MapPin } from "lucide-react";
 import { AuthGuard } from "@/components/auth-guard";
 import { api, mapProperty } from "@/lib/api";
 import { formatPriceFullNumber } from "@/lib/constants";
+import { formatLocation } from "@/lib/utils";
 import { useAuthStore } from "@/lib/auth-store";
 
 // Rent: inspection fee + BT charge (₦700) = total
@@ -135,7 +136,7 @@ function PaymentContent({ propertyId }: { propertyId: string }) {
               <h3 className="font-semibold text-neutral-900">{property.title}</h3>
               <p className="text-sm text-neutral-500 flex items-center gap-1 mt-1">
                 <MapPin className="w-3.5 h-3.5" />
-                {property.address}, {property.lga}, {property.state}
+                {formatLocation(property.address, property.lga, property.state)}
               </p>
               <p className="text-bt-primary font-bold mt-2">
                 {formatPriceFullNumber(property.price)}/year

@@ -38,8 +38,7 @@ export function copyToClipboard(text: string): Promise<boolean> {
     console.error("execCommand copy failed:", err);
   }
 
-  // If fallback failed, try modern API
-  if (navigator.clipboard && window.isSecureContext) {
+  if (typeof navigator !== "undefined" && navigator.clipboard && window.isSecureContext) {
     return navigator.clipboard.writeText(text)
       .then(() => true)
       .catch(() => false);
@@ -47,3 +46,26 @@ export function copyToClipboard(text: string): Promise<boolean> {
 
   return Promise.resolve(false);
 }
+
+export function formatLocation(address?: string, lga?: string, state?: string): string {
+  const parts: string[] = [];
+  const cleanAddr = (address || "").trim();
+  const cleanLga = (lga || "").trim();
+  const cleanState = (state || "").trim();
+
+  if (
+    cleanAddr &&
+    cleanAddr.toLowerCase() !== cleanLga.toLowerCase() &&
+    cleanAddr.toLowerCase() !== cleanState.toLowerCase()
+  ) {
+    parts.push(cleanAddr);
+  }
+  if (cleanLga && cleanLga.toLowerCase() !== cleanState.toLowerCase()) {
+    parts.push(cleanLga);
+  }
+  if (cleanState) {
+    parts.push(cleanState);
+  }
+  return parts.join(", ");
+}
+
