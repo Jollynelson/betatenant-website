@@ -15,7 +15,7 @@ import {
   PawPrint, Cigarette, PartyPopper, Music, UserX, Baby,
 } from "lucide-react";
 import { BoostModal } from "@/components/boost-modal";
-import { cn } from "@/lib/utils";
+import { cn, formatLocation } from "@/lib/utils";
 import { isFavorited, toggleFavorite } from "@/lib/favorites";
 import { formatPriceFullNumber, AMENITY_ICONS, amenitySlugToKey } from "@/lib/constants";
 import { propertyApi, tenantSwitchApi, api, cdnImg } from "@/lib/api";
@@ -435,7 +435,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
             <h1 className="text-xl font-bold text-neutral-900 tracking-[-0.02em] leading-snug">{property.title}</h1>
             <p className="text-sm text-neutral-500 mt-1.5 flex items-center gap-1.5">
               <MapPin className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
-              {property.address}, {property.lga}, {property.state}
+              {formatLocation(property.address, property.lga, property.state)}
             </p>
 
             {/* Stats row */}
@@ -882,7 +882,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
               <h1 className="text-2xl md:text-[28px] font-bold text-neutral-900 tracking-[-0.02em] leading-snug">{property.title}</h1>
               <p className="text-[15px] text-neutral-500 mt-2 flex items-center gap-1.5">
                 <MapPin className="w-4 h-4 text-neutral-400 shrink-0" />
-                {property.address}, {property.lga}, {property.state}
+                {formatLocation(property.address, property.lga, property.state)}
               </p>
               <p className="text-[22px] font-bold text-bt-primary mt-3">
                 {formatPriceFullNumber(property.price)}
