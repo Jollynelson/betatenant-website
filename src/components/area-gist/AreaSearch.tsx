@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Search, MapPin, Navigation, History, Sparkles, Loader2, ArrowRight } from "lucide-react";
 import { API_BASE_URL } from "@/lib/api";
+import { locationData } from "@/lib/locations";
 
 interface AreaSearchProps {
   currentLocation: string;
@@ -66,18 +67,36 @@ export function AreaSearch({
 
     const timer = setTimeout(async () => {
       setIsSearching(true);
+      let foundServer = false;
       try {
         const res = await fetch(`${API_BASE_URL}/v1/area-gist/search?q=${encodeURIComponent(query)}`);
         const json = await res.json();
-        if (json.success && Array.isArray(json.suggestions)) {
+        if (json.success && Array.isArray(json.suggestions) && json.suggestions.length > 0) {
           setSuggestions(json.suggestions);
+          foundServer = true;
         }
       } catch (err) {
         console.warn("Autocomplete error:", err);
       } finally {
         setIsSearching(false);
       }
-    }, 250);
+
+      if (!foundServer) {
+        // High-speed offline local fallback from locationData
+        const qLower = query.toLowerCase().trim();
+        const localMatches: Array<{ name: string; lga: string; state: string }> = [];
+        for (const item of locationData) {
+          for (const city of item.cities) {
+            if (city.toLowerCase().includes(qLower) || item.state.toLowerCase().includes(qLower)) {
+              localMatches.push({ name: city, lga: city, state: item.state });
+              if (localMatches.length >= 8) break;
+            }
+          }
+          if (localMatches.length >= 8) break;
+        }
+        setSuggestions(localMatches);
+      }
+    }, 200);
 
     return () => clearTimeout(timer);
   }, [query]);
