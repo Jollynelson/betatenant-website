@@ -3,19 +3,10 @@
 import React, { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { 
-  Sparkles, 
   Loader2, 
   AlertCircle, 
   RefreshCw, 
   Compass, 
-  MapPin, 
-  Share2, 
-  ArrowLeftRight, 
-  MessageSquarePlus,
-  Building2,
-  ListChecks,
-  Users,
-  Radio
 } from "lucide-react";
 import { API_BASE_URL } from "@/lib/api";
 import { AreaGistData } from "@/components/area-gist/types";
@@ -23,7 +14,6 @@ import { AreaSearch } from "@/components/area-gist/AreaSearch";
 import { AreaGistHero } from "@/components/area-gist/AreaGistHero";
 import { AreaQuickIntelCard } from "@/components/area-gist/AreaQuickIntelCard";
 import { RentalRealitySection } from "@/components/area-gist/RentalRealitySection";
-import { WhatIsHappeningFeed } from "@/components/area-gist/WhatIsHappeningFeed";
 import { BeforeYouPayChecklist } from "@/components/area-gist/BeforeYouPayChecklist";
 import { AreaListingsSection } from "@/components/area-gist/AreaListingsSection";
 import { CommunityGistSection } from "@/components/area-gist/CommunityGistSection";
@@ -33,19 +23,18 @@ import { CompareSection } from "@/components/area-gist/CompareSection";
 import { WhatsAppShareModal } from "@/components/area-gist/WhatsAppShareModal";
 
 const ROTATING_TIPS = [
-  "Checking if local gutters actually flow when it rains heavily...",
-  "Consulting verified news sources, municipal records, and resident gist...",
-  "Calculating median rent and cautionary fees across verified homes...",
-  "Synthesizing peak hour traffic patterns and Third Mainland / express access...",
-  "Checking transformer stability and water salinity reports...",
+  "Checking verified local rent and caution fee standards...",
+  "Synthesizing transport access and primary commuting corridors...",
+  "Loading flood risk and drainage observations...",
+  "Checking transformer stability and water reports...",
 ];
 
 function AreaGistContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  const initialLocation = searchParams.get("location") || "Yaba";
-  const initialState = searchParams.get("state") || "Lagos";
+  const initialLocation = searchParams.get("location") || "Uyo";
+  const initialState = searchParams.get("state") || "Akwa Ibom";
 
   const [location, setLocation] = useState(initialLocation);
   const [state, setState] = useState(initialState);
@@ -115,23 +104,9 @@ function AreaGistContent() {
 
   return (
     <div className="min-h-screen bg-bt-surface text-gray-900 pb-20">
-      {/* Top Banner / Header Search */}
-      <div className="bg-white border-b border-gray-100 pt-8 pb-6 px-4 sm:px-6">
+      {/* Top Search Bar (Clean header matching Screenshot 0) */}
+      <div className="bg-white border-b border-gray-100 py-6 px-4 sm:px-6">
         <div className="max-w-6xl mx-auto">
-          <div className="text-center max-w-2xl mx-auto mb-6">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider bg-bt-secondary/10 text-bt-secondary mb-2.5">
-              <Sparkles className="w-3.5 h-3.5" />
-              Area Gist by Beta Tenant
-            </div>
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-gray-950 tracking-tight">
-              Know the Area Before You Pay Caution Fee
-            </h1>
-            <p className="text-xs sm:text-sm text-gray-600 mt-2">
-              Real-time, Google-grounded neighbourhood intelligence for Nigerian renters. Rent medians, NEPA stability, flood history, and honest resident gist.
-            </p>
-          </div>
-
-          {/* Autocomplete Search Bar */}
           <AreaSearch
             currentLocation={location}
             currentState={state}
@@ -153,7 +128,7 @@ function AreaGistContent() {
 
             <div>
               <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-1">
-                Investigating {location}, {state}...
+                Loading intelligence for {location}, {state}...
               </h2>
               <p className="text-xs sm:text-sm text-bt-primary font-medium min-h-[24px] transition-all">
                 {ROTATING_TIPS[tipIndex]}
@@ -162,7 +137,6 @@ function AreaGistContent() {
 
             {/* Skeleton blocks */}
             <div className="space-y-4 pt-6">
-              <div className="h-8 bg-gray-200/70 rounded-xl animate-pulse w-3/4 mx-auto" />
               <div className="h-20 bg-gray-100 rounded-2xl animate-pulse" />
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {Array.from({ length: 4 }).map((_, i) => (
@@ -181,7 +155,7 @@ function AreaGistContent() {
               Could not load Area Gist
             </h3>
             <p className="text-xs sm:text-sm text-gray-600 mb-6 font-normal">
-              {error || "An unexpected error occurred while synthesizing data."}
+              {error || "An unexpected error occurred while loading preset intelligence."}
             </p>
             <button
               type="button"
@@ -192,103 +166,49 @@ function AreaGistContent() {
             </button>
           </div>
         ) : (
-          /* Live Intelligence Experience */
+          /* Live Intelligence Experience (Matching Screenshots 0 through 6) */
           <div>
-            {/* Sticky Sub-nav Bar */}
-            <div className="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-gray-200/80 shadow-xs">
-              <div className="max-w-6xl mx-auto px-4 sm:px-6 flex items-center justify-between overflow-x-auto no-scrollbar py-2 text-xs font-bold text-gray-600">
-                <div className="flex items-center gap-1 sm:gap-4 shrink-0">
-                  <a href="#hero" className="px-2.5 py-1.5 rounded-lg hover:text-bt-primary hover:bg-gray-100/80 transition-colors">
-                    Overview
-                  </a>
-                  <a href="#quick-intel" className="px-2.5 py-1.5 rounded-lg hover:text-bt-primary hover:bg-gray-100/80 transition-colors">
-                    Quick Intel
-                  </a>
-                  <a href="#rental-reality" className="px-2.5 py-1.5 rounded-lg hover:text-bt-primary hover:bg-gray-100/80 transition-colors">
-                    Rental Reality
-                  </a>
-                  <a href="#what-is-happening" className="px-2.5 py-1.5 rounded-lg hover:text-bt-primary hover:bg-gray-100/80 transition-colors">
-                    Recent Radar
-                  </a>
-                  <a href="#inspection-checklist" className="px-2.5 py-1.5 rounded-lg hover:text-bt-primary hover:bg-gray-100/80 transition-colors">
-                    Inspection Checklist
-                  </a>
-                  <a href="#available-listings" className="px-2.5 py-1.5 rounded-lg hover:text-bt-primary hover:bg-gray-100/80 transition-colors flex items-center gap-1">
-                    Homes <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-bt-primary/10 text-bt-primary font-extrabold">{data.stats.totalAvailableListings}</span>
-                  </a>
-                  <a href="#community-gist" className="px-2.5 py-1.5 rounded-lg hover:text-bt-primary hover:bg-gray-100/80 transition-colors">
-                    Resident Gist
-                  </a>
-                </div>
+            {/* 1. Meta Badges, 4 Stat Cards & Action Buttons (Screenshot 0) */}
+            <AreaGistHero
+              data={data}
+              onOpenCompare={() => setIsCompareOpen(true)}
+              onOpenDropGist={() => setIsDropGistOpen(true)}
+              onOpenShare={() => setIsShareOpen(true)}
+            />
 
-                <div className="hidden sm:flex items-center gap-2 shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => setIsCompareOpen(true)}
-                    className="inline-flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 transition-colors cursor-pointer"
-                  >
-                    <ArrowLeftRight className="w-3.5 h-3.5 text-bt-primary" /> Compare
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setIsShareOpen(true)}
-                    className="inline-flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 transition-colors cursor-pointer"
-                  >
-                    <Share2 className="w-3.5 h-3.5" /> Share
-                  </button>
-                </div>
-              </div>
-            </div>
+            {/* 2. Area Quick Intel: Rent Breakdown, Transit & Living Condition Meters (Screenshots 0 & 1) */}
+            <AreaQuickIntelCard data={data} />
 
-            {/* 1. Hero Overview */}
-            <div id="hero">
-              <AreaGistHero
-                data={data}
-                onOpenCompare={() => setIsCompareOpen(true)}
-                onOpenDropGist={() => setIsDropGistOpen(true)}
-                onOpenShare={() => setIsShareOpen(true)}
-              />
-            </div>
-
-            {/* 2. Area Quick Intel: Rent Breakdown, Transit & Living Quality Gauges */}
-            <div id="quick-intel">
-              <AreaQuickIntelCard data={data} />
-            </div>
-
-            {/* 3. Rental Reality Dimensions Grid */}
+            {/* 3. The Street-Level Reality: Rental Reality Breakdown (Screenshot 2) */}
             <RentalRealitySection
               rentalReality={data.rentalReality}
               locationName={data.locationName}
             />
 
-            {/* 3. What Is Happening Around Here Feed */}
-            <WhatIsHappeningFeed
-              recentIntelligence={data.recentIntelligence}
-              locationName={data.locationName}
-            />
-
-            {/* 4. Physical Inspection Checklist */}
+            {/* 4. Physical Inspection Guide: Before You Pay Checklist (Screenshot 3) */}
             <BeforeYouPayChecklist
               checklist={data.checklist}
               locationName={data.locationName}
               locationKey={data.locationKey}
             />
 
-            {/* 5. Live Verified Beta Tenant Inventory */}
-            <AreaListingsSection
-              stats={data.stats}
-              locationName={data.locationName}
-              state={data.state}
-            />
+            {/* 5. Verified Homes For Rent in Location (Screenshot 4) */}
+            <div id="available-listings">
+              <AreaListingsSection
+                stats={data.stats}
+                locationName={data.locationName}
+                state={data.state}
+              />
+            </div>
 
-            {/* 6. Compare Section Call-To-Action */}
+            {/* 6. Torn Between Two Neighbourhoods? Comparison Callout (Screenshot 5) */}
             <CompareSection
               currentLocation={data.locationName}
               currentState={data.state}
               onOpenCompare={() => setIsCompareOpen(true)}
             />
 
-            {/* 7. Community Reports & Corroboration */}
+            {/* 7. Direct From Residents: Community Gist (Screenshots 5 & 6) */}
             <CommunityGistSection
               communityReports={data.communityReports}
               locationName={data.locationName}
@@ -330,11 +250,8 @@ export default function AreaGistPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-bt-surface">
-          <div className="text-center space-y-3">
-            <Loader2 className="w-8 h-8 animate-spin text-bt-primary mx-auto" />
-            <p className="text-xs text-gray-500 font-medium">Loading Area Gist...</p>
-          </div>
+        <div className="min-h-screen bg-bt-surface flex items-center justify-center">
+          <Loader2 className="w-8 h-8 animate-spin text-bt-primary" />
         </div>
       }
     >

@@ -1,9 +1,9 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { Search, MapPin, Navigation, History, Sparkles, Loader2, ArrowRight, X } from "lucide-react";
+import { Search, MapPin, Navigation, History, Loader2, ArrowRight, X, ShieldAlert } from "lucide-react";
 import { API_BASE_URL } from "@/lib/api";
-import { locationData } from "@/lib/locations";
+import { PRESET_LOCATIONS, searchPresetLocations, PresetLocation } from "@/lib/presetLocations";
 
 interface AreaSearchProps {
   currentLocation: string;
@@ -11,16 +11,6 @@ interface AreaSearchProps {
   onSelectLocation: (location: string, state: string) => void;
   isLoading?: boolean;
 }
-
-const POPULAR_SEARCHES = [
-  { name: "Lekki Phase 1", state: "Lagos" },
-  { name: "Yaba", state: "Lagos" },
-  { name: "Ikeja", state: "Lagos" },
-  { name: "Wuse 2", state: "Abuja" },
-  { name: "Gwarinpa", state: "Abuja" },
-  { name: "Bodija", state: "Oyo" },
-  { name: "Uyo", state: "Akwa Ibom" },
-];
 
 export function AreaSearch({
   currentLocation,
@@ -32,7 +22,7 @@ export function AreaSearch({
     currentLocation ? `${currentLocation}${currentState ? `, ${currentState}` : ""}` : ""
   );
   const [isOpen, setIsOpen] = useState(false);
-  const [suggestions, setSuggestions] = useState<Array<{ name: string; lga: string; state: string }>>([]);
+  const [suggestions, setSuggestions] = useState<PresetLocation[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [locatingUser, setLocatingUser] = useState(false);
   const [recentSearches, setRecentSearches] = useState<Array<{ name: string; state: string }>>([]);
@@ -66,10 +56,10 @@ export function AreaSearch({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Fetch suggestions when query changes
+  // Filter suggestions strictly against preset locations
   useEffect(() => {
     if (!query.trim()) {
-      setSuggestions([]);
+      setSuggestions(PRESET_LOCATIONS.slice(0, 8));
       return;
     }
 
@@ -90,21 +80,11 @@ export function AreaSearch({
       }
 
       if (!foundServer) {
-        // High-speed offline local fallback from locationData
-        const qLower = query.toLowerCase().trim();
-        const localMatches: Array<{ name: string; lga: string; state: string }> = [];
-        for (const item of locationData) {
-          for (const city of item.cities) {
-            if (city.toLowerCase().includes(qLower) || item.state.toLowerCase().includes(qLower)) {
-              localMatches.push({ name: city, lga: city, state: item.state });
-              if (localMatches.length >= 8) break;
-            }
-          }
-          if (localMatches.length >= 8) break;
-        }
-        setSuggestions(localMatches);
+        // High-speed strictly preset fallback
+        const presetMatches = searchPresetLocations(query);
+        setSuggestions(presetMatches);
       }
-    }, 200);
+    }, 150);
 
     return () => clearTimeout(timer);
   }, [query]);
@@ -124,7 +104,7 @@ export function AreaSearch({
 
   const handleClear = () => {
     setQuery("");
-    setSuggestions([]);
+    setSuggestions(PRESET_LOCATIONS.slice(0, 8));
   };
 
   const handleAnalyze = () => {
@@ -135,13 +115,15 @@ export function AreaSearch({
       return;
     }
 
-    // Parse "Name, State" if present
-    const parts = query.split(",").map((s) => s.trim());
-    if (parts.length >= 2) {
-      handleSelect(parts[0], parts[1]);
-    } else {
-      handleSelect(parts[0], currentState || "Lagos");
+    // Try finding preset match
+    const matched = searchPresetLocations(query);
+    if (matched.length > 0) {
+      handleSelect(matched[0].name, matched[0].state);
+      return;
     }
+
+    // Default to currently selected location
+    handleSelect(currentLocation || "Uyo", currentState || "Akwa Ibom");
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -166,18 +148,15 @@ export function AreaSearch({
             `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
           );
           const data = await res.json();
-          const suburb =
-            data.address?.suburb ||
-            data.address?.neighbourhood ||
-            data.address?.city ||
-            data.address?.town ||
-            data.address?.state_district ||
-            "Lagos";
-          const state = data.address?.state || "Lagos";
-
-          handleSelect(suburb, state);
+          const target = data.address?.state || data.address?.city || "Uyo";
+          const matched = searchPresetLocations(target);
+          if (matched.length > 0) {
+            handleSelect(matched[0].name, matched[0].state);
+          } else {
+            handleSelect("Uyo", "Akwa Ibom");
+          }
         } catch {
-          handleSelect("Yaba", "Lagos");
+          handleSelect("Uyo", "Akwa Ibom");
         } finally {
           setLocatingUser(false);
         }
@@ -192,7 +171,7 @@ export function AreaSearch({
 
   return (
     <div className="w-full max-w-4xl mx-auto" ref={containerRef}>
-      {/* Search Input Bar */}
+      {/* Search Input Bar (Matching Screenshot 0) */}
       <div className="relative">
         <div className="relative flex items-center bg-white rounded-2xl shadow-md hover:shadow-lg border border-gray-200 hover:border-bt-primary/40 focus-within:border-bt-primary focus-within:ring-4 focus-within:ring-bt-primary/10 transition-all p-1.5 sm:p-2">
           {/* Search Icon */}
@@ -214,7 +193,7 @@ export function AreaSearch({
             }}
             onFocus={() => setIsOpen(true)}
             onKeyDown={handleKeyDown}
-            placeholder="Which area are you thinking of renting in? (e.g. Uyo, Lekki, Yaba)"
+            placeholder="Search preset locations (e.g. Uyo, Lekki Phase 1, Yaba, Wuse 2)"
             className="w-full bg-transparent text-gray-950 placeholder:text-gray-400 text-sm sm:text-base font-semibold focus:outline-none px-1 py-1"
           />
 
@@ -259,13 +238,13 @@ export function AreaSearch({
           </button>
         </div>
 
-        {/* Autocomplete & Recents Dropdown */}
+        {/* Autocomplete & Recents Dropdown (Strictly Preset Locations Only) */}
         {isOpen && (
-          <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-50 divide-y divide-gray-50 animate-in fade-in slide-in-from-top-2 duration-150">
-            {query.trim() && suggestions.length > 0 && (
+          <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-50 divide-y divide-gray-50 animate-in fade-in slide-in-from-top-2 duration-150 max-h-96 overflow-y-auto">
+            {suggestions.length > 0 ? (
               <div className="p-2">
                 <div className="px-3 py-1.5 text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                  Neighborhood Matches
+                  Preset Verified Locations
                 </div>
                 {suggestions.map((item, idx) => (
                   <button
@@ -291,13 +270,35 @@ export function AreaSearch({
                   </button>
                 ))}
               </div>
+            ) : (
+              <div className="p-4 text-center">
+                <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-700 bg-amber-50 px-3 py-1.5 rounded-xl mb-3">
+                  <ShieldAlert className="w-3.5 h-3.5" />
+                  No preset location matches &quot;{query}&quot;
+                </div>
+                <div className="text-xs font-semibold text-gray-500 mb-2">
+                  Please select one of our verified locations:
+                </div>
+                <div className="flex flex-wrap justify-center gap-1.5">
+                  {PRESET_LOCATIONS.slice(0, 6).map((preset, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => handleSelect(preset.name, preset.state)}
+                      className="px-2.5 py-1 text-xs font-semibold text-gray-700 bg-gray-100 hover:bg-bt-primary hover:text-white rounded-lg transition-colors cursor-pointer"
+                    >
+                      {preset.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
             )}
 
             {/* Recent Searches */}
             {recentSearches.length > 0 && (
-              <div className="p-2">
+              <div className="p-2 bg-gray-50/50">
                 <div className="px-3 py-1.5 text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
-                  <History className="w-3.5 h-3.5" /> Recent Areas
+                  <History className="w-3.5 h-3.5" /> Recent Preset Areas
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 mt-1">
                   {recentSearches.map((rec, i) => (
@@ -316,30 +317,6 @@ export function AreaSearch({
             )}
           </div>
         )}
-      </div>
-
-      {/* Popular searches inline row under search bar (Matching the wireframe) */}
-      <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 mt-3 px-1 text-xs text-gray-500">
-        <span className="font-medium text-gray-400">Popular searches:</span>
-        {POPULAR_SEARCHES.map((pill, idx) => {
-          const isSelected = currentLocation.toLowerCase() === pill.name.toLowerCase();
-          return (
-            <React.Fragment key={idx}>
-              <button
-                type="button"
-                onClick={() => handleSelect(pill.name, pill.state)}
-                className={`font-semibold hover:text-bt-primary hover:underline transition-colors cursor-pointer ${
-                  isSelected ? "text-bt-primary font-bold underline" : "text-gray-600"
-                }`}
-              >
-                {pill.name}
-              </button>
-              {idx < POPULAR_SEARCHES.length - 1 && (
-                <span className="text-gray-300 select-none">·</span>
-              )}
-            </React.Fragment>
-          );
-        })}
       </div>
     </div>
   );
