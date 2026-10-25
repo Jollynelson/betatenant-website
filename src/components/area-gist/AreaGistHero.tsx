@@ -157,12 +157,12 @@ export function AreaGistHero({
           </div>
         </div>
 
-        {/* Action Row (Matching Screenshot 0) */}
-        <div className="flex flex-wrap items-center gap-2.5">
+        {/* Action Row (Matching Screenshot 0 & Mobile Optimized) */}
+        <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2 sm:gap-2.5">
           <button
             type="button"
             onClick={onOpenCompare}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-gray-800 bg-white border border-gray-200 hover:border-bt-primary hover:text-bt-primary shadow-xs transition-all active:scale-95 cursor-pointer"
+            className="inline-flex items-center justify-center sm:justify-start gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-gray-800 bg-white border border-gray-200 hover:border-bt-primary hover:text-bt-primary shadow-xs transition-all active:scale-95 cursor-pointer"
           >
             <ArrowLeftRight className="w-4 h-4 text-bt-primary" />
             Compare {data.locationName} vs Another Area
@@ -171,7 +171,7 @@ export function AreaGistHero({
           <button
             type="button"
             onClick={onOpenDropGist}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-bt-primary bg-bt-primary/5 hover:bg-bt-primary/10 border border-bt-primary/20 transition-all active:scale-95 cursor-pointer"
+            className="inline-flex items-center justify-center sm:justify-start gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-bt-primary bg-bt-primary/5 hover:bg-bt-primary/10 border border-bt-primary/20 transition-all active:scale-95 cursor-pointer"
           >
             <MessageSquarePlus className="w-4 h-4 text-bt-primary" />
             Drop Your Gist (Live here?)
@@ -180,7 +180,7 @@ export function AreaGistHero({
           <button
             type="button"
             onClick={onOpenShare}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-white bg-emerald-600 hover:bg-emerald-700 shadow-sm transition-all active:scale-95 cursor-pointer"
+            className="inline-flex items-center justify-center sm:justify-start gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-white bg-emerald-600 hover:bg-emerald-700 shadow-sm transition-all active:scale-95 cursor-pointer"
           >
             <Share2 className="w-4 h-4" />
             Share on WhatsApp
@@ -189,7 +189,7 @@ export function AreaGistHero({
           {data.stats.totalAvailableListings > 0 && (
             <a
               href="#available-listings"
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-white bg-bt-primary hover:bg-bt-primary-light shadow-sm transition-all ml-auto active:scale-95 cursor-pointer"
+              className="inline-flex items-center justify-center sm:justify-start gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-white bg-bt-primary hover:bg-bt-primary-light shadow-sm transition-all sm:ml-auto active:scale-95 cursor-pointer"
             >
               <Building2 className="w-4 h-4 text-white" />
               See {data.stats.totalAvailableListings} Available Homes

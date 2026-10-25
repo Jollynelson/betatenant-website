@@ -81,14 +81,14 @@ export function AreaQuickIntelCard({ data }: AreaQuickIntelCardProps) {
           </span>
         </div>
 
-        {/* High-Contrast Wireframe Bar: Green Fill + Red Remainder */}
+        {/* High-Contrast Wireframe Bar: Green Fill + Red Remainder (Fully Mobile Responsive) */}
         <div className="relative w-full h-11 sm:h-12 rounded-lg overflow-hidden flex border-2 border-black/80 shadow-sm">
           {/* Green / Active Portion */}
           <div
             style={{ width: `${clampedScore}%` }}
-            className={`${greenBg} h-full flex items-center justify-center px-3 transition-all duration-700 ease-out`}
+            className={`${greenBg} h-full flex items-center justify-center px-1.5 sm:px-3 transition-all duration-700 ease-out`}
           >
-            <span className="text-white font-extrabold text-xs sm:text-sm md:text-base tracking-wide uppercase truncate text-center drop-shadow-xs">
+            <span className="text-white font-extrabold text-[10px] xs:text-xs sm:text-sm md:text-base tracking-tight sm:tracking-wide uppercase truncate text-center drop-shadow-xs">
               {label}
             </span>
           </div>
@@ -98,7 +98,7 @@ export function AreaQuickIntelCard({ data }: AreaQuickIntelCardProps) {
             style={{ width: `${100 - clampedScore}%` }}
             className={`${redBg} h-full flex items-center justify-center shrink-0`}
           >
-            {/* Subtle hatch or solid warning tone */}
+            {/* Remainder warning tone */}
           </div>
         </div>
 
@@ -112,19 +112,19 @@ export function AreaQuickIntelCard({ data }: AreaQuickIntelCardProps) {
   };
 
   return (
-    <section className="w-full max-w-4xl mx-auto my-6 px-4 sm:px-0">
+    <section className="w-full max-w-4xl mx-auto my-4 sm:my-6 px-3 sm:px-0">
       {/* SECTION CONTAINER */}
-      <div className="bg-white rounded-3xl p-5 sm:p-7 shadow-sm border border-gray-200/90 space-y-6">
+      <div className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-7 shadow-sm border border-gray-200/90 space-y-5 sm:space-y-6">
         
         {/* TOP ROW: Estimated Annual Rent (Left) + Transit & Connectivity (Right) */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
           
           {/* CARD 1: ESTIMATED ANNUAL RENT */}
-          <div className="bg-white rounded-2xl border border-gray-200/90 p-4 sm:p-5 shadow-xs flex flex-col justify-between">
+          <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-200/90 p-3.5 sm:p-5 shadow-xs flex flex-col justify-between">
             <div>
-              <div className="flex items-center justify-between mb-4 pb-2 border-b border-gray-100">
-                <h3 className="text-sm sm:text-base font-extrabold text-gray-900 tracking-tight flex items-center gap-2">
-                  <Home className="w-4 h-4 text-bt-primary" />
+              <div className="flex items-center justify-between mb-3 sm:mb-4 pb-2 border-b border-gray-100">
+                <h3 className="text-sm sm:text-base font-extrabold text-gray-900 tracking-tight flex items-center gap-1.5 sm:gap-2">
+                  <Home className="w-4 h-4 text-bt-primary shrink-0" />
                   Estimated Annual Rent
                 </h3>
                 <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 bg-gray-100 text-gray-600 rounded-md">
@@ -133,9 +133,9 @@ export function AreaQuickIntelCard({ data }: AreaQuickIntelCardProps) {
               </div>
 
               {/* RENT ROWS */}
-              <div className="space-y-3 divide-y divide-gray-100/80">
+              <div className="space-y-2.5 sm:space-y-3 divide-y divide-gray-100/80">
                 {/* Self-Contained / Studio */}
-                <div className="pt-2 flex items-center justify-between gap-3 text-xs sm:text-sm">
+                <div className="pt-2 flex flex-wrap items-center justify-between gap-1 text-[11px] sm:text-sm">
                   <span className="font-semibold text-gray-700 leading-tight">
                     Self-Contained / Studio
                   </span>
@@ -145,7 +145,7 @@ export function AreaQuickIntelCard({ data }: AreaQuickIntelCardProps) {
                 </div>
 
                 {/* 1 Bedroom Flat */}
-                <div className="pt-3 flex items-center justify-between gap-3 text-xs sm:text-sm">
+                <div className="pt-2.5 sm:pt-3 flex flex-wrap items-center justify-between gap-1 text-[11px] sm:text-sm">
                   <span className="font-semibold text-gray-700 leading-tight">
                     1 Bedroom Flat
                   </span>
@@ -155,7 +155,7 @@ export function AreaQuickIntelCard({ data }: AreaQuickIntelCardProps) {
                 </div>
 
                 {/* 2 Bedroom Flat */}
-                <div className="pt-3 flex items-center justify-between gap-3 text-xs sm:text-sm">
+                <div className="pt-2.5 sm:pt-3 flex flex-wrap items-center justify-between gap-1 text-[11px] sm:text-sm">
                   <span className="font-semibold text-gray-700 leading-tight">
                     2 Bedroom Flat
                   </span>
@@ -165,7 +165,7 @@ export function AreaQuickIntelCard({ data }: AreaQuickIntelCardProps) {
                 </div>
 
                 {/* 3+ Bedroom / Duplex */}
-                <div className="pt-3 flex items-center justify-between gap-3 text-xs sm:text-sm">
+                <div className="pt-2.5 sm:pt-3 flex flex-wrap items-center justify-between gap-1 text-[11px] sm:text-sm">
                   <span className="font-semibold text-gray-700 leading-tight">
                     3+ Bedroom / Duplex
                   </span>
@@ -176,7 +176,7 @@ export function AreaQuickIntelCard({ data }: AreaQuickIntelCardProps) {
               </div>
             </div>
 
-            <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between text-[11px] text-gray-500">
+            <div className="mt-3.5 pt-2.5 sm:mt-4 sm:pt-3 border-t border-gray-100 flex items-center justify-between text-[11px] text-gray-500">
               <span>*Excludes caution & agency fees</span>
               <a href="#available-listings" className="text-bt-primary font-bold hover:underline flex items-center gap-1">
                 View homes <ArrowRight className="w-3 h-3" />
@@ -185,7 +185,7 @@ export function AreaQuickIntelCard({ data }: AreaQuickIntelCardProps) {
           </div>
 
           {/* CARD 2: TRANSIT & CONNECTIVITY */}
-          <div className="bg-white rounded-2xl border border-gray-200/90 p-4 sm:p-5 shadow-xs flex flex-col justify-between">
+          <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-200/90 p-3.5 sm:p-5 shadow-xs flex flex-col justify-between">
             <div className="space-y-4">
               <div className="flex items-center justify-between pb-2 border-b border-gray-100">
                 <h3 className="text-sm sm:text-base font-extrabold text-gray-900 tracking-tight flex items-center gap-2">

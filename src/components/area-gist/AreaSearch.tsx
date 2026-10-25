@@ -225,7 +225,7 @@ export function AreaSearch({
             type="button"
             onClick={handleAnalyze}
             disabled={isLoading}
-            className="px-4 sm:px-6 py-2.5 sm:py-3 bg-bt-primary hover:bg-bt-primary-light text-white font-extrabold text-xs sm:text-sm rounded-xl shadow-sm hover:shadow active:scale-95 transition-all whitespace-nowrap cursor-pointer shrink-0 flex items-center gap-1.5"
+            className="px-3 sm:px-6 py-2.5 sm:py-3 bg-bt-primary hover:bg-bt-primary-light text-white font-extrabold text-xs sm:text-sm rounded-xl shadow-sm hover:shadow active:scale-95 transition-all whitespace-nowrap cursor-pointer shrink-0 flex items-center gap-1.5"
           >
             {isLoading ? (
               <>
@@ -233,7 +233,10 @@ export function AreaSearch({
                 <span className="hidden sm:inline">Analyzing...</span>
               </>
             ) : (
-              <span>Analyze Area</span>
+              <>
+                <span className="inline sm:hidden">Analyze</span>
+                <span className="hidden sm:inline">Analyze Area</span>
+              </>
             )}
           </button>
         </div>
