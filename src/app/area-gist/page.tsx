@@ -21,6 +21,7 @@ import { API_BASE_URL } from "@/lib/api";
 import { AreaGistData } from "@/components/area-gist/types";
 import { AreaSearch } from "@/components/area-gist/AreaSearch";
 import { AreaGistHero } from "@/components/area-gist/AreaGistHero";
+import { AreaQuickIntelCard } from "@/components/area-gist/AreaQuickIntelCard";
 import { RentalRealitySection } from "@/components/area-gist/RentalRealitySection";
 import { WhatIsHappeningFeed } from "@/components/area-gist/WhatIsHappeningFeed";
 import { BeforeYouPayChecklist } from "@/components/area-gist/BeforeYouPayChecklist";
@@ -200,6 +201,9 @@ function AreaGistContent() {
                   <a href="#hero" className="px-2.5 py-1.5 rounded-lg hover:text-bt-primary hover:bg-gray-100/80 transition-colors">
                     Overview
                   </a>
+                  <a href="#quick-intel" className="px-2.5 py-1.5 rounded-lg hover:text-bt-primary hover:bg-gray-100/80 transition-colors">
+                    Quick Intel
+                  </a>
                   <a href="#rental-reality" className="px-2.5 py-1.5 rounded-lg hover:text-bt-primary hover:bg-gray-100/80 transition-colors">
                     Rental Reality
                   </a>
@@ -246,7 +250,12 @@ function AreaGistContent() {
               />
             </div>
 
-            {/* 2. Rental Reality Dimensions Grid */}
+            {/* 2. Area Quick Intel: Rent Breakdown, Transit & Living Quality Gauges */}
+            <div id="quick-intel">
+              <AreaQuickIntelCard data={data} />
+            </div>
+
+            {/* 3. Rental Reality Dimensions Grid */}
             <RentalRealitySection
               rentalReality={data.rentalReality}
               locationName={data.locationName}

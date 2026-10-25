@@ -1,3 +1,25 @@
+export interface RentBreakdown {
+  selfContained: { min: number; max: number };
+  oneBedroom: { min: number; max: number };
+  twoBedroom: { min: number; max: number };
+  threeBedroomPlus: { min: number; max: number };
+}
+
+export interface TransitConnectivity {
+  availableModes: string[];
+  frequency: "High" | "Moderate" | "Low" | "Very High" | string;
+  primaryCorridors: string[];
+}
+
+export interface LivingQualityScores {
+  traffic: { score: number; label: string; details?: string };
+  security: { score: number; label: string; details?: string };
+  flood: { score: number; label: string; details?: string };
+  cleanliness: { score: number; label: string; details?: string };
+  electricity?: { score: number; label: string; hoursPerDay?: number };
+  water?: { score: number; label: string };
+}
+
 export interface AreaGistData {
   locationKey: string;
   locationName: string;
@@ -14,6 +36,9 @@ export interface AreaGistData {
     rain_alert: boolean;
     updatedAt: string;
   } | null;
+  rentBreakdown?: RentBreakdown;
+  transit?: TransitConnectivity;
+  scores?: LivingQualityScores;
   rentalReality: Array<{
     dimension: string;
     status: "Favourable" | "Fair" | "Challenging" | "High Alert" | string;
