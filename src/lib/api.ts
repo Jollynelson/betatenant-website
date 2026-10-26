@@ -135,6 +135,13 @@ export function mapProperty(raw: any) {
     createdAt: raw.createdAt ?? "",
     updatedAt: raw.updatedAt ?? "",
     promotionPackage: raw.promotionPackage ?? null,
+    takenReport: raw.takenReport ? {
+      status: raw.takenReport.status ?? "none",
+      reportedAt: raw.takenReport.reportedAt ?? null,
+      expiresAt: raw.takenReport.expiresAt ?? null,
+      reason: raw.takenReport.reason ?? null,
+      details: raw.takenReport.details ?? null,
+    } : null,
     host: {
       _id: String(host._id ?? ""),
       firstName: host.firstName ?? "",
@@ -309,6 +316,16 @@ export const propertyApi = {
       freeUnlocksRemaining: res.freeUnlocksRemaining ?? 0,
       hasListedSpace: res.hasListedSpace ?? false,
     };
+  },
+
+  /** Mark a property as taken / unavailable (triggers 5-hour verification alert to host) */
+  markTaken: async (id: string, reason: string, details?: string) => {
+    return api.post<any>(`/v1/user/property/${id}/mark-taken`, { reason, details });
+  },
+
+  /** Host re-verification: confirm still available OR move to draft */
+  confirmAvailability: async (id: string, action: "confirm_available" | "mark_draft") => {
+    return api.post<any>(`/v1/user/property/${id}/confirm-availability`, { action });
   },
 };
 
