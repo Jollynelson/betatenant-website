@@ -22,6 +22,7 @@ import { propertyApi, tenantSwitchApi, api, cdnImg } from "@/lib/api";
 import { useAuthStore } from "@/lib/auth-store";
 import toast from "react-hot-toast";
 import { PropertyCard } from "@/components/property/property-card";
+import { MarkTakenCard } from "@/components/property/MarkTakenCard";
 import type { Property } from "@/types";
 
 const APARTMENT_TYPE_LABELS: Record<string, string> = {
@@ -1276,6 +1277,20 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
                   </div>
                 )}
               </div>
+
+              {/* ── Mark Listing as Not Available or Taken Card ── */}
+              <MarkTakenCard
+                propertyId={property._id}
+                propertyTitle={property.title}
+                hostName={`${property.host.firstName} ${property.host.lastName}`.trim()}
+                isOwner={isOwner}
+                propertyStatus={propertyStatus || property.status}
+                takenReport={(property as any).takenReport}
+                onStatusUpdated={(newStatus, newReport) => {
+                  setPropertyStatus(newStatus);
+                  (property as any).takenReport = newReport;
+                }}
+              />
 
               <div className="p-4 rounded-xl bg-bt-success/5 border border-bt-success/15 flex items-start gap-3">
                 <Shield className="w-5 h-5 text-bt-success shrink-0 mt-0.5" />
