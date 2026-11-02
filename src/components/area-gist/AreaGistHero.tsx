@@ -119,9 +119,15 @@ export function AreaGistHero({
               <Building2 className="w-4 h-4 text-bt-primary" /> Available Homes
             </div>
             <div className="text-xl sm:text-2xl font-extrabold text-gray-950">
-              {data.stats.totalAvailableListings}
+              {data.stats.totalAvailableListings > 0 ? (
+                data.stats.totalAvailableListings
+              ) : (
+                <span className="text-base sm:text-lg text-emerald-700 font-bold">New Zone</span>
+              )}
             </div>
-            <div className="text-[11px] text-gray-500 mt-0.5">Verified on Beta Tenant</div>
+            <div className="text-[11px] text-gray-500 mt-0.5">
+              {data.stats.totalAvailableListings > 0 ? "Verified on Beta Tenant" : "Vetted Intel Active"}
+            </div>
           </div>
 
           <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-xs hover:border-bt-primary/20 transition-all">
@@ -129,7 +135,18 @@ export function AreaGistHero({
               <Coins className="w-4 h-4 text-emerald-600" /> Median Rent
             </div>
             <div className="text-xl sm:text-2xl font-extrabold text-emerald-600">
-              {data.stats.medianRent ? formatCurrency(data.stats.medianRent) : "₦1,500,000"}
+              {data.stats.medianRent && data.stats.medianRent > 0
+                ? formatCurrency(data.stats.medianRent)
+                : data.rentBreakdown
+                ? formatCurrency(
+                    Math.round(
+                      ((data.rentBreakdown.oneBedroom?.min ?? 600000) +
+                        (data.rentBreakdown.oneBedroom?.max ?? 1200000) +
+                        (data.rentBreakdown.twoBedroom?.min ?? 1200000) +
+                        (data.rentBreakdown.twoBedroom?.max ?? 2500000)) / 4
+                    )
+                  )
+                : "₦1,500,000"}
             </div>
             <div className="text-[11px] text-gray-500 mt-0.5">per annum</div>
           </div>
@@ -139,8 +156,10 @@ export function AreaGistHero({
               <Compass className="w-4 h-4 text-bt-secondary" /> Price Range
             </div>
             <div className="text-base sm:text-lg font-bold text-gray-900 truncate">
-              {data.stats.priceRange?.min && data.stats.priceRange?.max
+              {data.stats.priceRange?.min && data.stats.priceRange?.max && data.stats.priceRange.min > 0
                 ? `${formatCurrency(data.stats.priceRange.min)} - ${formatCurrency(data.stats.priceRange.max)}`
+                : data.rentBreakdown
+                ? `${formatCurrency(data.rentBreakdown.selfContained?.min || data.rentBreakdown.oneBedroom?.min || 350000)} - ${formatCurrency(data.rentBreakdown.threeBedroomPlus?.max || data.rentBreakdown.twoBedroom?.max || 5000000)}`
                 : "₦350,000 - ₦12,000,000"}
             </div>
             <div className="text-[11px] text-gray-500 mt-0.5">Budget to Luxury</div>
@@ -186,13 +205,21 @@ export function AreaGistHero({
             Share on WhatsApp
           </button>
 
-          {data.stats.totalAvailableListings > 0 && (
+          {data.stats.totalAvailableListings > 0 ? (
             <a
               href="#available-listings"
               className="inline-flex items-center justify-center sm:justify-start gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-white bg-bt-primary hover:bg-bt-primary-light shadow-sm transition-all sm:ml-auto active:scale-95 cursor-pointer"
             >
               <Building2 className="w-4 h-4 text-white" />
               See {data.stats.totalAvailableListings} Available Homes
+            </a>
+          ) : (
+            <a
+              href="/properties"
+              className="inline-flex items-center justify-center sm:justify-start gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-white bg-bt-primary hover:bg-bt-primary-light shadow-sm transition-all sm:ml-auto active:scale-95 cursor-pointer"
+            >
+              <Building2 className="w-4 h-4 text-white" />
+              Explore Rental Listings
             </a>
           )}
         </div>

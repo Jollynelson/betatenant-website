@@ -463,7 +463,9 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
               )}
               <div className="ml-auto flex items-center gap-1 text-xs text-neutral-400">
                 <Eye className="w-3.5 h-3.5" />
-                {(property.views ?? 0).toLocaleString()}
+                {property.views && property.views > 0
+                  ? property.views.toLocaleString()
+                  : "New"}
               </div>
             </div>
           </div>
@@ -904,7 +906,9 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
               )}
               <div className="ml-auto flex items-center gap-1 text-xs text-neutral-400">
                 <Eye className="w-3.5 h-3.5" />
-                {(property.views ?? 0).toLocaleString()} views
+                {property.views && property.views > 0
+                  ? `${property.views.toLocaleString()} views`
+                  : "New listing"}
               </div>
             </div>
 
