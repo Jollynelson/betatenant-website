@@ -18,7 +18,7 @@ import { API_BASE_URL } from "@/lib/api";
 interface CommunityGistSectionProps {
   communityReports: AreaGistData["communityReports"];
   locationName: string;
-  onOpenDropGist: () => void;
+  onOpenDropGist?: () => void;
 }
 
 export function CommunityGistSection({
@@ -89,15 +89,6 @@ export function CommunityGistSection({
               First-hand reports from people who live and commute through these streets every day.
             </p>
           </div>
-
-          <button
-            type="button"
-            onClick={onOpenDropGist}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-white bg-bt-primary hover:bg-bt-primary-light shadow-sm transition-all self-start sm:self-auto cursor-pointer"
-          >
-            <MessageSquarePlus className="w-4 h-4" />
-            <span>Drop Your Gist</span>
-          </button>
         </div>
 
         {/* Filter Pills */}
@@ -126,18 +117,11 @@ export function CommunityGistSection({
           <div className="bg-white rounded-3xl border border-dashed border-gray-300 p-8 text-center max-w-lg mx-auto">
             <Users className="w-10 h-10 text-gray-400 mx-auto mb-3" />
             <h3 className="text-base font-bold text-gray-900 mb-1">
-              Be the First to Drop Gist on {locationName}
+              No resident reports for {locationName} yet
             </h3>
-            <p className="text-xs sm:text-sm text-gray-600 mb-4">
-              Do you stay in or around {locationName}? Share your experience about power, water, or traffic to help incoming tenants.
+            <p className="text-xs sm:text-sm text-gray-600">
+              Check back soon for first-hand reports on power, water and traffic.
             </p>
-            <button
-              type="button"
-              onClick={onOpenDropGist}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-white bg-bt-primary hover:bg-bt-primary-light transition-colors cursor-pointer"
-            >
-              <MessageSquarePlus className="w-4 h-4" /> Drop Gist Now
-            </button>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
