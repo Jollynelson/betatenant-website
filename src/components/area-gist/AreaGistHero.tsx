@@ -22,14 +22,13 @@ import { AreaGistData } from "./types";
 interface AreaGistHeroProps {
   data: AreaGistData;
   onOpenCompare: () => void;
-  onOpenDropGist: () => void;
+  onOpenDropGist?: () => void;
   onOpenShare: () => void;
 }
 
 export function AreaGistHero({
   data,
   onOpenCompare,
-  onOpenDropGist,
   onOpenShare,
 }: AreaGistHeroProps) {
   const formatCurrency = (val: number) => {
@@ -185,15 +184,6 @@ export function AreaGistHero({
           >
             <ArrowLeftRight className="w-4 h-4 text-bt-primary" />
             Compare {data.locationName} vs Another Area
-          </button>
-
-          <button
-            type="button"
-            onClick={onOpenDropGist}
-            className="inline-flex items-center justify-center sm:justify-start gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-bt-primary bg-bt-primary/5 hover:bg-bt-primary/10 border border-bt-primary/20 transition-all active:scale-95 cursor-pointer"
-          >
-            <MessageSquarePlus className="w-4 h-4 text-bt-primary" />
-            Drop Your Gist (Live here?)
           </button>
 
           <button

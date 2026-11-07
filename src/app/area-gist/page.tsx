@@ -17,7 +17,6 @@ import { RentalRealitySection } from "@/components/area-gist/RentalRealitySectio
 import { BeforeYouPayChecklist } from "@/components/area-gist/BeforeYouPayChecklist";
 import { AreaListingsSection } from "@/components/area-gist/AreaListingsSection";
 import { CommunityGistSection } from "@/components/area-gist/CommunityGistSection";
-import { DropYourGistModal } from "@/components/area-gist/DropYourGistModal";
 import { CompareAreasModal } from "@/components/area-gist/CompareAreasModal";
 import { CompareSection } from "@/components/area-gist/CompareSection";
 import { WhatsAppShareModal } from "@/components/area-gist/WhatsAppShareModal";
@@ -45,7 +44,6 @@ function AreaGistContent() {
 
   // Modals
   const [isCompareOpen, setIsCompareOpen] = useState(false);
-  const [isDropGistOpen, setIsDropGistOpen] = useState(false);
   const [isShareOpen, setIsShareOpen] = useState(false);
 
   // Cycle tips during loading
@@ -107,6 +105,15 @@ function AreaGistContent() {
       {/* Top Search Bar (Clean header matching Screenshot 0) */}
       <div className="bg-white border-b border-gray-100 py-6 px-4 sm:px-6">
         <div className="max-w-6xl mx-auto">
+          <div className="flex justify-center mb-4">
+            <div
+              role="note"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-bt-primary text-white text-xs sm:text-sm font-semibold shadow-md"
+            >
+              <Compass className="w-4 h-4" />
+              Know the area before you rent
+            </div>
+          </div>
           <AreaSearch
             currentLocation={location}
             currentState={state}
@@ -172,7 +179,6 @@ function AreaGistContent() {
             <AreaGistHero
               data={data}
               onOpenCompare={() => setIsCompareOpen(true)}
-              onOpenDropGist={() => setIsDropGistOpen(true)}
               onOpenShare={() => setIsShareOpen(true)}
             />
 
@@ -212,7 +218,6 @@ function AreaGistContent() {
             <CommunityGistSection
               communityReports={data.communityReports}
               locationName={data.locationName}
-              onOpenDropGist={() => setIsDropGistOpen(true)}
             />
           </div>
         )}
@@ -225,14 +230,6 @@ function AreaGistContent() {
             isOpen={isCompareOpen}
             onClose={() => setIsCompareOpen(false)}
             currentArea={{ name: data.locationName, state: data.state }}
-          />
-
-          <DropYourGistModal
-            isOpen={isDropGistOpen}
-            onClose={() => setIsDropGistOpen(false)}
-            locationName={data.locationName}
-            state={data.state}
-            onReportSubmitted={() => fetchAreaGist(location, state)}
           />
 
           <WhatsAppShareModal
