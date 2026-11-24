@@ -8,29 +8,31 @@ import {
   Cloud, 
   Droplets, 
   ShieldCheck, 
-  ArrowLeftRight, 
-  Share2, 
-  MessageSquarePlus, 
   Building2, 
   Coins, 
   Clock, 
   Compass, 
-  AlertTriangle 
+  AlertTriangle,
+  ChevronRight
 } from "lucide-react";
 import { AreaGistData } from "./types";
 
 interface AreaGistHeroProps {
   data: AreaGistData;
-  onOpenCompare: () => void;
+  onOpenCompare?: () => void;
   onOpenDropGist?: () => void;
-  onOpenShare: () => void;
+  onOpenShare?: () => void;
 }
 
 export function AreaGistHero({
   data,
-  onOpenCompare,
-  onOpenShare,
 }: AreaGistHeroProps) {
+  const getConfidenceLabel = (score?: string) => {
+    const raw = (score || "").toLowerCase();
+    if (raw.includes("moderate")) return "Moderate Confidence Area";
+    if (raw.includes("low")) return "Emerging Confidence Area";
+    return "High Confidence Area";
+  };
   const formatCurrency = (val: number) => {
     if (!val || val === 0) return "Not specified";
     return new Intl.NumberFormat("en-NG", {
@@ -79,7 +81,7 @@ export function AreaGistHero({
 
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-              {data.confidenceScore || "High Confidence (Verified Knowledge Base)"}
+              {getConfidenceLabel(data.confidenceScore)}
             </span>
 
             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium text-gray-500 bg-gray-100/80">
@@ -111,23 +113,29 @@ export function AreaGistHero({
           )}
         </div>
 
-        {/* Live Rental Stats Grid (4 Cards - Matching Screenshot 0) */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-6">
-          <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-xs hover:border-bt-primary/20 transition-all">
-            <div className="flex items-center gap-2 text-gray-400 text-xs font-semibold uppercase tracking-wider mb-1">
-              <Building2 className="w-4 h-4 text-bt-primary" /> Available Homes
+        {/* Live Rental Stats Grid (4 Cards) */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+          <a
+            href={data.stats.totalAvailableListings > 0 ? "#available-listings" : "/properties"}
+            className="group block bg-white rounded-2xl p-4 border border-gray-100 shadow-xs hover:border-bt-primary hover:shadow-md active:scale-[0.99] transition-all cursor-pointer"
+          >
+            <div className="flex items-center justify-between gap-2 text-gray-400 text-xs font-semibold uppercase tracking-wider mb-1">
+              <span className="flex items-center gap-2">
+                <Building2 className="w-4 h-4 text-bt-primary" /> Available Homes
+              </span>
+              <ChevronRight className="w-4 h-4 text-bt-primary opacity-70 group-hover:translate-x-0.5 transition-transform shrink-0" />
             </div>
-            <div className="text-xl sm:text-2xl font-extrabold text-gray-950">
+            <div className="text-xl sm:text-2xl font-extrabold text-gray-950 group-hover:text-bt-primary transition-colors">
               {data.stats.totalAvailableListings > 0 ? (
                 data.stats.totalAvailableListings
               ) : (
                 <span className="text-base sm:text-lg text-emerald-700 font-bold">New Zone</span>
               )}
             </div>
-            <div className="text-[11px] text-gray-500 mt-0.5">
-              {data.stats.totalAvailableListings > 0 ? "Verified on Beta Tenant" : "Vetted Intel Active"}
+            <div className="text-[11px] text-bt-primary font-semibold mt-0.5">
+              {data.stats.totalAvailableListings > 0 ? "Tap to view homes" : "Browse rental listings"}
             </div>
-          </div>
+          </a>
 
           <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-xs hover:border-bt-primary/20 transition-all">
             <div className="flex items-center gap-2 text-gray-400 text-xs font-semibold uppercase tracking-wider mb-1">
@@ -173,45 +181,6 @@ export function AreaGistHero({
             </div>
             <div className="text-[11px] text-amber-600 mt-0.5">Investigate on inspection</div>
           </div>
-        </div>
-
-        {/* Action Row (Matching Screenshot 0 & Mobile Optimized) */}
-        <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2 sm:gap-2.5">
-          <button
-            type="button"
-            onClick={onOpenCompare}
-            className="inline-flex items-center justify-center sm:justify-start gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-gray-800 bg-white border border-gray-200 hover:border-bt-primary hover:text-bt-primary shadow-xs transition-all active:scale-95 cursor-pointer"
-          >
-            <ArrowLeftRight className="w-4 h-4 text-bt-primary" />
-            Compare {data.locationName} vs Another Area
-          </button>
-
-          <button
-            type="button"
-            onClick={onOpenShare}
-            className="inline-flex items-center justify-center sm:justify-start gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-white bg-emerald-600 hover:bg-emerald-700 shadow-sm transition-all active:scale-95 cursor-pointer"
-          >
-            <Share2 className="w-4 h-4" />
-            Share on WhatsApp
-          </button>
-
-          {data.stats.totalAvailableListings > 0 ? (
-            <a
-              href="#available-listings"
-              className="inline-flex items-center justify-center sm:justify-start gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-white bg-bt-primary hover:bg-bt-primary-light shadow-sm transition-all sm:ml-auto active:scale-95 cursor-pointer"
-            >
-              <Building2 className="w-4 h-4 text-white" />
-              See {data.stats.totalAvailableListings} Available Homes
-            </a>
-          ) : (
-            <a
-              href="/properties"
-              className="inline-flex items-center justify-center sm:justify-start gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-white bg-bt-primary hover:bg-bt-primary-light shadow-sm transition-all sm:ml-auto active:scale-95 cursor-pointer"
-            >
-              <Building2 className="w-4 h-4 text-white" />
-              Explore Rental Listings
-            </a>
-          )}
         </div>
       </div>
     </div>

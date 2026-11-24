@@ -34,7 +34,7 @@ export function WhatsAppShareModal({
 
   // Build high-impact WhatsApp message
   const shareText = [
-    `📍 *Area Gist: ${data.locationName}, ${data.state}*`,
+    `📍 *Area Check: ${data.locationName}, ${data.state}*`,
     `"${data.headline}"`,
     ``,
     `💰 *Median Rent:* ${formatCurrency(data.stats.medianRent)}/yr`,
@@ -63,7 +63,7 @@ export function WhatsAppShareModal({
     if (navigator.share) {
       try {
         await navigator.share({
-          title: `Area Gist: ${data.locationName}`,
+          title: `Area Check: ${data.locationName}`,
           text: shareText,
           url: pageUrl,
         });

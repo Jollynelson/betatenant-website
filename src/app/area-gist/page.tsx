@@ -159,7 +159,7 @@ function AreaGistContent() {
               <AlertCircle className="w-7 h-7" />
             </div>
             <h3 className="text-lg font-bold text-gray-900 mb-1">
-              Could not load Area Gist
+              Could not load Area Check
             </h3>
             <p className="text-xs sm:text-sm text-gray-600 mb-6 font-normal">
               {error || "An unexpected error occurred while loading preset intelligence."}
@@ -175,15 +175,15 @@ function AreaGistContent() {
         ) : (
           /* Live Intelligence Experience (Matching Screenshots 0 through 6) */
           <div>
-            {/* 1. Meta Badges, 4 Stat Cards & Action Buttons (Screenshot 0) */}
-            <AreaGistHero
+            {/* 1. Meta Badges & 4 Stat Cards */}
+            <AreaGistHero data={data} />
+
+            {/* 2. Living Condition Meters, Rent Breakdown, Transit & Action Buttons */}
+            <AreaQuickIntelCard
               data={data}
               onOpenCompare={() => setIsCompareOpen(true)}
               onOpenShare={() => setIsShareOpen(true)}
             />
-
-            {/* 2. Area Quick Intel: Rent Breakdown, Transit & Living Condition Meters (Screenshots 0 & 1) */}
-            <AreaQuickIntelCard data={data} />
 
             {/* 3. The Street-Level Reality: Rental Reality Breakdown (Screenshot 2) */}
             <RentalRealitySection

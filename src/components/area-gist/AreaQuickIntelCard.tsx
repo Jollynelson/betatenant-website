@@ -10,18 +10,19 @@ import {
   Zap, 
   Droplets, 
   Navigation,
-  Compass,
   ArrowRight,
-  CheckCircle2,
-  AlertCircle
+  ArrowLeftRight,
+  Share2
 } from "lucide-react";
 import { AreaGistData } from "./types";
 
 interface AreaQuickIntelCardProps {
   data: AreaGistData;
+  onOpenCompare?: () => void;
+  onOpenShare?: () => void;
 }
 
-export function AreaQuickIntelCard({ data }: AreaQuickIntelCardProps) {
+export function AreaQuickIntelCard({ data, onOpenCompare, onOpenShare }: AreaQuickIntelCardProps) {
   // Format numbers to clean Nigerian currency string: e.g. "250,000 - 450,000 NGN"
   const formatRange = (min?: number, max?: number, isPlus = false) => {
     if (!min && !max) return "Available on Request";
@@ -114,10 +115,87 @@ export function AreaQuickIntelCard({ data }: AreaQuickIntelCardProps) {
   return (
     <section className="w-full max-w-4xl mx-auto my-4 sm:my-6 px-3 sm:px-0">
       {/* SECTION CONTAINER */}
-      <div className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-7 shadow-sm border border-gray-200/90 space-y-5 sm:space-y-6">
-        
-        {/* TOP ROW: Estimated Annual Rent (Left) + Transit & Connectivity (Right) */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+      <div className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-7 shadow-sm border border-gray-200/90 space-y-6 sm:space-y-7">
+
+        {/* 1. LIVING CONDITION METERS (Top Section) */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between pb-1 border-b border-gray-100">
+            <h3 className="text-xs sm:text-sm font-extrabold text-gray-900 uppercase tracking-wider flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-bt-secondary" />
+              Living Condition Meters
+            </h3>
+            <span className="text-[11px] text-gray-400">Grounded in resident data & street reports</span>
+          </div>
+
+          {/* 1. TRAFFIC METER */}
+          {renderMeter(
+            "TRAFFIC",
+            scores.traffic?.score ?? 80,
+            scores.traffic?.label || `${scores.traffic?.score ?? 80}% LESS TRAFFIC`,
+            scores.traffic?.details,
+            <Car className="w-4 h-4 text-emerald-600" />
+          )}
+
+          {/* 2. SECURITY METER */}
+          {renderMeter(
+            "SECURITY",
+            scores.security?.score ?? 73,
+            scores.security?.label || `${scores.security?.score ?? 73}% SECURE`,
+            scores.security?.details,
+            <ShieldCheck className="w-4 h-4 text-emerald-600" />
+          )}
+
+          {/* 3. FLOOD METER */}
+          {renderMeter(
+            "FLOOD",
+            scores.flood?.score ?? 45,
+            scores.flood?.label || `${scores.flood?.score ?? 45}% FLOOD PRONE`,
+            scores.flood?.details,
+            <Waves className="w-4 h-4 text-blue-500" />,
+            true
+          )}
+
+          {/* 4. CLEANLINESS METER */}
+          {renderMeter(
+            "CLEANLINESS",
+            scores.cleanliness?.score ?? 95,
+            scores.cleanliness?.label || `${scores.cleanliness?.score ?? 95}% CLEAN`,
+            scores.cleanliness?.details,
+            <Sparkles className="w-4 h-4 text-teal-600" />
+          )}
+
+          {/* Bonus Power & Water Bar */}
+          {(scores.electricity || scores.water) && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+              {scores.electricity && (
+                <div className="flex items-center justify-between p-3 bg-amber-50/60 border border-amber-200/70 rounded-xl text-xs font-semibold text-gray-800">
+                  <div className="flex items-center gap-2">
+                    <Zap className="w-4 h-4 text-amber-500" />
+                    <span>Power Stability</span>
+                  </div>
+                  <span className="font-extrabold text-amber-900 bg-amber-100 px-2 py-0.5 rounded-md">
+                    {scores.electricity.label}
+                  </span>
+                </div>
+              )}
+
+              {scores.water && (
+                <div className="flex items-center justify-between p-3 bg-sky-50/60 border border-sky-200/70 rounded-xl text-xs font-semibold text-gray-800">
+                  <div className="flex items-center gap-2">
+                    <Droplets className="w-4 h-4 text-sky-500" />
+                    <span>Water Quality</span>
+                  </div>
+                  <span className="font-extrabold text-sky-900 bg-sky-100 px-2 py-0.5 rounded-md">
+                    {scores.water.label}
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* 2. ESTIMATED ANNUAL RENT + TRANSIT & CONNECTIVITY (Below Living Conditions) */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 pt-1">
           
           {/* CARD 1: ESTIMATED ANNUAL RENT */}
           <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-200/90 p-3.5 sm:p-5 shadow-xs flex flex-col justify-between">
@@ -250,82 +328,32 @@ export function AreaQuickIntelCard({ data }: AreaQuickIntelCardProps) {
           </div>
         </div>
 
-        {/* BOTTOM METERS: CORE LIVING QUALITY GAUGES (Wireframe Dual-Tone Bars) */}
-        <div className="pt-2 space-y-4">
-          <div className="flex items-center justify-between pb-1 border-b border-gray-100">
-            <h3 className="text-xs sm:text-sm font-extrabold text-gray-900 uppercase tracking-wider flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-bt-secondary" />
-              Living Condition Meters
-            </h3>
-            <span className="text-[11px] text-gray-400">Grounded in resident data & street reports</span>
+        {/* 3. ACTION BUTTONS (Below Transit & Connectivity) */}
+        {(onOpenCompare || onOpenShare) && (
+          <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2.5 pt-2 border-t border-gray-100">
+            {onOpenCompare && (
+              <button
+                type="button"
+                onClick={onOpenCompare}
+                className="inline-flex items-center justify-center sm:justify-start gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-gray-800 bg-white border border-gray-200 hover:border-bt-primary hover:text-bt-primary shadow-xs transition-all active:scale-95 cursor-pointer"
+              >
+                <ArrowLeftRight className="w-4 h-4 text-bt-primary" />
+                Compare {data.locationName} vs Another Area
+              </button>
+            )}
+
+            {onOpenShare && (
+              <button
+                type="button"
+                onClick={onOpenShare}
+                className="inline-flex items-center justify-center sm:justify-start gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-white bg-emerald-600 hover:bg-emerald-700 shadow-sm transition-all active:scale-95 cursor-pointer"
+              >
+                <Share2 className="w-4 h-4" />
+                Share on WhatsApp
+              </button>
+            )}
           </div>
-
-          {/* 1. TRAFFIC METER */}
-          {renderMeter(
-            "TRAFFIC",
-            scores.traffic?.score ?? 80,
-            scores.traffic?.label || `${scores.traffic?.score ?? 80}% LESS TRAFFIC`,
-            scores.traffic?.details,
-            <Car className="w-4 h-4 text-emerald-600" />
-          )}
-
-          {/* 2. SECURITY METER */}
-          {renderMeter(
-            "SECURITY",
-            scores.security?.score ?? 73,
-            scores.security?.label || `${scores.security?.score ?? 73}% SECURE`,
-            scores.security?.details,
-            <ShieldCheck className="w-4 h-4 text-emerald-600" />
-          )}
-
-          {/* 3. FLOOD METER */}
-          {renderMeter(
-            "FLOOD",
-            scores.flood?.score ?? 45,
-            scores.flood?.label || `${scores.flood?.score ?? 45}% FLOOD PRONE`,
-            scores.flood?.details,
-            <Waves className="w-4 h-4 text-blue-500" />,
-            true
-          )}
-
-          {/* 4. CLEANLINESS METER */}
-          {renderMeter(
-            "CLEANLINESS",
-            scores.cleanliness?.score ?? 95,
-            scores.cleanliness?.label || `${scores.cleanliness?.score ?? 95}% CLEAN`,
-            scores.cleanliness?.details,
-            <Sparkles className="w-4 h-4 text-teal-600" />
-          )}
-
-          {/* Bonus Power & Water Bar */}
-          {(scores.electricity || scores.water) && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-              {scores.electricity && (
-                <div className="flex items-center justify-between p-3 bg-amber-50/60 border border-amber-200/70 rounded-xl text-xs font-semibold text-gray-800">
-                  <div className="flex items-center gap-2">
-                    <Zap className="w-4 h-4 text-amber-500" />
-                    <span>Power Stability</span>
-                  </div>
-                  <span className="font-extrabold text-amber-900 bg-amber-100 px-2 py-0.5 rounded-md">
-                    {scores.electricity.label}
-                  </span>
-                </div>
-              )}
-
-              {scores.water && (
-                <div className="flex items-center justify-between p-3 bg-sky-50/60 border border-sky-200/70 rounded-xl text-xs font-semibold text-gray-800">
-                  <div className="flex items-center gap-2">
-                    <Droplets className="w-4 h-4 text-sky-500" />
-                    <span>Water Quality</span>
-                  </div>
-                  <span className="font-extrabold text-sky-900 bg-sky-100 px-2 py-0.5 rounded-md">
-                    {scores.water.label}
-                  </span>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+        )}
 
       </div>
     </section>

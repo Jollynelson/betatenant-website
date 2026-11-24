@@ -84,7 +84,7 @@ export function BeforeYouPayChecklist({
   // Copy checklist to clipboard
   const handleCopy = () => {
     const text = [
-      `📋 Physical Inspection Checklist for ${locationName} (via Beta Tenant Area Gist)`,
+      `📋 Physical Inspection Checklist for ${locationName} (via Beta Tenant Area Check)`,
       "",
       ...checklist.map((item, idx) => {
         const isDone = completedItems[item.task] ? "[x]" : "[ ]";
