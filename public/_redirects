@@ -10,6 +10,10 @@ http://www.betatenant.com/*     https://betatenant.com/:splat           301
 /s/*                            https://api.betatenant.com/s/:splat     302
 /m/*                            https://api.betatenant.com/m/:splat     302
 
+# Area Check redirect from legacy /area-gist
+/area-gist                      /area-check                             301
+/area-gist/*                    /area-check/:splat                      301
+
 # SPA dynamic route rewrites
 /property/:id                    /property/placeholder                   200
 /payment/:id                     /payment/placeholder                    200

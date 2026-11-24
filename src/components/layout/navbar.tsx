@@ -174,7 +174,7 @@ export function Navbar() {
           <div className="hidden lg:flex items-center gap-0.5">
             <NavLink href="/properties">Browse</NavLink>
             <NavLink href="/tenant-switch">Tenant Switch</NavLink>
-            <NavLink href="/area-gist">Area Check</NavLink>
+            <NavLink href="/area-check">Area Check</NavLink>
             <NavLink href="/agents">Report Agent</NavLink>
           </div>
 
@@ -363,7 +363,7 @@ export function Navbar() {
                   <>
                     <MobileNavLink href="/properties" onClick={() => setMobileMenuOpen(false)}>Browse Properties</MobileNavLink>
                     <MobileNavLink href="/tenant-switch" onClick={() => setMobileMenuOpen(false)}>Tenant Switch</MobileNavLink>
-                    <MobileNavLink href="/area-gist" onClick={() => setMobileMenuOpen(false)}>Area Check</MobileNavLink>
+                    <MobileNavLink href="/area-check" onClick={() => setMobileMenuOpen(false)}>Area Check</MobileNavLink>
                     <MobileNavLink href="/agents" onClick={() => setMobileMenuOpen(false)}>Report Agent</MobileNavLink>
                   </>
                 )}

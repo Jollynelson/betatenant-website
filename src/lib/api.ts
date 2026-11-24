@@ -46,11 +46,13 @@ export function cdnThumb(url: string): string {
 // No Next.js rewrite exists for /api/bt (static export has no server), so both
 // dev and prod call the API directly. Override with NEXT_PUBLIC_API_URL if needed.
 export const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL ??
-  process.env.NEXT_PUBLIC_API_URL ??
-  (typeof window !== "undefined" && window.location.hostname !== "localhost"
+  typeof window !== "undefined" &&
+  window.location.hostname !== "localhost" &&
+  window.location.hostname !== "127.0.0.1"
     ? "https://api.betatenant.com"
-    : "/api/bt");
+    : (process.env.NEXT_PUBLIC_API_BASE_URL ??
+       process.env.NEXT_PUBLIC_API_URL ??
+       "https://api.betatenant.com");
 
 const BASE = API_BASE_URL;
 

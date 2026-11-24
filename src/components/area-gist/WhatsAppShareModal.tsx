@@ -20,8 +20,8 @@ export function WhatsAppShareModal({
   if (!isOpen) return null;
 
   const pageUrl = typeof window !== "undefined"
-    ? `${window.location.origin}/area-gist?location=${encodeURIComponent(data.locationName)}&state=${encodeURIComponent(data.state)}`
-    : `https://betatenant.com/area-gist?location=${encodeURIComponent(data.locationName)}&state=${encodeURIComponent(data.state)}`;
+    ? `${window.location.origin}/area-check?location=${encodeURIComponent(data.locationName)}&state=${encodeURIComponent(data.state)}`
+    : `https://betatenant.com/area-check?location=${encodeURIComponent(data.locationName)}&state=${encodeURIComponent(data.state)}`;
 
   const formatCurrency = (val: number) => {
     if (!val) return "₦1.5M - ₦3M";
