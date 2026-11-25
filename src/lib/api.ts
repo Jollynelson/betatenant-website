@@ -101,11 +101,13 @@ export const api = {
 
 // ── Field mapper ──────────────────────────────────────────────────────────────
 // The backend returns its own field names; we normalise them to our Property type.
-export function mapProperty(raw: any) {
-  const host = raw.userId ?? {};
+export function mapProperty(input: any) {
+  const raw = input?._doc ?? input ?? {};
+  const host = raw.userId?._doc ?? raw.userId ?? {};
+  const locLabel = raw.propertyLGA || raw.propertyState || "";
   return {
-    _id: String(raw._id),
-    title: raw.houseName || `${raw.roomCount ?? 1} Bedroom in ${raw.propertyLGA}`,
+    _id: String(raw._id ?? ""),
+    title: raw.houseName || (locLabel ? `${raw.roomCount || 1} Bedroom in ${locLabel}` : `${raw.roomCount || 1} Bedroom Apartment`),
     description: raw.houseDescription ?? "",
     type: (raw.rentType ?? "rent") as "rent" | "short-let" | "tenant-switch",
     rentType: raw.rentType ?? "rent",
@@ -332,11 +334,13 @@ export const propertyApi = {
 };
 
 // ── Tenant Switch ─────────────────────────────────────────────────────────────
-export function mapTenantListing(raw: any) {
-  const host = raw.userId ?? {};
+export function mapTenantListing(input: any) {
+  const raw = input?._doc ?? input ?? {};
+  const host = raw.userId?._doc ?? raw.userId ?? {};
+  const locLabel = raw.propertyLGA || raw.propertyState || "";
   return {
-    _id: String(raw._id),
-    title: raw.houseName || `${raw.roomCount ?? 1} Bedroom in ${raw.propertyLGA}`,
+    _id: String(raw._id ?? ""),
+    title: raw.houseName || (locLabel ? `${raw.roomCount || 1} Bedroom in ${locLabel}` : `${raw.roomCount || 1} Bedroom Apartment`),
     description: raw.houseDescription ?? "",
     apartmentType: raw.apartmentType ?? "",
     state: raw.propertyState ?? "",
